@@ -11,6 +11,11 @@ blind players can share the same experience and play together.
 The first game in development is **3×3 three-piece Tic-Tac-Toe**, with a
 movement phase after each player places their three pieces.
 
+## Project structure
+
+- `app/`: Android client written in Java
+- `backend/`: Django multiplayer server ([setup and API](backend/README.md))
+
 ## Status
 
 This project is currently under development.
