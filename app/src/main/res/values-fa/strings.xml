@@ -15,10 +15,9 @@
     <string name="cell_position">سطر %1$d، ستون %2$d</string>
     <string name="piece_placed_announcement">%1$s در %2$s قرار گرفت.</string>
     <string name="piece_moved_announcement">%1$s از %2$s به %3$s منتقل شد.</string>
-    <string name="piece_selected">%1$s انتخاب شد. یک خانه خالی مجاور را انتخاب کنید.</string>
+    <string name="piece_selected">%1$s انتخاب شد. یک خانه خالی را انتخاب کنید.</string>
     <string name="select_piece_first">ابتدا یکی از مهره‌های خودتان را انتخاب کنید.</string>
     <string name="not_your_piece">این مهره متعلق به بازیکن دیگر است.</string>
-    <string name="destination_not_adjacent">این خانه مجاور مهره انتخاب‌شده نیست.</string>
     <string name="selected">انتخاب‌شده</string>
     <string name="mode_two_players">دو بازیکن</string>
     <string name="mode_play_bot">بازی با ربات</string>

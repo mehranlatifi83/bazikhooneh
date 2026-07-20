@@ -15,10 +15,9 @@
     <string name="cell_position">row %1$d, column %2$d</string>
     <string name="piece_placed_announcement">%1$s placed at %2$s.</string>
     <string name="piece_moved_announcement">%1$s moved from %2$s to %3$s.</string>
-    <string name="piece_selected">%1$s selected. Choose an adjacent empty cell.</string>
+    <string name="piece_selected">%1$s selected. Choose an empty cell.</string>
     <string name="select_piece_first">Select one of your pieces first.</string>
     <string name="not_your_piece">That piece belongs to the other player.</string>
-    <string name="destination_not_adjacent">That cell is not adjacent to the selected piece.</string>
     <string name="selected">selected</string>
     <string name="mode_two_players">Two players</string>
     <string name="mode_play_bot">Play bot</string>

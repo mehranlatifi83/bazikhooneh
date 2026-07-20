@@ -51,13 +51,12 @@ public class TicTacToeGameTest {
     }
 
     @Test
-    public void movementRequiresOwnPieceAndAdjacentEmptyDestination() {
+    public void movementRequiresOwnPieceAndAllowsAnyEmptyDestination() {
         enterMovementPhase();
         assertEquals(MoveResult.SOURCE_NOT_OWNED, game.move(1, 4));
-        assertEquals(MoveResult.NOT_ADJACENT, game.move(0, 6));
-        assertEquals(MoveResult.ACCEPTED, game.move(7, 4));
-        assertEquals(Mark.EMPTY, game.getCell(7));
-        assertEquals(Mark.X, game.getCell(4));
+        assertEquals(MoveResult.ACCEPTED, game.move(0, 6));
+        assertEquals(Mark.EMPTY, game.getCell(0));
+        assertEquals(Mark.X, game.getCell(6));
         assertEquals(Mark.O, game.getCurrentPlayer());
     }
 

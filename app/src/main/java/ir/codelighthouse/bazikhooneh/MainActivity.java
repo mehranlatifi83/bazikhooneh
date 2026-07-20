@@ -147,10 +147,6 @@ public final class MainActivity extends Activity {
         }
 
         MoveResult result = game.move(selectedSource, cellIndex);
-        if (result == MoveResult.NOT_ADJACENT) {
-            announce(getString(R.string.destination_not_adjacent));
-            return;
-        }
         if (result == MoveResult.CELL_OCCUPIED) {
             announce(getString(R.string.cell_occupied));
             return;

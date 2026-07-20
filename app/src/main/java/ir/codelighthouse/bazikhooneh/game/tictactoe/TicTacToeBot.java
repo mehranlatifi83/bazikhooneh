@@ -143,8 +143,7 @@ public final class TicTacToeBot {
                 continue;
             }
             for (int destination = 0; destination < board.length; destination++) {
-                if (board[destination] == Mark.EMPTY
-                        && TicTacToeGame.areAdjacent(source, destination)) {
+                if (board[destination] == Mark.EMPTY) {
                     actions.add(BotAction.move(source, destination));
                 }
             }

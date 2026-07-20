@@ -91,12 +91,12 @@ public final class MainActivityUiTest {
             assertEquals(activity.getString(R.string.player_move_turn,
                     activity.getString(R.string.mark_x)), status.getText().toString());
 
-            activity.findViewById(R.id.cell_7).performClick();
-            assertTrue(activity.findViewById(R.id.cell_7).getAlpha() < 1f);
-            activity.findViewById(R.id.cell_4).performClick();
+            activity.findViewById(R.id.cell_0).performClick();
+            assertTrue(activity.findViewById(R.id.cell_0).getAlpha() < 1f);
+            activity.findViewById(R.id.cell_6).performClick();
 
-            assertEquals("", ((Button) activity.findViewById(R.id.cell_7)).getText().toString());
-            assertEquals("X", ((Button) activity.findViewById(R.id.cell_4)).getText().toString());
+            assertEquals("", ((Button) activity.findViewById(R.id.cell_0)).getText().toString());
+            assertEquals("X", ((Button) activity.findViewById(R.id.cell_6)).getText().toString());
             assertEquals(activity.getString(R.string.player_move_turn,
                     activity.getString(R.string.mark_o)), status.getText().toString());
         });

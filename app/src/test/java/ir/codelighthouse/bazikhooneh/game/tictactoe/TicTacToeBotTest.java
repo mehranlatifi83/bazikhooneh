@@ -30,9 +30,9 @@ public class TicTacToeBotTest {
 
     @Test
     public void mediumBotTakesWinWhenThereIsNoImmediateThreat() {
-        TicTacToeGame game = gameAfter(0, 3, 2, 4, 7);
+        TicTacToeGame game = gameAfter(0, 2, 5, 4, 7);
         BotAction action = new TicTacToeBot().chooseAction(game, BotDifficulty.MEDIUM);
-        assertEquals(5, action.getDestination());
+        assertEquals(6, action.getDestination());
     }
 
     @Test
@@ -44,7 +44,6 @@ public class TicTacToeBotTest {
         assertTrue(action.isMovement());
         assertEquals(Mark.O, game.getCell(action.getSource()));
         assertEquals(Mark.EMPTY, game.getCell(action.getDestination()));
-        assertTrue(TicTacToeGame.areAdjacent(action.getSource(), action.getDestination()));
     }
 
     @Test

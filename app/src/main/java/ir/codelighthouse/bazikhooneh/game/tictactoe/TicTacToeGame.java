@@ -66,10 +66,6 @@ public final class TicTacToeGame {
         if (board[destination] != Mark.EMPTY) {
             return MoveResult.CELL_OCCUPIED;
         }
-        if (!areAdjacent(source, destination)) {
-            return MoveResult.NOT_ADJACENT;
-        }
-
         board[source] = Mark.EMPTY;
         board[destination] = currentPlayer;
         actionHistory.add(encodeMovement(source, destination));
@@ -127,30 +123,6 @@ public final class TicTacToeGame {
 
     public static int movementDestination(int encodedAction) {
         return (encodedAction - MOVEMENT_ACTION_OFFSET) % CELL_COUNT;
-    }
-
-    public static boolean areAdjacent(int first, int second) {
-        if (!isValidIndex(first) || !isValidIndex(second) || first == second) {
-            return false;
-        }
-        for (int[] line : WINNING_LINES) {
-            int firstPosition = positionInLine(line, first);
-            int secondPosition = positionInLine(line, second);
-            if (firstPosition >= 0 && secondPosition >= 0
-                    && Math.abs(firstPosition - secondPosition) == 1) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static int positionInLine(int[] line, int cell) {
-        for (int position = 0; position < line.length; position++) {
-            if (line[position] == cell) {
-                return position;
-            }
-        }
-        return -1;
     }
 
     private static int encodeMovement(int source, int destination) {
