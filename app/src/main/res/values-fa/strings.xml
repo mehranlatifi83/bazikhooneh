@@ -93,6 +93,9 @@
     <string name="match_win">برد</string>
     <string name="match_loss">باخت</string>
     <string name="match_history_item">%1$s مقابل %2$s، دور %3$d</string>
+    <string name="login_title">حساب بازی‌خونه</string>
+    <string name="login_description">یک حساب برای همه بازی‌های آنلاین، پروفایل، امتیاز و دعوت‌های بازی‌خونه استفاده می‌شود.</string>
+    <string name="tic_tac_toe_description">بازی دونفره، با ربات و آنلاین</string>
     <string-array name="avatar_colors"><item>سبز</item><item>قرمز</item><item>آبی</item><item>بنفش</item><item>نارنجی</item><item>خاکستری</item></string-array>
     <string name="bot_difficulty">درجه سختی ربات</string>
     <string name="bot_thinking">ربات در حال فکر کردن است…</string>

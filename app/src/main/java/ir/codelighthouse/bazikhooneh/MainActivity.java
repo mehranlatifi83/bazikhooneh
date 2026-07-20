@@ -30,8 +30,7 @@ import ir.codelighthouse.bazikhooneh.game.tictactoe.Mark;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.MoveResult;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeBot;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeGame;
-import ir.codelighthouse.bazikhooneh.account.AccountClient;
-import ir.codelighthouse.bazikhooneh.account.AccountSession;
+import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
@@ -48,10 +47,6 @@ public final class MainActivity extends Activity {
     private static final String PREF_ROOM = "room";
     private static final String PREF_SYMBOL = "symbol";
     private static final String PREF_TOKEN = "token";
-    private static final String ACCOUNT_PREFS = "account_session";
-    private static final String PREF_ACCOUNT_TOKEN = "account_token";
-    private static final String PREF_USERNAME = "username";
-    private static final String PREF_DISPLAY_NAME = "display_name";
 
     private final TicTacToeGame game = new TicTacToeGame();
     private final TicTacToeBot bot = new TicTacToeBot();
@@ -63,19 +58,13 @@ public final class MainActivity extends Activity {
     private EditText roomCodeInput;
     private TextView roomInformation;
     private Button rematchButton;
-    private LinearLayout accountForm;
-    private LinearLayout accountSummary;
-    private EditText accountUsernameInput;
-    private EditText accountDisplayNameInput;
-    private EditText accountPasswordInput;
-    private TextView accountName;
     private boolean botMode;
     private boolean onlineMode;
     private boolean botThinking;
     private int selectedSource = -1;
     private String pendingHumanAnnouncement;
     private OnlineGameClient onlineClient;
-    private AccountClient accountClient;
+    private SessionStore sessionStore;
     private OnlineGameState onlineState;
     private String onlineSymbol;
     private int reconnectAttempts;
@@ -83,8 +72,6 @@ public final class MainActivity extends Activity {
     private boolean onlineActionPending;
     private boolean leavingRoom;
     private String accountToken = "";
-    private String accountUsername = "";
-    private String accountDisplayName = "";
     private ToneGenerator toneGenerator;
     private final Runnable reconnectRunnable = this::restoreOnlineSession;
 
@@ -100,14 +87,8 @@ public final class MainActivity extends Activity {
         roomCodeInput = findViewById(R.id.room_code_input);
         roomInformation = findViewById(R.id.room_information);
         rematchButton = findViewById(R.id.rematch_button);
-        accountForm = findViewById(R.id.account_form);
-        accountSummary = findViewById(R.id.account_summary);
-        accountUsernameInput = findViewById(R.id.account_username_input);
-        accountDisplayNameInput = findViewById(R.id.account_display_name_input);
-        accountPasswordInput = findViewById(R.id.account_password_input);
-        accountName = findViewById(R.id.account_name);
         onlineClient = new OnlineGameClient(BuildConfig.API_BASE_URL, onlineListener);
-        accountClient = new AccountClient(BuildConfig.API_BASE_URL, accountListener);
+        sessionStore = new SessionStore(this);
         restoreAccountSession();
         configureGameOptions(savedInstanceState);
         int[] cellIds = {
@@ -127,9 +108,6 @@ public final class MainActivity extends Activity {
         findViewById(R.id.leave_room_button).setOnClickListener(view -> leaveOnlineRoom());
         findViewById(R.id.copy_room_code_button).setOnClickListener(view -> copyRoomCode());
         findViewById(R.id.share_room_code_button).setOnClickListener(view -> shareRoomCode());
-        findViewById(R.id.account_login_button).setOnClickListener(view -> loginAccount());
-        findViewById(R.id.account_register_button).setOnClickListener(view -> registerAccount());
-        findViewById(R.id.account_logout_button).setOnClickListener(view -> logoutAccount());
 
         restoreState(savedInstanceState);
         render(false);
@@ -324,6 +302,7 @@ public final class MainActivity extends Activity {
             renderOnline(animateMove);
             return;
         }
+        findViewById(R.id.game_board).setVisibility(View.VISIBLE);
         for (int index = 0; index < cells.length; index++) {
             Mark mark = game.getCell(index);
             Button cell = cells[index];
@@ -486,6 +465,13 @@ public final class MainActivity extends Activity {
     }
 
     private void renderOnline(boolean animateMove) {
+        boolean hasRoom = onlineState != null;
+        findViewById(R.id.room_entry_actions).setVisibility(hasRoom ? View.GONE : View.VISIBLE);
+        findViewById(R.id.room_share_actions).setVisibility(hasRoom ? View.VISIBLE : View.GONE);
+        findViewById(R.id.room_management_actions).setVisibility(hasRoom ? View.VISIBLE : View.GONE);
+        roomCodeInput.setEnabled(!hasRoom);
+        boolean showBoard = hasRoom && !"waiting".equals(onlineState.roomState);
+        findViewById(R.id.game_board).setVisibility(showBoard ? View.VISIBLE : View.GONE);
         for (int index = 0; index < cells.length; index++) {
             char value = onlineState == null ? '.' : onlineState.board.charAt(index);
             Button cell = cells[index];
@@ -722,6 +708,7 @@ public final class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if (sessionStore != null) restoreAccountSession();
         if (cells[0] != null) render(false);
     }
 
@@ -749,100 +736,12 @@ public final class MainActivity extends Activity {
 
     private boolean ensureAccount() {
         if (!accountToken.isEmpty()) return true;
-        announce(getString(R.string.account_required));
-        accountUsernameInput.requestFocus();
+        startActivity(new Intent(this, LoginActivity.class));
         return false;
     }
 
-    private void loginAccount() {
-        String username = accountUsernameInput.getText().toString().trim();
-        String password = accountPasswordInput.getText().toString();
-        if (username.length() < 3 || password.length() < 8) {
-            announce(getString(R.string.account_fields_required));
-            return;
-        }
-        accountClient.login(username, password);
-    }
-
-    private void registerAccount() {
-        String username = accountUsernameInput.getText().toString().trim();
-        String displayName = accountDisplayNameInput.getText().toString().trim();
-        String password = accountPasswordInput.getText().toString();
-        if (username.length() < 3 || password.length() < 8) {
-            announce(getString(R.string.account_fields_required));
-            return;
-        }
-        if (displayName.isEmpty()) {
-            announce(getString(R.string.display_name_required));
-            return;
-        }
-        accountClient.register(username, displayName, password);
-    }
-
-    private void logoutAccount() {
-        if (accountToken.isEmpty()) return;
-        reconnectAllowed = false;
-        if (onlineState != null) onlineClient.leaveRoom();
-        onlineClient.disconnect();
-        accountClient.logout(accountToken);
-    }
-
-    private final AccountClient.Listener accountListener = new AccountClient.Listener() {
-        @Override public void onSession(AccountSession session) {
-            runOnUiThread(() -> {
-                accountToken = session.token;
-                accountUsername = session.username;
-                accountDisplayName = session.displayName;
-                getSharedPreferences(ACCOUNT_PREFS, MODE_PRIVATE).edit()
-                        .putString(PREF_ACCOUNT_TOKEN, accountToken)
-                        .putString(PREF_USERNAME, accountUsername)
-                        .putString(PREF_DISPLAY_NAME, accountDisplayName).apply();
-                onlineClient.setAccountToken(accountToken);
-                accountPasswordInput.setText("");
-                renderAccount();
-                announce(getString(R.string.account_signed_in, accountDisplayName, accountUsername));
-            });
-        }
-
-        @Override public void onLoggedOut() {
-            runOnUiThread(() -> {
-                accountToken = "";
-                accountUsername = "";
-                accountDisplayName = "";
-                onlineClient.setAccountToken("");
-                getSharedPreferences(ACCOUNT_PREFS, MODE_PRIVATE).edit().clear().apply();
-                getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit().clear().apply();
-                onlineState = null;
-                onlineSymbol = null;
-                renderAccount();
-                renderOnline(false);
-                announce(getString(R.string.account_logged_out));
-            });
-        }
-
-        @Override public void onError(String error) {
-            runOnUiThread(() -> announce(getString(R.string.account_error, error)));
-        }
-    };
-
     private void restoreAccountSession() {
-        accountToken = getSharedPreferences(ACCOUNT_PREFS, MODE_PRIVATE)
-                .getString(PREF_ACCOUNT_TOKEN, "");
-        accountUsername = getSharedPreferences(ACCOUNT_PREFS, MODE_PRIVATE)
-                .getString(PREF_USERNAME, "");
-        accountDisplayName = getSharedPreferences(ACCOUNT_PREFS, MODE_PRIVATE)
-                .getString(PREF_DISPLAY_NAME, "");
+        accountToken = sessionStore.token();
         onlineClient.setAccountToken(accountToken);
-        renderAccount();
-    }
-
-    private void renderAccount() {
-        boolean signedIn = !accountToken.isEmpty();
-        accountForm.setVisibility(signedIn ? View.GONE : View.VISIBLE);
-        accountSummary.setVisibility(signedIn ? View.VISIBLE : View.GONE);
-        accountName.setText(signedIn
-                ? getString(R.string.account_signed_in, accountDisplayName, accountUsername) : "");
-        findViewById(R.id.create_room_button).setEnabled(signedIn);
-        findViewById(R.id.join_room_button).setEnabled(signedIn);
     }
 }

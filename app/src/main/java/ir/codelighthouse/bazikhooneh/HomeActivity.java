@@ -4,6 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.catalog.GameCatalog;
+import ir.codelighthouse.bazikhooneh.catalog.GameDefinition;
 
 public final class HomeActivity extends Activity {
     private static final String ACCOUNT_PREFS = "account_session";
@@ -12,10 +17,12 @@ public final class HomeActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_home);
-        findViewById(R.id.open_tic_tac_toe).setOnClickListener(v ->
-                startActivity(new Intent(this, MainActivity.class)));
-        findViewById(R.id.open_profile).setOnClickListener(v ->
-                startActivity(new Intent(this, ProfileActivity.class)));
+        renderGames();
+        findViewById(R.id.open_profile).setOnClickListener(v -> {
+            Class<?> destination = new SessionStore(this).isSignedIn()
+                    ? ProfileActivity.class : LoginActivity.class;
+            startActivity(new Intent(this, destination));
+        });
         findViewById(R.id.open_settings).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsActivity.class)));
         findViewById(R.id.open_guide).setOnClickListener(v ->
@@ -39,5 +46,26 @@ public final class HomeActivity extends Activity {
         TextView welcome = findViewById(R.id.home_welcome);
         welcome.setText(displayName.isEmpty() ? getString(R.string.home_guest)
                 : getString(R.string.home_welcome, displayName));
+        ((Button) findViewById(R.id.open_profile)).setText(
+                new SessionStore(this).isSignedIn() ? R.string.profile_title : R.string.account_login);
+    }
+
+    private void renderGames() {
+        LinearLayout catalog = findViewById(R.id.game_catalog);
+        catalog.removeAllViews();
+        int margin = Math.round(12 * getResources().getDisplayMetrics().density);
+        for (GameDefinition game : GameCatalog.availableGames()) {
+            Button card = new Button(this);
+            card.setAllCaps(false);
+            card.setText(getString(game.titleRes) + "\n" + getString(game.descriptionRes));
+            card.setTextSize(18);
+            card.setMinHeight(Math.round(88 * getResources().getDisplayMetrics().density));
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.topMargin = margin;
+            card.setLayoutParams(params);
+            card.setOnClickListener(v -> startActivity(new Intent(this, game.activity)));
+            catalog.addView(card);
+        }
     }
 }

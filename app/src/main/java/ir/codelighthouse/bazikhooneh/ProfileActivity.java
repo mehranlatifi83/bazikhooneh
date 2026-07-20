@@ -10,12 +10,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import java.util.Locale;
 import ir.codelighthouse.bazikhooneh.account.ProfileClient;
+import ir.codelighthouse.bazikhooneh.account.AccountClient;
+import ir.codelighthouse.bazikhooneh.account.AccountSession;
+import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public final class ProfileActivity extends Activity {
-    private static final String PREFS = "account_session";
     private static final String[] COLORS = {"#2E7D32", "#C62828", "#1565C0", "#6A1B9A", "#EF6C00", "#455A64"};
     private EditText displayName;
     private Spinner avatarColor;
@@ -24,6 +26,7 @@ public final class ProfileActivity extends Activity {
     private TextView history;
     private View avatarPreview;
     private ProfileClient client;
+    private SessionStore sessionStore;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -38,7 +41,8 @@ public final class ProfileActivity extends Activity {
                 R.array.avatar_colors, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         avatarColor.setAdapter(adapter);
-        String token = getSharedPreferences(PREFS, MODE_PRIVATE).getString("account_token", "");
+        sessionStore = new SessionStore(this);
+        String token = sessionStore.token();
         if (token.isEmpty()) {
             findViewById(R.id.profile_content).setVisibility(View.GONE);
             findViewById(R.id.profile_signed_out).setVisibility(View.VISIBLE);
@@ -46,6 +50,7 @@ public final class ProfileActivity extends Activity {
         }
         client = new ProfileClient(BuildConfig.API_BASE_URL, token, listener);
         findViewById(R.id.profile_save).setOnClickListener(v -> saveProfile());
+        findViewById(R.id.profile_logout).setOnClickListener(v -> logout(token));
         client.load();
     }
 
@@ -82,7 +87,7 @@ public final class ProfileActivity extends Activity {
             for (int i = 0; i < COLORS.length; i++) if (COLORS[i].equals(color)) colorIndex = i;
             avatarColor.setSelection(colorIndex);
             avatarPreview.setBackgroundColor(Color.parseColor(color));
-            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("display_name", name).apply();
+            sessionStore.updateDisplayName(name);
         } catch (JSONException ignored) { }
     }
 
@@ -105,5 +110,17 @@ public final class ProfileActivity extends Activity {
             }
             history.setText(text.toString());
         } catch (JSONException ignored) { }
+    }
+
+    private void logout(String token) {
+        new AccountClient(BuildConfig.API_BASE_URL, new AccountClient.Listener() {
+            @Override public void onSession(AccountSession session) { }
+            @Override public void onLoggedOut() {
+                runOnUiThread(() -> { sessionStore.clear(); finish(); });
+            }
+            @Override public void onError(String error) {
+                runOnUiThread(() -> { sessionStore.clear(); finish(); });
+            }
+        }).logout(token);
     }
 }

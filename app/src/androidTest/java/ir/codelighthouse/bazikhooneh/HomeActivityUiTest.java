@@ -2,6 +2,7 @@ package ir.codelighthouse.bazikhooneh;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Rule;
@@ -17,7 +18,7 @@ public final class HomeActivityUiTest {
 
     @Test public void primaryDestinationsHaveReadableLabelsAndTouchTargets() {
         rule.getScenario().onActivity(activity -> {
-            int[] ids = {R.id.open_tic_tac_toe, R.id.open_profile, R.id.open_settings, R.id.open_guide};
+            int[] ids = {R.id.open_profile, R.id.open_settings, R.id.open_guide};
             int minimum = Math.round(48 * activity.getResources().getDisplayMetrics().density);
             for (int id : ids) {
                 Button button = activity.findViewById(id);
@@ -25,6 +26,11 @@ public final class HomeActivityUiTest {
                 assertTrue(button.getHeight() >= minimum);
                 assertTrue(button.getVisibility() == View.VISIBLE);
             }
+            LinearLayout catalog = activity.findViewById(R.id.game_catalog);
+            assertTrue(catalog.getChildCount() >= 1);
+            Button game = (Button) catalog.getChildAt(0);
+            assertFalse(game.getText().toString().trim().isEmpty());
+            assertTrue(game.getHeight() >= minimum);
         });
     }
 }

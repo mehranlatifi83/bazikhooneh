@@ -93,6 +93,9 @@
     <string name="match_win">Win</string>
     <string name="match_loss">Loss</string>
     <string name="match_history_item">%1$s against %2$s, round %3$d</string>
+    <string name="login_title">Your BaziKhooneh account</string>
+    <string name="login_description">One account is used for every online game, profile, score, and invitation in BaziKhooneh.</string>
+    <string name="tic_tac_toe_description">Local, bot, and online play</string>
     <string-array name="avatar_colors"><item>Green</item><item>Red</item><item>Blue</item><item>Purple</item><item>Orange</item><item>Gray</item></string-array>
     <string name="bot_difficulty">Bot difficulty</string>
     <string name="bot_thinking">Bot is thinking…</string>
