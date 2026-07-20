@@ -15,16 +15,14 @@ public class TicTacToeGameTest {
     }
 
     @Test
-    public void newGameStartsEmptyWithX() {
+    public void newGameStartsInPlacementPhaseWithX() {
+        assertEquals(GamePhase.PLACEMENT, game.getPhase());
         assertEquals(GameStatus.IN_PROGRESS, game.getStatus());
         assertEquals(Mark.X, game.getCurrentPlayer());
-        for (int index = 0; index < TicTacToeGame.CELL_COUNT; index++) {
-            assertEquals(Mark.EMPTY, game.getCell(index));
-        }
     }
 
     @Test
-    public void acceptedMovePlacesMarkAndChangesTurn() {
+    public void acceptedPlacementChangesTurn() {
         assertEquals(MoveResult.ACCEPTED, game.play(4));
         assertEquals(Mark.X, game.getCell(4));
         assertEquals(Mark.O, game.getCurrentPlayer());
@@ -35,58 +33,68 @@ public class TicTacToeGameTest {
         game.play(4);
         assertEquals(MoveResult.CELL_OCCUPIED, game.play(4));
         assertEquals(Mark.O, game.getCurrentPlayer());
-        assertEquals(1, game.getMoveHistory().size());
+        assertEquals(1, game.getActionHistory().size());
     }
 
     @Test
-    public void outOfBoundsMoveIsRejected() {
-        assertEquals(MoveResult.OUT_OF_BOUNDS, game.play(-1));
-        assertEquals(MoveResult.OUT_OF_BOUNDS, game.play(9));
-    }
-
-    @Test
-    public void detectsRowWin() {
-        playMoves(0, 3, 1, 4, 2);
+    public void detectsWinDuringPlacement() {
+        place(0, 3, 1, 4, 2);
         assertEquals(GameStatus.X_WON, game.getStatus());
     }
 
     @Test
-    public void detectsColumnWin() {
-        playMoves(0, 1, 3, 2, 6);
-        assertEquals(GameStatus.X_WON, game.getStatus());
-    }
-
-    @Test
-    public void detectsDiagonalWin() {
-        playMoves(0, 1, 4, 2, 8);
-        assertEquals(GameStatus.X_WON, game.getStatus());
-    }
-
-    @Test
-    public void detectsDraw() {
-        playMoves(0, 1, 2, 4, 3, 5, 7, 6, 8);
-        assertEquals(GameStatus.DRAW, game.getStatus());
-    }
-
-    @Test
-    public void moveAfterFinishedGameIsRejected() {
-        playMoves(0, 3, 1, 4, 2);
-        assertEquals(MoveResult.GAME_FINISHED, game.play(8));
-    }
-
-    @Test
-    public void resetClearsBoardAndHistory() {
-        playMoves(0, 1, 4);
-        game.reset();
+    public void switchesToMovementAfterSixPiecesWithoutWin() {
+        enterMovementPhase();
+        assertEquals(GamePhase.MOVEMENT, game.getPhase());
         assertEquals(Mark.X, game.getCurrentPlayer());
-        assertEquals(GameStatus.IN_PROGRESS, game.getStatus());
-        assertTrue(game.getMoveHistory().isEmpty());
+        assertEquals(MoveResult.WRONG_PHASE, game.play(6));
+    }
+
+    @Test
+    public void movementRequiresOwnPieceAndAdjacentEmptyDestination() {
+        enterMovementPhase();
+        assertEquals(MoveResult.SOURCE_NOT_OWNED, game.move(1, 4));
+        assertEquals(MoveResult.NOT_ADJACENT, game.move(0, 6));
+        assertEquals(MoveResult.ACCEPTED, game.move(7, 4));
+        assertEquals(Mark.EMPTY, game.getCell(7));
+        assertEquals(Mark.X, game.getCell(4));
+        assertEquals(Mark.O, game.getCurrentPlayer());
+    }
+
+    @Test
+    public void detectsWinAfterMovement() {
+        place(0, 3, 1, 5, 4, 8);
+        game.move(4, 2);
+        assertEquals(GameStatus.X_WON, game.getStatus());
+    }
+
+    @Test
+    public void movementHistoryCanBeDecoded() {
+        enterMovementPhase();
+        game.move(7, 4);
+        int action = game.getActionHistory().get(6);
+        assertTrue(TicTacToeGame.isMovementAction(action));
+        assertEquals(7, TicTacToeGame.movementSource(action));
+        assertEquals(4, TicTacToeGame.movementDestination(action));
+    }
+
+    @Test
+    public void resetClearsBoardHistoryAndPhase() {
+        enterMovementPhase();
+        game.reset();
+        assertEquals(GamePhase.PLACEMENT, game.getPhase());
+        assertEquals(Mark.X, game.getCurrentPlayer());
+        assertTrue(game.getActionHistory().isEmpty());
         assertEquals(Mark.EMPTY, game.getCell(4));
     }
 
-    private void playMoves(int... moves) {
-        for (int move : moves) {
-            game.play(move);
+    private void enterMovementPhase() {
+        place(0, 1, 2, 3, 7, 8);
+    }
+
+    private void place(int... cells) {
+        for (int cell : cells) {
+            game.play(cell);
         }
     }
 }

@@ -15,18 +15,22 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import ir.codelighthouse.bazikhooneh.game.tictactoe.GameStatus;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.BotAction;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotDifficulty;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.GamePhase;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.GameStatus;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.Mark;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.MoveResult;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeBot;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeGame;
 
 public final class MainActivity extends Activity {
-    private static final String STATE_MOVES = "state_moves";
+    private static final String STATE_ACTIONS = "state_actions";
     private static final String STATE_BOT_MODE = "state_bot_mode";
     private static final String STATE_DIFFICULTY = "state_difficulty";
-    private static final long BOT_MOVE_DELAY_MS = 450L;
+    private static final String STATE_SELECTED_SOURCE = "state_selected_source";
+    private static final String STATE_PENDING_ANNOUNCEMENT = "state_pending_announcement";
+    private static final long BOT_MOVE_DELAY_MS = 500L;
 
     private final TicTacToeGame game = new TicTacToeGame();
     private final TicTacToeBot bot = new TicTacToeBot();
@@ -36,6 +40,8 @@ public final class MainActivity extends Activity {
     private Spinner difficultySpinner;
     private boolean botMode;
     private boolean botThinking;
+    private int selectedSource = -1;
+    private String pendingHumanAnnouncement;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,14 +59,14 @@ public final class MainActivity extends Activity {
         for (int index = 0; index < cells.length; index++) {
             final int cellIndex = index;
             cells[index] = findViewById(cellIds[index]);
-            cells[index].setOnClickListener(view -> playMove(cellIndex));
+            cells[index].setOnClickListener(view -> onCellClicked(cellIndex));
         }
         findViewById(R.id.restart_button).setOnClickListener(view -> restartGame());
 
-        restoreMoves(savedInstanceState);
+        restoreState(savedInstanceState);
         render(false);
         if (botMode && game.getCurrentPlayer() == Mark.O) {
-            scheduleBotMove();
+            scheduleBotAction();
         }
     }
 
@@ -68,7 +74,6 @@ public final class MainActivity extends Activity {
         botMode = state != null && state.getBoolean(STATE_BOT_MODE, false);
         int difficultyPosition = state == null ? BotDifficulty.MEDIUM.ordinal()
                 : state.getInt(STATE_DIFFICULTY, BotDifficulty.MEDIUM.ordinal());
-
         RadioGroup modeGroup = findViewById(R.id.game_mode_group);
         modeGroup.check(botMode ? R.id.mode_bot : R.id.mode_local);
 
@@ -91,9 +96,9 @@ public final class MainActivity extends Activity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (firstSelection) {
                     firstSelection = false;
-                    return;
+                } else {
+                    restartGame();
                 }
-                restartGame();
             }
 
             @Override
@@ -103,48 +108,114 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private void playMove(int cellIndex) {
+    private void onCellClicked(int cellIndex) {
         if (botThinking || (botMode && game.getCurrentPlayer() == Mark.O)) {
             return;
         }
-        Mark playedMark = game.getCurrentPlayer();
-        MoveResult result = game.play(cellIndex);
+        if (game.getPhase() == GamePhase.PLACEMENT) {
+            placeHumanPiece(cellIndex);
+        } else {
+            handleMovementSelection(cellIndex);
+        }
+    }
+
+    private void placeHumanPiece(int destination) {
+        Mark mark = game.getCurrentPlayer();
+        MoveResult result = game.play(destination);
         if (result == MoveResult.CELL_OCCUPIED) {
             announce(getString(R.string.cell_occupied));
             return;
         }
-        if (result != MoveResult.ACCEPTED) {
-            return;
-        }
-
-        cells[cellIndex].performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-        render(true);
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            int row = cellIndex / TicTacToeGame.BOARD_SIZE + 1;
-            int column = cellIndex % TicTacToeGame.BOARD_SIZE + 1;
-            announce(getString(R.string.move_announcement, markName(playedMark), row, column,
-                    markName(game.getCurrentPlayer())));
-        } else {
-            announce(statusText.getText().toString());
-        }
-        if (botMode && game.getStatus() == GameStatus.IN_PROGRESS) {
-            scheduleBotMove();
+        if (result == MoveResult.ACCEPTED) {
+            completeHumanAction(mark, -1, destination);
         }
     }
 
-    private void scheduleBotMove() {
+    private void handleMovementSelection(int cellIndex) {
+        Mark cellMark = game.getCell(cellIndex);
+        Mark currentPlayer = game.getCurrentPlayer();
+        if (cellMark == currentPlayer) {
+            selectedSource = cellIndex;
+            render(false);
+            announce(getString(R.string.piece_selected, positionName(cellIndex)));
+            return;
+        }
+        if (selectedSource < 0) {
+            announce(cellMark == Mark.EMPTY ? getString(R.string.select_piece_first)
+                    : getString(R.string.not_your_piece));
+            return;
+        }
+
+        MoveResult result = game.move(selectedSource, cellIndex);
+        if (result == MoveResult.NOT_ADJACENT) {
+            announce(getString(R.string.destination_not_adjacent));
+            return;
+        }
+        if (result == MoveResult.CELL_OCCUPIED) {
+            announce(getString(R.string.cell_occupied));
+            return;
+        }
+        if (result == MoveResult.ACCEPTED) {
+            int source = selectedSource;
+            selectedSource = -1;
+            completeHumanAction(currentPlayer, source, cellIndex);
+        }
+    }
+
+    private void completeHumanAction(Mark mark, int source, int destination) {
+        cells[destination].performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        String actionAnnouncement = actionAnnouncement(mark, source, destination);
+        render(true);
+        if (game.getStatus() != GameStatus.IN_PROGRESS) {
+            announce(actionAnnouncement + " " + statusMessage());
+            return;
+        }
+        if (botMode) {
+            pendingHumanAnnouncement = actionAnnouncement;
+            scheduleBotAction();
+        } else {
+            announce(actionAnnouncement + " " + statusMessage());
+        }
+    }
+
+    private void scheduleBotAction() {
         botThinking = true;
         render(false);
         handler.postDelayed(() -> {
-            int move = bot.chooseMove(game, selectedDifficulty());
-            if (move >= 0) {
-                game.play(move);
-                cells[move].performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            BotAction action = bot.chooseAction(game, selectedDifficulty());
+            String botAnnouncement = "";
+            if (action != null) {
+                if (action.isMovement()) {
+                    game.move(action.getSource(), action.getDestination());
+                } else {
+                    game.play(action.getDestination());
+                }
+                cells[action.getDestination()].performHapticFeedback(
+                        HapticFeedbackConstants.KEYBOARD_TAP);
+                botAnnouncement = actionAnnouncement(Mark.O, action.getSource(),
+                        action.getDestination());
             }
             botThinking = false;
             render(true);
-            announce(statusText.getText().toString());
+            String humanPart = pendingHumanAnnouncement == null ? "" : pendingHumanAnnouncement + " ";
+            pendingHumanAnnouncement = null;
+            announce(humanPart + botAnnouncement + " " + statusMessage());
         }, BOT_MOVE_DELAY_MS);
+    }
+
+    private String actionAnnouncement(Mark mark, int source, int destination) {
+        if (source >= 0) {
+            return getString(R.string.piece_moved_announcement, markName(mark),
+                    positionName(source), positionName(destination));
+        }
+        return getString(R.string.piece_placed_announcement, markName(mark),
+                positionName(destination));
+    }
+
+    private String positionName(int cellIndex) {
+        int row = cellIndex / TicTacToeGame.BOARD_SIZE + 1;
+        int column = cellIndex % TicTacToeGame.BOARD_SIZE + 1;
+        return getString(R.string.cell_position, row, column);
     }
 
     private BotDifficulty selectedDifficulty() {
@@ -156,6 +227,8 @@ public final class MainActivity extends Activity {
     private void restartGame() {
         handler.removeCallbacksAndMessages(null);
         botThinking = false;
+        selectedSource = -1;
+        pendingHumanAnnouncement = null;
         game.reset();
         render(false);
         announce(getString(R.string.game_restarted));
@@ -170,10 +243,15 @@ public final class MainActivity extends Activity {
             boolean humanCanPlay = game.getStatus() == GameStatus.IN_PROGRESS
                     && !botThinking && (!botMode || game.getCurrentPlayer() == Mark.X);
             cell.setEnabled(humanCanPlay);
-            int row = index / TicTacToeGame.BOARD_SIZE + 1;
-            int column = index % TicTacToeGame.BOARD_SIZE + 1;
+            cell.setAlpha(index == selectedSource ? 0.6f : 1f);
             String value = mark == Mark.EMPTY ? getString(R.string.empty_cell) : markName(mark);
-            cell.setContentDescription(getString(R.string.cell_description, row, column, value));
+            String description = getString(R.string.cell_description,
+                    index / TicTacToeGame.BOARD_SIZE + 1,
+                    index % TicTacToeGame.BOARD_SIZE + 1, value);
+            if (index == selectedSource) {
+                description += ", " + getString(R.string.selected);
+            }
+            cell.setContentDescription(description);
             if (animateMove && mark != Mark.EMPTY) {
                 cell.animate().cancel();
                 cell.setScaleX(0.85f);
@@ -181,7 +259,6 @@ public final class MainActivity extends Activity {
                 cell.animate().scaleX(1f).scaleY(1f).setDuration(140).start();
             }
         }
-
         statusText.setText(statusMessage());
     }
 
@@ -198,6 +275,9 @@ public final class MainActivity extends Activity {
                 return getString(R.string.game_draw);
             case IN_PROGRESS:
             default:
+                if (game.getPhase() == GamePhase.MOVEMENT) {
+                    return getString(R.string.player_move_turn, markName(game.getCurrentPlayer()));
+                }
                 return getString(R.string.player_turn, markName(game.getCurrentPlayer()));
         }
     }
@@ -207,30 +287,39 @@ public final class MainActivity extends Activity {
     }
 
     private void announce(String message) {
-        statusText.announceForAccessibility(message);
+        statusText.announceForAccessibility(message.trim());
     }
 
-    private void restoreMoves(Bundle state) {
+    private void restoreState(Bundle state) {
         if (state == null) {
             return;
         }
-        ArrayList<Integer> moves = state.getIntegerArrayList(STATE_MOVES);
-        if (moves == null) {
-            return;
-        }
-        for (Integer move : moves) {
-            if (move != null) {
-                game.play(move);
+        ArrayList<Integer> actions = state.getIntegerArrayList(STATE_ACTIONS);
+        if (actions != null) {
+            for (Integer action : actions) {
+                if (action == null) {
+                    continue;
+                }
+                if (TicTacToeGame.isMovementAction(action)) {
+                    game.move(TicTacToeGame.movementSource(action),
+                            TicTacToeGame.movementDestination(action));
+                } else {
+                    game.play(action);
+                }
             }
         }
+        selectedSource = state.getInt(STATE_SELECTED_SOURCE, -1);
+        pendingHumanAnnouncement = state.getString(STATE_PENDING_ANNOUNCEMENT);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putIntegerArrayList(STATE_MOVES, new ArrayList<>(game.getMoveHistory()));
+        outState.putIntegerArrayList(STATE_ACTIONS, new ArrayList<>(game.getActionHistory()));
         outState.putBoolean(STATE_BOT_MODE, botMode);
         outState.putInt(STATE_DIFFICULTY, selectedDifficulty().ordinal());
+        outState.putInt(STATE_SELECTED_SOURCE, selectedSource);
+        outState.putString(STATE_PENDING_ANNOUNCEMENT, pendingHumanAnnouncement);
     }
 
     @Override

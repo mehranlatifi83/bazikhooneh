@@ -75,4 +75,30 @@ public final class MainActivityUiTest {
             assertEquals(3, difficulty.getCount());
         });
     }
+
+    @Test
+    public void localGameEntersMovementPhaseAndMovesSelectedPiece() {
+        activityRule.getScenario().onActivity(activity -> {
+            int[] placements = {
+                    R.id.cell_0, R.id.cell_1, R.id.cell_2,
+                    R.id.cell_3, R.id.cell_7, R.id.cell_8
+            };
+            for (int id : placements) {
+                activity.findViewById(id).performClick();
+            }
+
+            TextView status = activity.findViewById(R.id.game_status);
+            assertEquals(activity.getString(R.string.player_move_turn,
+                    activity.getString(R.string.mark_x)), status.getText().toString());
+
+            activity.findViewById(R.id.cell_7).performClick();
+            assertTrue(activity.findViewById(R.id.cell_7).getAlpha() < 1f);
+            activity.findViewById(R.id.cell_4).performClick();
+
+            assertEquals("", ((Button) activity.findViewById(R.id.cell_7)).getText().toString());
+            assertEquals("X", ((Button) activity.findViewById(R.id.cell_4)).getText().toString());
+            assertEquals(activity.getString(R.string.player_move_turn,
+                    activity.getString(R.string.mark_o)), status.getText().toString());
+        });
+    }
 }

@@ -3,6 +3,7 @@
     <string name="tic_tac_toe_title">دوز</string>
     <string name="restart_game">شروع دوباره</string>
     <string name="player_turn">نوبت: %1$s</string>
+    <string name="player_move_turn">نوبت %1$s است؛ یک مهره را برای جابه‌جایی انتخاب کنید</string>
     <string name="player_won">%1$s برنده شد!</string>
     <string name="game_draw">بازی مساوی شد.</string>
     <string name="game_restarted">بازی جدید شروع شد. ابتدا ضربدر بازی می‌کند.</string>
@@ -11,7 +12,14 @@
     <string name="mark_x">ضربدر</string>
     <string name="mark_o">دایره</string>
     <string name="cell_description">سطر %1$d، ستون %2$d، %3$s</string>
-    <string name="move_announcement">%1$s در سطر %2$d، ستون %3$d قرار گرفت. نوبت %4$s است.</string>
+    <string name="cell_position">سطر %1$d، ستون %2$d</string>
+    <string name="piece_placed_announcement">%1$s در %2$s قرار گرفت.</string>
+    <string name="piece_moved_announcement">%1$s از %2$s به %3$s منتقل شد.</string>
+    <string name="piece_selected">%1$s انتخاب شد. یک خانه خالی مجاور را انتخاب کنید.</string>
+    <string name="select_piece_first">ابتدا یکی از مهره‌های خودتان را انتخاب کنید.</string>
+    <string name="not_your_piece">این مهره متعلق به بازیکن دیگر است.</string>
+    <string name="destination_not_adjacent">این خانه مجاور مهره انتخاب‌شده نیست.</string>
+    <string name="selected">انتخاب‌شده</string>
     <string name="mode_two_players">دو بازیکن</string>
     <string name="mode_play_bot">بازی با ربات</string>
     <string name="bot_difficulty">درجه سختی ربات</string>

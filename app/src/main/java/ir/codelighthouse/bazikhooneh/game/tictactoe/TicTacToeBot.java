@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/** Chooses a move for the O player without depending on Android APIs. */
+/** Chooses placement and movement actions for the O player. */
 public final class TicTacToeBot {
+    private static final int HARD_SEARCH_DEPTH = 6;
     private static final int[][] WINNING_LINES = {
             {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
             {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
@@ -22,82 +23,146 @@ public final class TicTacToeBot {
         this.random = random;
     }
 
-    public int chooseMove(TicTacToeGame game, BotDifficulty difficulty) {
+    public BotAction chooseAction(TicTacToeGame game, BotDifficulty difficulty) {
+        if (game.getStatus() != GameStatus.IN_PROGRESS) {
+            return null;
+        }
         Mark[] board = copyBoard(game);
-        List<Integer> available = availableCells(board);
-        if (available.isEmpty() || game.getStatus() != GameStatus.IN_PROGRESS) {
-            return -1;
+        List<BotAction> actions = availableActions(board, Mark.O);
+        if (actions.isEmpty()) {
+            return null;
+        }
+        if (difficulty == BotDifficulty.EASY) {
+            return chooseRandom(actions);
         }
 
-        switch (difficulty) {
-            case HARD:
-                return chooseBestMove(board);
-            case MEDIUM:
-                int tacticalMove = findWinningMove(board, Mark.O);
-                if (tacticalMove >= 0) {
-                    return tacticalMove;
+        // Defensive priority requested for medium and hard: stop an immediate X win first.
+        if (hasImmediateWin(board, Mark.X)) {
+            for (BotAction action : actions) {
+                Mark[] next = applyCopy(board, action, Mark.O);
+                if (!hasImmediateWin(next, Mark.X)) {
+                    return action;
                 }
-                int blockingMove = findWinningMove(board, Mark.X);
-                return blockingMove >= 0 ? blockingMove : chooseRandom(available);
-            case EASY:
-            default:
-                return chooseRandom(available);
+            }
         }
+
+        for (BotAction action : actions) {
+            if (winner(applyCopy(board, action, Mark.O)) == Mark.O) {
+                return action;
+            }
+        }
+
+        if (difficulty == BotDifficulty.MEDIUM) {
+            return chooseRandom(actions);
+        }
+        return chooseBestAction(board, actions);
     }
 
-    private int chooseBestMove(Mark[] board) {
+    private BotAction chooseBestAction(Mark[] board, List<BotAction> actions) {
         int bestScore = Integer.MIN_VALUE;
-        int bestMove = -1;
-        for (int cell : availableCells(board)) {
-            board[cell] = Mark.O;
-            int score = minimax(board, false, 0);
-            board[cell] = Mark.EMPTY;
+        BotAction bestAction = actions.get(0);
+        for (BotAction action : actions) {
+            int score = minimax(applyCopy(board, action, Mark.O), Mark.X,
+                    HARD_SEARCH_DEPTH - 1);
             if (score > bestScore) {
                 bestScore = score;
-                bestMove = cell;
+                bestAction = action;
             }
         }
-        return bestMove;
+        return bestAction;
     }
 
-    private int minimax(Mark[] board, boolean maximizing, int depth) {
+    private int minimax(Mark[] board, Mark turn, int depth) {
         Mark winner = winner(board);
         if (winner == Mark.O) {
-            return 10 - depth;
+            return 100 + depth;
         }
         if (winner == Mark.X) {
-            return depth - 10;
+            return -100 - depth;
         }
-        List<Integer> available = availableCells(board);
-        if (available.isEmpty()) {
-            return 0;
+        if (depth == 0) {
+            return heuristic(board);
         }
 
-        int bestScore = maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        Mark mark = maximizing ? Mark.O : Mark.X;
-        for (int cell : available) {
-            board[cell] = mark;
-            int score = minimax(board, !maximizing, depth + 1);
-            board[cell] = Mark.EMPTY;
-            bestScore = maximizing ? Math.max(bestScore, score) : Math.min(bestScore, score);
+        List<BotAction> actions = availableActions(board, turn);
+        if (actions.isEmpty()) {
+            return turn == Mark.O ? -50 : 50;
         }
-        return bestScore;
+        int best = turn == Mark.O ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        for (BotAction action : actions) {
+            int score = minimax(applyCopy(board, action, turn), turn.opponent(), depth - 1);
+            best = turn == Mark.O ? Math.max(best, score) : Math.min(best, score);
+        }
+        return best;
     }
 
-    private int findWinningMove(Mark[] board, Mark mark) {
-        for (int cell : availableCells(board)) {
-            board[cell] = mark;
-            boolean wins = winner(board) == mark;
-            board[cell] = Mark.EMPTY;
-            if (wins) {
-                return cell;
+    private int heuristic(Mark[] board) {
+        int score = 0;
+        for (int[] line : WINNING_LINES) {
+            int x = 0;
+            int o = 0;
+            for (int cell : line) {
+                if (board[cell] == Mark.X) {
+                    x++;
+                } else if (board[cell] == Mark.O) {
+                    o++;
+                }
+            }
+            if (x == 0) {
+                score += o * o;
+            }
+            if (o == 0) {
+                score -= x * x;
             }
         }
-        return -1;
+        return score;
     }
 
-    private int chooseRandom(List<Integer> available) {
-        return available.get(random.nextInt(available.size()));
+    private boolean hasImmediateWin(Mark[] board, Mark mark) {
+        for (BotAction action : availableActions(board, mark)) {
+            if (winner(applyCopy(board, action, mark)) == mark) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<BotAction> availableActions(Mark[] board, Mark mark) {
+        List<BotAction> actions = new ArrayList<>();
+        int pieceCount = count(board, mark);
+        if (pieceCount < TicTacToeGame.PIECES_PER_PLAYER) {
+            for (int destination = 0; destination < board.length; destination++) {
+                if (board[destination] == Mark.EMPTY) {
+                    actions.add(BotAction.place(destination));
+                }
+            }
+            return actions;
+        }
+        for (int source = 0; source < board.length; source++) {
+            if (board[source] != mark) {
+                continue;
+            }
+            for (int destination = 0; destination < board.length; destination++) {
+                if (board[destination] == Mark.EMPTY
+                        && TicTacToeGame.areAdjacent(source, destination)) {
+                    actions.add(BotAction.move(source, destination));
+                }
+            }
+        }
+        return actions;
+    }
+
+    private Mark[] applyCopy(Mark[] board, BotAction action, Mark mark) {
+        Mark[] result = board.clone();
+        if (action.isMovement()) {
+            result[action.getSource()] = Mark.EMPTY;
+        }
+        result[action.getDestination()] = mark;
+        return result;
+    }
+
+    private BotAction chooseRandom(List<BotAction> actions) {
+        return actions.get(random.nextInt(actions.size()));
     }
 
     private Mark[] copyBoard(TicTacToeGame game) {
@@ -108,14 +173,14 @@ public final class TicTacToeBot {
         return board;
     }
 
-    private List<Integer> availableCells(Mark[] board) {
-        List<Integer> available = new ArrayList<>();
-        for (int index = 0; index < board.length; index++) {
-            if (board[index] == Mark.EMPTY) {
-                available.add(index);
+    private int count(Mark[] board, Mark mark) {
+        int count = 0;
+        for (Mark cell : board) {
+            if (cell == mark) {
+                count++;
             }
         }
-        return available;
+        return count;
     }
 
     private Mark winner(Mark[] board) {

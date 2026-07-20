@@ -5,50 +5,58 @@ import org.junit.Test;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TicTacToeBotTest {
     @Test
-    public void easyBotChoosesAnAvailableCell() {
+    public void easyBotChoosesAnAvailablePlacement() {
         TicTacToeGame game = gameAfter(0, 4, 8);
-        int move = new TicTacToeBot(new Random(1)).chooseMove(game, BotDifficulty.EASY);
-        assertTrue(move >= 0 && move < TicTacToeGame.CELL_COUNT);
-        assertEquals(Mark.EMPTY, game.getCell(move));
+        BotAction action = new TicTacToeBot(new Random(1))
+                .chooseAction(game, BotDifficulty.EASY);
+        assertNotNull(action);
+        assertFalse(action.isMovement());
+        assertEquals(Mark.EMPTY, game.getCell(action.getDestination()));
     }
 
     @Test
-    public void mediumBotTakesWinningMove() {
-        TicTacToeGame game = gameAfter(0, 3, 1, 4, 8);
-        assertEquals(5, new TicTacToeBot().chooseMove(game, BotDifficulty.MEDIUM));
+    public void mediumBotBlocksBeforeTakingItsOwnWin() {
+        TicTacToeGame game = gameAfter(0, 3, 1);
+        BotAction action = new TicTacToeBot().chooseAction(game, BotDifficulty.MEDIUM);
+        assertEquals(2, action.getDestination());
     }
 
     @Test
-    public void mediumBotBlocksImmediateLoss() {
-        TicTacToeGame game = gameAfter(0, 4, 1);
-        assertEquals(2, new TicTacToeBot().chooseMove(game, BotDifficulty.MEDIUM));
+    public void mediumBotTakesWinWhenThereIsNoImmediateThreat() {
+        TicTacToeGame game = gameAfter(0, 3, 2, 4, 7);
+        BotAction action = new TicTacToeBot().chooseAction(game, BotDifficulty.MEDIUM);
+        assertEquals(5, action.getDestination());
     }
 
     @Test
-    public void hardBotNeverAllowsForcedWinFromOpening() {
-        TicTacToeBot bot = new TicTacToeBot();
-        for (int firstMove = 0; firstMove < TicTacToeGame.CELL_COUNT; firstMove++) {
-            TicTacToeGame game = gameAfter(firstMove);
-            int response = bot.chooseMove(game, BotDifficulty.HARD);
-            assertTrue(response >= 0);
-            assertEquals(Mark.EMPTY, game.getCell(response));
-        }
+    public void hardBotReturnsLegalMovementAction() {
+        TicTacToeGame game = gameAfter(0, 1, 2, 3, 7, 8);
+        assertEquals(MoveResult.ACCEPTED, game.move(7, 4));
+        BotAction action = new TicTacToeBot().chooseAction(game, BotDifficulty.HARD);
+        assertNotNull(action);
+        assertTrue(action.isMovement());
+        assertEquals(Mark.O, game.getCell(action.getSource()));
+        assertEquals(Mark.EMPTY, game.getCell(action.getDestination()));
+        assertTrue(TicTacToeGame.areAdjacent(action.getSource(), action.getDestination()));
     }
 
     @Test
-    public void botReturnsMinusOneAfterGameEnds() {
+    public void botReturnsNullAfterGameEnds() {
         TicTacToeGame game = gameAfter(0, 3, 1, 4, 2);
-        assertEquals(-1, new TicTacToeBot().chooseMove(game, BotDifficulty.HARD));
+        assertNull(new TicTacToeBot().chooseAction(game, BotDifficulty.HARD));
     }
 
-    private TicTacToeGame gameAfter(int... moves) {
+    private TicTacToeGame gameAfter(int... placements) {
         TicTacToeGame game = new TicTacToeGame();
-        for (int move : moves) {
-            game.play(move);
+        for (int placement : placements) {
+            game.play(placement);
         }
         return game;
     }

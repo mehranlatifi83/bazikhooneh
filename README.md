@@ -8,7 +8,8 @@ blind players can share the same experience and play together.
 
 ## First Game
 
-The first game in development is classic **3×3 Tic-Tac-Toe**.
+The first game in development is **3×3 three-piece Tic-Tac-Toe**, with a
+movement phase after each player places their three pieces.
 
 ## Status
 
@@ -26,7 +27,8 @@ This project is currently under development.
 
 ### اولین بازی
 
-اولین بازی در حال توسعه، **دوز کلاسیک ۳×۳** است.
+اولین بازی در حال توسعه، **دوز سه‌مهره‌ای ۳×۳** است. پس از قرارگرفتن سه مهره
+هر بازیکن، بازی با جابه‌جایی مهره‌ها ادامه پیدا می‌کند.
 
 ### وضعیت پروژه
 
