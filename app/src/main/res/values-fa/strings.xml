@@ -13,4 +13,13 @@
     <string name="mark_o">دایره</string>
     <string name="cell_description">سطر %1$d، ستون %2$d، %3$s</string>
     <string name="move_announcement">%1$s در سطر %2$d، ستون %3$d قرار گرفت. نوبت %4$s است.</string>
+    <string name="mode_two_players">دو بازیکن</string>
+    <string name="mode_play_bot">بازی با ربات</string>
+    <string name="bot_difficulty">درجه سختی ربات</string>
+    <string name="bot_thinking">ربات در حال فکر کردن است…</string>
+    <string-array name="bot_difficulties">
+        <item>آسان</item>
+        <item>متوسط</item>
+        <item>سخت</item>
+    </string-array>
 </resources>

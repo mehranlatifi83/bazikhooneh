@@ -27,6 +27,37 @@
             android:textStyle="bold"
             android:importantForAccessibility="no" />
 
+        <RadioGroup
+            android:id="@+id/game_mode_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/mode_local"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:checked="true"
+                android:text="@string/mode_two_players" />
+
+            <RadioButton
+                android:id="@+id/mode_bot"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="20dp"
+                android:text="@string/mode_play_bot" />
+        </RadioGroup>
+
+        <Spinner
+            android:id="@+id/difficulty_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/bot_difficulty"
+            android:enabled="false" />
+
         <TextView
             android:id="@+id/game_status"
             android:layout_width="match_parent"
