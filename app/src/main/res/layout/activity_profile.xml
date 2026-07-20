@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/profile_root" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="@color/screen_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/profile_title" android:textSize="30sp" android:textStyle="bold"
+            android:accessibilityHeading="true" />
+        <TextView android:id="@+id/profile_signed_out" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="24dp"
+            android:text="@string/profile_signed_out" android:textSize="18sp" android:visibility="gone" />
+        <LinearLayout android:id="@+id/profile_content" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical">
+            <View android:id="@+id/profile_avatar_preview" android:layout_width="72dp"
+                android:layout_height="72dp" android:layout_gravity="center_horizontal"
+                android:layout_marginTop="20dp" android:contentDescription="@string/avatar_preview" />
+            <TextView android:id="@+id/profile_username" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="center"
+                android:textSize="18sp" />
+            <EditText android:id="@+id/profile_display_name" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="16dp"
+                android:hint="@string/account_display_name" android:maxLength="40" android:minHeight="48dp" />
+            <Spinner android:id="@+id/profile_avatar_color" android:layout_width="match_parent"
+                android:layout_height="48dp" android:contentDescription="@string/avatar_color" />
+            <Button android:id="@+id/profile_save" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:minHeight="56dp"
+                android:text="@string/profile_save" android:textAllCaps="false" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="28dp" android:text="@string/profile_stats_heading"
+                android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+            <TextView android:id="@+id/profile_stats" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textSize="18sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="28dp" android:text="@string/profile_history_heading"
+                android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+            <TextView android:id="@+id/profile_history" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:textSize="17sp" android:lineSpacingExtra="6dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

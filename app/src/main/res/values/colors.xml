@@ -10,4 +10,6 @@
     <color name="text_secondary">#3D4556</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="piece_x">#C62828</color>
+    <color name="piece_o">#2E7D32</color>
 </resources>

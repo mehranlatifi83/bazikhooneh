@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.AdapterView;
@@ -83,12 +85,14 @@ public final class MainActivity extends Activity {
     private String accountToken = "";
     private String accountUsername = "";
     private String accountDisplayName = "";
+    private ToneGenerator toneGenerator;
     private final Runnable reconnectRunnable = this::restoreOnlineSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 35);
 
         statusText = findViewById(R.id.game_status);
         difficultySpinner = findViewById(R.id.difficulty_spinner);
@@ -130,7 +134,9 @@ public final class MainActivity extends Activity {
         restoreState(savedInstanceState);
         render(false);
         if (onlineMode) {
-            restoreOnlineSession();
+            String invitedCode = getIntent().getStringExtra("room_code");
+            if (invitedCode != null) roomCodeInput.setText(invitedCode.toUpperCase());
+            else restoreOnlineSession();
         }
         if (botMode && game.getCurrentPlayer() == Mark.O) {
             scheduleBotAction();
@@ -139,7 +145,8 @@ public final class MainActivity extends Activity {
 
     private void configureGameOptions(Bundle state) {
         botMode = state != null && state.getBoolean(STATE_BOT_MODE, false);
-        onlineMode = state != null && state.getBoolean(STATE_ONLINE_MODE, false);
+        onlineMode = state != null ? state.getBoolean(STATE_ONLINE_MODE, false)
+                : getIntent().hasExtra("room_code");
         int difficultyPosition = state == null ? BotDifficulty.MEDIUM.ordinal()
                 : state.getInt(STATE_DIFFICULTY, BotDifficulty.MEDIUM.ordinal());
         RadioGroup modeGroup = findViewById(R.id.game_mode_group);
@@ -239,7 +246,7 @@ public final class MainActivity extends Activity {
     }
 
     private void completeHumanAction(Mark mark, int source, int destination) {
-        cells[destination].performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        performMoveHaptic(cells[destination]);
         String actionAnnouncement = actionAnnouncement(mark, source, destination);
         render(true);
         if (game.getStatus() != GameStatus.IN_PROGRESS) {
@@ -266,8 +273,7 @@ public final class MainActivity extends Activity {
                 } else {
                     game.play(action.getDestination());
                 }
-                cells[action.getDestination()].performHapticFeedback(
-                        HapticFeedbackConstants.KEYBOARD_TAP);
+                performMoveHaptic(cells[action.getDestination()]);
                 botAnnouncement = actionAnnouncement(Mark.O, action.getSource(),
                         action.getDestination());
             }
@@ -322,6 +328,7 @@ public final class MainActivity extends Activity {
             Mark mark = game.getCell(index);
             Button cell = cells[index];
             cell.setText(mark == Mark.EMPTY ? "" : mark.name());
+            applyPieceAppearance(cell, mark);
             boolean humanCanPlay = game.getStatus() == GameStatus.IN_PROGRESS
                     && !botThinking && (!botMode || game.getCurrentPlayer() == Mark.X);
             cell.setEnabled(humanCanPlay);
@@ -409,6 +416,7 @@ public final class MainActivity extends Activity {
     protected void onDestroy() {
         handler.removeCallbacksAndMessages(null);
         onlineClient.disconnect();
+        toneGenerator.release();
         super.onDestroy();
     }
 
@@ -482,6 +490,7 @@ public final class MainActivity extends Activity {
             char value = onlineState == null ? '.' : onlineState.board.charAt(index);
             Button cell = cells[index];
             cell.setText(value == '.' ? "" : String.valueOf(value));
+            applyPieceAppearance(cell, value == '.' ? Mark.EMPTY : value == 'X' ? Mark.X : Mark.O);
             boolean canPlay = onlineState != null && "active".equals(onlineState.roomState)
                     && onlineState.currentPlayer.equals(onlineSymbol)
                     && "active".equals(onlineState.status) && !onlineActionPending;
@@ -695,7 +704,8 @@ public final class MainActivity extends Activity {
         }
         Intent send = new Intent(Intent.ACTION_SEND);
         send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_TEXT, getString(R.string.room_invitation, code));
+        send.putExtra(Intent.EXTRA_TEXT, getString(R.string.room_invitation, code)
+                + "\n" + "bazikhooneh://room/" + code);
         startActivity(Intent.createChooser(send, getString(R.string.share_room_title)));
     }
 
@@ -708,6 +718,33 @@ public final class MainActivity extends Activity {
             case "not_your_turn": return getString(R.string.error_not_your_turn);
             default: return getString(R.string.error_generic);
         }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (cells[0] != null) render(false);
+    }
+
+    private void performMoveHaptic(View view) {
+        if (getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.HAPTIC, true)) {
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        }
+        if (getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.SOUND, true)) {
+            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 80);
+        }
+    }
+
+    private void applyPieceAppearance(Button cell, Mark mark) {
+        boolean large = getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.LARGE_TEXT, false);
+        boolean contrast = getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.HIGH_CONTRAST, false);
+        cell.setTextSize(large ? 34 : 28);
+        if (mark == Mark.X) cell.setTextColor(getColor(contrast ? R.color.black : R.color.piece_x));
+        else if (mark == Mark.O) cell.setTextColor(getColor(contrast ? R.color.brand_primary_dark : R.color.piece_o));
+        else cell.setTextColor(getColor(R.color.text_primary));
     }
 
     private boolean ensureAccount() {
