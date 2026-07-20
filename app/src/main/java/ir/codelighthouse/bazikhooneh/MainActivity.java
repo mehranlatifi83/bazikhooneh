@@ -1,13 +1,11 @@
 package ir.codelighthouse.bazikhooneh;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 
@@ -16,7 +14,7 @@ import ir.codelighthouse.bazikhooneh.game.tictactoe.Mark;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.MoveResult;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeGame;
 
-public final class MainActivity extends AppCompatActivity {
+public final class MainActivity extends Activity {
     private static final String STATE_MOVES = "state_moves";
 
     private final TicTacToeGame game = new TicTacToeGame();
@@ -134,7 +132,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
+    protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putIntegerArrayList(STATE_MOVES, new ArrayList<>(game.getMoveHistory()));
     }

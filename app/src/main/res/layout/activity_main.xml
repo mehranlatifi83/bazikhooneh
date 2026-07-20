@@ -61,7 +61,7 @@
             <Button android:id="@+id/cell_8" style="@style/Widget.BaziKhooneh.BoardCell" />
         </GridLayout>
 
-        <com.google.android.material.button.MaterialButton
+        <Button
             android:id="@+id/restart_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
