@@ -125,6 +125,32 @@
                 android:orientation="horizontal">
 
                 <Button
+                    android:id="@+id/copy_room_code_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="@string/copy_room_code"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/share_room_code_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="@string/share_room_code"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <Button
                     android:id="@+id/rematch_button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

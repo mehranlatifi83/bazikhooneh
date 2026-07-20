@@ -54,6 +54,10 @@ Request a rematch after a finished game with `{"type":"rematch"}`. The board
 is reset only after both players request it. Presence messages report when a
 player connects or disconnects.
 
+Leave a room with `{"type":"leave"}`. The room is closed, the leaving
+player's reconnect token is revoked, and the other player receives the updated
+state.
+
 ## Configuration
 
 Development uses SQLite and an in-memory channel layer. Copy `.env.example`
@@ -68,3 +72,12 @@ Never commit environment files, secrets, or reconnect tokens.
 ```powershell
 python manage.py test
 ```
+
+Expired rooms can be removed by a scheduled maintenance job:
+
+```powershell
+python manage.py cleanup_rooms
+```
+
+Waiting rooms expire after two hours and closed or finished rooms after 24
+hours. Both thresholds can be changed with command options.

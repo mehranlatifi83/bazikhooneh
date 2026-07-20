@@ -134,6 +134,11 @@ public final class OnlineGameClient {
         if (socket != null) socket.send("{\"type\":\"rematch\"}");
     }
 
+    public void leaveRoom() {
+        if (socket != null) socket.send("{\"type\":\"leave\"}");
+        else listener.onError("not_connected");
+    }
+
     private void sendAction(String kind, int source, int destination) {
         if (socket == null) {
             listener.onError("not_connected");

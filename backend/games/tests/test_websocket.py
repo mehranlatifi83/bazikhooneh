@@ -22,6 +22,9 @@ class RoomWebSocketTests(TransactionTestCase):
     def test_both_players_can_start_a_rematch(self):
         async_to_sync(self._run_rematch_flow)()
 
+    def test_leaving_closes_room_and_revokes_player_token(self):
+        async_to_sync(self._run_leave_flow)()
+
     async def _run_game_flow(self):
         x_socket = self._socket(self.x_token)
         o_socket = self._socket(self.o_token)
@@ -87,8 +90,31 @@ class RoomWebSocketTests(TransactionTestCase):
         await o_socket.receive_json_from()
         self.assertEqual(".........", restarted["game"]["board"])
         self.assertEqual("active", restarted["game"]["room_state"])
+        self.assertEqual("O", restarted["game"]["current_player"])
         self.assertFalse(restarted["game"]["rematch_x"])
 
+        await x_socket.disconnect()
+        await o_socket.disconnect()
+
+    async def _run_leave_flow(self):
+        x_socket = self._socket(self.x_token)
+        o_socket = self._socket(self.o_token)
+        await x_socket.connect()
+        await o_socket.connect()
+        await x_socket.receive_json_from()
+        await x_socket.receive_json_from()
+        await x_socket.receive_json_from()
+        await o_socket.receive_json_from()
+        await o_socket.receive_json_from()
+
+        await x_socket.send_json_to({"type": "leave"})
+        x_state = await x_socket.receive_json_from()
+        o_state = await o_socket.receive_json_from()
+        self.assertEqual("closed", x_state["game"]["room_state"])
+        self.assertEqual("x_left", o_state["game"]["outcome_reason"])
+
+        replacement = self._socket(self.x_token)
+        self.assertFalse((await replacement.connect())[0])
         await x_socket.disconnect()
         await o_socket.disconnect()
 

@@ -13,6 +13,7 @@ public final class OnlineGameState {
     public final int version;
     public final boolean rematchX;
     public final boolean rematchO;
+    public final String outcomeReason;
 
     private OnlineGameState(JSONObject json) throws JSONException {
         roomCode = json.getString("room_code");
@@ -24,6 +25,7 @@ public final class OnlineGameState {
         version = json.getInt("version");
         rematchX = json.optBoolean("rematch_x", false);
         rematchO = json.optBoolean("rematch_o", false);
+        outcomeReason = json.optString("outcome_reason", "");
     }
 
     public static OnlineGameState from(JSONObject json) throws JSONException {

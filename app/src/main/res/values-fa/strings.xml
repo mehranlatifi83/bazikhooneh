@@ -47,6 +47,13 @@
     <string name="error_connection_failed">اتصال به سرور برقرار نشد.</string>
     <string name="error_not_your_turn">الان نوبت شما نیست.</string>
     <string name="error_generic">انجام درخواست آنلاین ممکن نشد.</string>
+    <string name="copy_room_code">کپی کد</string>
+    <string name="share_room_code">اشتراک کد</string>
+    <string name="room_code_copied">کد اتاق %1$s کپی شد.</string>
+    <string name="room_invitation">با این کد به اتاق من در بازی‌خونه بیا: %1$s</string>
+    <string name="share_room_title">اشتراک‌گذاری کد اتاق</string>
+    <string name="leaving_room">در حال خروج از اتاق…</string>
+    <string name="opponent_left_room">بازیکن دیگر از اتاق خارج شد.</string>
     <string name="bot_difficulty">درجه سختی ربات</string>
     <string name="bot_thinking">ربات در حال فکر کردن است…</string>
     <string-array name="bot_difficulties">

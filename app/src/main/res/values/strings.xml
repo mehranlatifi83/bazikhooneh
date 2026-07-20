@@ -47,6 +47,13 @@
     <string name="error_connection_failed">Could not connect to the server.</string>
     <string name="error_not_your_turn">It is not your turn.</string>
     <string name="error_generic">The online request could not be completed.</string>
+    <string name="copy_room_code">Copy code</string>
+    <string name="share_room_code">Share code</string>
+    <string name="room_code_copied">Room code %1$s copied.</string>
+    <string name="room_invitation">Join my BaziKhooneh room with this code: %1$s</string>
+    <string name="share_room_title">Share room code</string>
+    <string name="leaving_room">Leaving the room…</string>
+    <string name="opponent_left_room">The other player left the room.</string>
     <string name="bot_difficulty">Bot difficulty</string>
     <string name="bot_thinking">Bot is thinking…</string>
     <string-array name="bot_difficulties">

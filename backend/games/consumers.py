@@ -52,6 +52,12 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 self.group_name, {"type": "game.state", "game": state}
             )
             return
+        if content.get("type") == "leave":
+            state = await self._leave_room()
+            await self.channel_layer.group_send(
+                self.group_name, {"type": "game.state", "game": state}
+            )
+            return
         if content.get("type") != "action" or not isinstance(content.get("action"), dict):
             await self.send_json({"type": "error", "error": "invalid_message"})
             return
@@ -114,6 +120,7 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
             return Player.objects.select_related("room").get(
                 room__code=self.room_code,
                 reconnect_token_hash=token_hash(self.token),
+                is_active=True,
             )
         except Player.DoesNotExist:
             return None
@@ -140,6 +147,20 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
             room = Room.objects.select_for_update().get(code=self.room_code)
             if room.state != Room.State.FINISHED:
                 raise GameError("game_not_finished")
+            if room.players.filter(is_active=True).count() != 2:
+                raise GameError("opponent_left")
             room.request_rematch(self.player.symbol)
             room.save()
+            return room.public_state()
+
+    @database_sync_to_async
+    def _leave_room(self):
+        with transaction.atomic():
+            room = Room.objects.select_for_update().get(code=self.room_code)
+            player = Player.objects.select_for_update().get(id=self.player.id)
+            if player.is_active:
+                player.is_active = False
+                player.save(update_fields=("is_active", "last_seen_at"))
+                room.close_for_player(player.symbol)
+                room.save()
             return room.public_state()

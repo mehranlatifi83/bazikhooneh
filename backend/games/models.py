@@ -24,6 +24,7 @@ class Room(models.Model):
         WAITING = "waiting", "Waiting"
         ACTIVE = "active", "Active"
         FINISHED = "finished", "Finished"
+        CLOSED = "closed", "Closed"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     code = models.CharField(max_length=6, unique=True, db_index=True)
@@ -35,6 +36,8 @@ class Room(models.Model):
     version = models.PositiveIntegerField(default=0)
     rematch_x = models.BooleanField(default=False)
     rematch_o = models.BooleanField(default=False)
+    next_starter = models.CharField(max_length=1, default="O")
+    outcome_reason = models.CharField(max_length=24, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -70,13 +73,22 @@ class Room(models.Model):
             self.rematch_o = True
         if self.rematch_x and self.rematch_o:
             self.board = "........."
-            self.current_player = "X"
+            self.current_player = self.next_starter
+            self.next_starter = "O" if self.next_starter == "X" else "X"
             self.phase = Phase.PLACEMENT.value
             self.game_status = Status.ACTIVE.value
             self.state = self.State.ACTIVE
             self.rematch_x = False
             self.rematch_o = False
+            self.outcome_reason = ""
             self.version += 1
+
+    def close_for_player(self, symbol: str):
+        self.state = self.State.CLOSED
+        self.outcome_reason = f"{symbol.lower()}_left"
+        self.rematch_x = False
+        self.rematch_o = False
+        self.version += 1
 
     def public_state(self) -> dict:
         return {
@@ -85,6 +97,7 @@ class Room(models.Model):
             "version": self.version,
             "rematch_x": self.rematch_x,
             "rematch_o": self.rematch_o,
+            "outcome_reason": self.outcome_reason,
             **self.game().as_dict(),
         }
 
@@ -96,6 +109,7 @@ class Player(models.Model):
     reconnect_token_hash = models.CharField(max_length=64, db_index=True)
     joined_at = models.DateTimeField(auto_now_add=True)
     last_seen_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         constraints = [

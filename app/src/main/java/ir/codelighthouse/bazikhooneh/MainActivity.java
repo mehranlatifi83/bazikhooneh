@@ -1,6 +1,9 @@
 package ir.codelighthouse.bazikhooneh;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -62,6 +65,8 @@ public final class MainActivity extends Activity {
     private String onlineSymbol;
     private int reconnectAttempts;
     private boolean reconnectAllowed;
+    private boolean onlineActionPending;
+    private boolean leavingRoom;
     private final Runnable reconnectRunnable = this::restoreOnlineSession;
 
     @Override
@@ -92,6 +97,8 @@ public final class MainActivity extends Activity {
         findViewById(R.id.join_room_button).setOnClickListener(view -> joinOnlineRoom());
         rematchButton.setOnClickListener(view -> onlineClient.requestRematch());
         findViewById(R.id.leave_room_button).setOnClickListener(view -> leaveOnlineRoom());
+        findViewById(R.id.copy_room_code_button).setOnClickListener(view -> copyRoomCode());
+        findViewById(R.id.share_room_code_button).setOnClickListener(view -> shareRoomCode());
 
         restoreState(savedInstanceState);
         render(false);
@@ -417,7 +424,11 @@ public final class MainActivity extends Activity {
         }
         char value = onlineState.board.charAt(index);
         if ("placement".equals(onlineState.phase)) {
-            if (value == '.') onlineClient.place(index);
+            if (value == '.') {
+                onlineActionPending = true;
+                onlineClient.place(index);
+                renderOnline(false);
+            }
             else announce(getString(R.string.cell_occupied));
             return;
         }
@@ -430,8 +441,10 @@ public final class MainActivity extends Activity {
         } else if (value != '.') {
             announce(getString(R.string.cell_occupied));
         } else {
+            onlineActionPending = true;
             onlineClient.move(selectedSource, index);
             selectedSource = -1;
+            renderOnline(false);
         }
     }
 
@@ -442,7 +455,7 @@ public final class MainActivity extends Activity {
             cell.setText(value == '.' ? "" : String.valueOf(value));
             boolean canPlay = onlineState != null && "active".equals(onlineState.roomState)
                     && onlineState.currentPlayer.equals(onlineSymbol)
-                    && "active".equals(onlineState.status);
+                    && "active".equals(onlineState.status) && !onlineActionPending;
             cell.setEnabled(canPlay);
             cell.setAlpha(index == selectedSource ? 0.6f : 1f);
             String readable = value == '.' ? getString(R.string.empty_cell)
@@ -476,6 +489,9 @@ public final class MainActivity extends Activity {
     }
 
     private String onlineStatusMessage() {
+        if ("closed".equals(onlineState.roomState)) {
+            return getString(R.string.opponent_left_room);
+        }
         if ("waiting".equals(onlineState.roomState)) {
             return getString(R.string.online_waiting, onlineState.roomCode);
         }
@@ -514,6 +530,12 @@ public final class MainActivity extends Activity {
                 OnlineGameState previous = onlineState;
                 int oldVersion = onlineState == null ? -1 : onlineState.version;
                 onlineState = state;
+                onlineActionPending = false;
+                if (leavingRoom && state.outcomeReason.equals(
+                        onlineSymbol.toLowerCase() + "_left")) {
+                    finishLocalLeave();
+                    return;
+                }
                 renderOnline(state.version > oldVersion);
                 String action = onlineActionAnnouncement(previous, state);
                 announce(action.isEmpty() ? onlineStatusMessage()
@@ -528,7 +550,12 @@ public final class MainActivity extends Activity {
 
         @Override public void onDisconnected() {
             runOnUiThread(() -> {
+                if (leavingRoom) {
+                    finishLocalLeave();
+                    return;
+                }
                 statusText.setText(R.string.online_disconnected);
+                onlineActionPending = false;
                 announce(getString(R.string.online_disconnected));
                 if (onlineMode && reconnectAllowed && !isFinishing()) {
                     reconnectAttempts++;
@@ -551,7 +578,13 @@ public final class MainActivity extends Activity {
 
         @Override public void onError(String error) {
             runOnUiThread(() -> {
+                if (leavingRoom) {
+                    finishLocalLeave();
+                    return;
+                }
                 String message = onlineErrorMessage(error);
+                onlineActionPending = false;
+                renderOnline(false);
                 statusText.setText(message);
                 announce(message);
             });
@@ -594,6 +627,14 @@ public final class MainActivity extends Activity {
     private void leaveOnlineRoom() {
         handler.removeCallbacks(reconnectRunnable);
         reconnectAllowed = false;
+        leavingRoom = true;
+        onlineClient.leaveRoom();
+        statusText.setText(R.string.leaving_room);
+        announce(getString(R.string.leaving_room));
+    }
+
+    private void finishLocalLeave() {
+        leavingRoom = false;
         onlineClient.disconnect();
         getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit().clear().apply();
         onlineState = null;
@@ -604,6 +645,29 @@ public final class MainActivity extends Activity {
         statusText.setText(R.string.room_left);
         renderOnline(false);
         announce(getString(R.string.room_left));
+    }
+
+    private void copyRoomCode() {
+        String code = roomCodeInput.getText().toString().trim().toUpperCase();
+        if (code.length() != 6) {
+            announce(getString(R.string.room_code_required));
+            return;
+        }
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.room_code_hint), code));
+        announce(getString(R.string.room_code_copied, code));
+    }
+
+    private void shareRoomCode() {
+        String code = roomCodeInput.getText().toString().trim().toUpperCase();
+        if (code.length() != 6) {
+            announce(getString(R.string.room_code_required));
+            return;
+        }
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, getString(R.string.room_invitation, code));
+        startActivity(Intent.createChooser(send, getString(R.string.share_room_title)));
     }
 
     private String onlineErrorMessage(String error) {
