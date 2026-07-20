@@ -22,6 +22,7 @@ public final class OnlineGameClient {
         void onState(OnlineGameState state);
         void onConnected();
         void onDisconnected();
+        void onPresence(String symbol, boolean connected);
         void onError(String error);
     }
 
@@ -76,15 +77,16 @@ public final class OnlineGameClient {
     private void connect(OnlineSession session) {
         disconnect();
         String wsBase = baseUrl.replaceFirst("^http", "ws");
-        Request request = new Request.Builder().url(wsBase + session.websocketPath).build();
+        Request request = new Request.Builder().url(wsBase + session.websocketPath)
+                .header("Authorization", "Bearer " + session.token).build();
         openSocket(request);
     }
 
     public void reconnect(String roomCode, String token) {
         disconnect();
         String wsBase = baseUrl.replaceFirst("^http", "ws");
-        Request request = new Request.Builder().url(wsBase + "/ws/v1/rooms/" + roomCode
-                + "/?token=" + token).build();
+        Request request = new Request.Builder().url(wsBase + "/ws/v1/rooms/" + roomCode + "/")
+                .header("Authorization", "Bearer " + token).build();
         openSocket(request);
     }
 
@@ -101,6 +103,9 @@ public final class OnlineGameClient {
                         listener.onState(OnlineGameState.from(message.getJSONObject("game")));
                     } else if ("error".equals(message.optString("type"))) {
                         listener.onError(message.optString("error", "server_error"));
+                    } else if ("presence".equals(message.optString("type"))) {
+                        listener.onPresence(message.optString("symbol"),
+                                message.optBoolean("connected"));
                     }
                 } catch (JSONException error) {
                     listener.onError("invalid_server_response");
@@ -123,6 +128,10 @@ public final class OnlineGameClient {
 
     public void move(int source, int destination) {
         sendAction("move", source, destination);
+    }
+
+    public void requestRematch() {
+        if (socket != null) socket.send("{\"type\":\"rematch\"}");
     }
 
     private void sendAction(String kind, int source, int destination) {

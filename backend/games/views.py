@@ -14,7 +14,7 @@ def player_payload(room, player, token):
         "player_id": str(player.id),
         "symbol": player.symbol,
         "reconnect_token": token,
-        "websocket_path": f"/ws/v1/rooms/{room.code}/?token={token}",
+        "websocket_path": f"/ws/v1/rooms/{room.code}/",
         "game": room.public_state(),
     }
 

@@ -1,3 +1,6 @@
+import time
+from collections import deque
+
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.db import transaction
@@ -9,7 +12,9 @@ from .models import Player, Room, token_hash
 class RoomConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.room_code = self.scope["url_route"]["kwargs"]["code"].upper()
-        self.token = self._query_token()
+        self.token = self._auth_token()
+        self.message_times = deque()
+        self.action_ids = deque(maxlen=100)
         self.player = await self._authenticate()
         if self.player is None:
             await self.close(code=4401)
@@ -19,12 +24,34 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         await self.send_json({"type": "state", "game": await self._room_state()})
+        await self.channel_layer.group_send(self.group_name, {
+            "type": "player.presence", "symbol": self.player.symbol, "connected": True,
+        })
 
     async def disconnect(self, close_code):
         if hasattr(self, "group_name"):
+            await self.channel_layer.group_send(self.group_name, {
+                "type": "player.presence", "symbol": self.player.symbol, "connected": False,
+            })
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
+        if not self._within_rate_limit():
+            await self.send_json({"type": "error", "error": "rate_limited"})
+            return
+        action_id = content.get("action_id")
+        if action_id and action_id in self.action_ids:
+            return
+        if content.get("type") == "rematch":
+            try:
+                state = await self._request_rematch()
+            except GameError as error:
+                await self.send_json({"type": "error", "error": str(error)})
+                return
+            await self.channel_layer.group_send(
+                self.group_name, {"type": "game.state", "game": state}
+            )
+            return
         if content.get("type") != "action" or not isinstance(content.get("action"), dict):
             await self.send_json({"type": "error", "error": "invalid_message"})
             return
@@ -41,6 +68,8 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 "action_id": content.get("action_id"),
             },
         )
+        if action_id:
+            self.action_ids.append(action_id)
 
     async def game_state(self, event):
         await self.send_json(
@@ -51,13 +80,33 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    def _query_token(self):
+    async def player_presence(self, event):
+        await self.send_json({
+            "type": "presence", "symbol": event["symbol"],
+            "connected": event["connected"],
+        })
+
+    def _auth_token(self):
+        for key, value in self.scope.get("headers", []):
+            if key.lower() == b"authorization":
+                authorization = value.decode("utf-8")
+                if authorization.startswith("Bearer "):
+                    return authorization[7:]
         query = self.scope.get("query_string", b"").decode("utf-8")
         for item in query.split("&"):
             key, _, value = item.partition("=")
             if key == "token":
                 return value
         return ""
+
+    def _within_rate_limit(self):
+        now = time.monotonic()
+        while self.message_times and now - self.message_times[0] > 10:
+            self.message_times.popleft()
+        if len(self.message_times) >= 20:
+            return False
+        self.message_times.append(now)
+        return True
 
     @database_sync_to_async
     def _authenticate(self):
@@ -82,5 +131,15 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 raise GameError("room_not_active")
             game = room.game().apply(player.symbol, action)
             room.apply_game(game)
+            room.save()
+            return room.public_state()
+
+    @database_sync_to_async
+    def _request_rematch(self):
+        with transaction.atomic():
+            room = Room.objects.select_for_update().get(code=self.room_code)
+            if room.state != Room.State.FINISHED:
+                raise GameError("game_not_finished")
+            room.request_rematch(self.player.symbol)
             room.save()
             return room.public_state()

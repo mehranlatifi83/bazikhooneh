@@ -82,6 +82,10 @@ else:
     }
 
 AUTH_PASSWORD_VALIDATORS = []
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"anon": os.getenv("API_ANON_RATE", "30/min")},
+}
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True

@@ -19,6 +19,9 @@ class RoomWebSocketTests(TransactionTestCase):
     def test_two_players_receive_authoritative_state_and_turn_errors(self):
         async_to_sync(self._run_game_flow)()
 
+    def test_both_players_can_start_a_rematch(self):
+        async_to_sync(self._run_rematch_flow)()
+
     async def _run_game_flow(self):
         x_socket = self._socket(self.x_token)
         o_socket = self._socket(self.o_token)
@@ -27,6 +30,9 @@ class RoomWebSocketTests(TransactionTestCase):
 
         self.assertEqual("state", (await x_socket.receive_json_from())["type"])
         self.assertEqual("state", (await o_socket.receive_json_from())["type"])
+        self.assertEqual("presence", (await x_socket.receive_json_from())["type"])
+        self.assertEqual("presence", (await x_socket.receive_json_from())["type"])
+        self.assertEqual("presence", (await o_socket.receive_json_from())["type"])
 
         await o_socket.send_json_to(
             {"type": "action", "action": {"kind": "place", "destination": 0}}
@@ -46,6 +52,42 @@ class RoomWebSocketTests(TransactionTestCase):
         self.assertEqual(x_state, o_state)
         self.assertEqual("move-1", x_state["action_id"])
         self.assertEqual("O", x_state["game"]["current_player"])
+
+        await x_socket.disconnect()
+        await o_socket.disconnect()
+
+    async def _run_rematch_flow(self):
+        x_socket = self._socket(self.x_token)
+        o_socket = self._socket(self.o_token)
+        await x_socket.connect()
+        await o_socket.connect()
+        await x_socket.receive_json_from()
+        await x_socket.receive_json_from()  # X presence
+        await o_socket.receive_json_from()
+        await o_socket.receive_json_from()  # O presence
+        await x_socket.receive_json_from()  # O presence
+
+        for socket, destination in (
+            (x_socket, 0), (o_socket, 3), (x_socket, 1),
+            (o_socket, 4), (x_socket, 2),
+        ):
+            await socket.send_json_to({
+                "type": "action", "action": {"kind": "place", "destination": destination}
+            })
+            await x_socket.receive_json_from()
+            await o_socket.receive_json_from()
+
+        await x_socket.send_json_to({"type": "rematch"})
+        x_vote = await x_socket.receive_json_from()
+        await o_socket.receive_json_from()
+        self.assertTrue(x_vote["game"]["rematch_x"])
+
+        await o_socket.send_json_to({"type": "rematch"})
+        restarted = await x_socket.receive_json_from()
+        await o_socket.receive_json_from()
+        self.assertEqual(".........", restarted["game"]["board"])
+        self.assertEqual("active", restarted["game"]["room_state"])
+        self.assertFalse(restarted["game"]["rematch_x"])
 
         await x_socket.disconnect()
         await o_socket.disconnect()

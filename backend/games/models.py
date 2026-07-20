@@ -33,6 +33,8 @@ class Room(models.Model):
     phase = models.CharField(max_length=16, default="placement")
     game_status = models.CharField(max_length=16, default="active")
     version = models.PositiveIntegerField(default=0)
+    rematch_x = models.BooleanField(default=False)
+    rematch_o = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -61,11 +63,28 @@ class Room(models.Model):
         if game.status.value != "active":
             self.state = self.State.FINISHED
 
+    def request_rematch(self, symbol: str):
+        if symbol == "X":
+            self.rematch_x = True
+        else:
+            self.rematch_o = True
+        if self.rematch_x and self.rematch_o:
+            self.board = "........."
+            self.current_player = "X"
+            self.phase = Phase.PLACEMENT.value
+            self.game_status = Status.ACTIVE.value
+            self.state = self.State.ACTIVE
+            self.rematch_x = False
+            self.rematch_o = False
+            self.version += 1
+
     def public_state(self) -> dict:
         return {
             "room_code": self.code,
             "room_state": self.state,
             "version": self.version,
+            "rematch_x": self.rematch_x,
+            "rematch_o": self.rematch_o,
             **self.game().as_dict(),
         }
 

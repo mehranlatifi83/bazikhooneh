@@ -51,6 +51,7 @@ public final class MainActivity extends Activity {
     private LinearLayout onlineControls;
     private EditText roomCodeInput;
     private TextView roomInformation;
+    private Button rematchButton;
     private boolean botMode;
     private boolean onlineMode;
     private boolean botThinking;
@@ -59,6 +60,9 @@ public final class MainActivity extends Activity {
     private OnlineGameClient onlineClient;
     private OnlineGameState onlineState;
     private String onlineSymbol;
+    private int reconnectAttempts;
+    private boolean reconnectAllowed;
+    private final Runnable reconnectRunnable = this::restoreOnlineSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,7 @@ public final class MainActivity extends Activity {
         onlineControls = findViewById(R.id.online_controls);
         roomCodeInput = findViewById(R.id.room_code_input);
         roomInformation = findViewById(R.id.room_information);
+        rematchButton = findViewById(R.id.rematch_button);
         onlineClient = new OnlineGameClient(BuildConfig.API_BASE_URL, onlineListener);
         configureGameOptions(savedInstanceState);
         int[] cellIds = {
@@ -85,6 +90,8 @@ public final class MainActivity extends Activity {
         findViewById(R.id.restart_button).setOnClickListener(view -> restartGame());
         findViewById(R.id.create_room_button).setOnClickListener(view -> createOnlineRoom());
         findViewById(R.id.join_room_button).setOnClickListener(view -> joinOnlineRoom());
+        rematchButton.setOnClickListener(view -> onlineClient.requestRematch());
+        findViewById(R.id.leave_room_button).setOnClickListener(view -> leaveOnlineRoom());
 
         restoreState(savedInstanceState);
         render(false);
@@ -114,7 +121,9 @@ public final class MainActivity extends Activity {
         modeGroup.setOnCheckedChangeListener((group, checkedId) -> {
             botMode = checkedId == R.id.mode_bot;
             onlineMode = checkedId == R.id.mode_online;
+            reconnectAllowed = false;
             onlineClient.disconnect();
+            handler.removeCallbacks(reconnectRunnable);
             onlineState = null;
             onlineSymbol = null;
             roomInformation.setText("");
@@ -393,6 +402,7 @@ public final class MainActivity extends Activity {
     }
 
     private void beginOnlineRequest() {
+        reconnectAllowed = true;
         selectedSource = -1;
         onlineState = null;
         roomInformation.setText("");
@@ -449,6 +459,20 @@ public final class MainActivity extends Activity {
             }
         }
         if (onlineState != null) statusText.setText(onlineStatusMessage());
+        boolean finished = onlineState != null && "finished".equals(onlineState.roomState);
+        rematchButton.setVisibility(finished ? View.VISIBLE : View.GONE);
+        if (finished && (("X".equals(onlineSymbol) && onlineState.rematchX)
+                || ("O".equals(onlineSymbol) && onlineState.rematchO))) {
+            rematchButton.setEnabled(false);
+            roomInformation.setText(R.string.rematch_requested);
+        } else {
+            rematchButton.setEnabled(true);
+            boolean opponentRequested = ("X".equals(onlineSymbol) && onlineState.rematchO)
+                    || ("O".equals(onlineSymbol) && onlineState.rematchX);
+            if (finished && opponentRequested) {
+                roomInformation.setText(R.string.rematch_opponent_requested);
+            }
+        }
     }
 
     private String onlineStatusMessage() {
@@ -467,6 +491,7 @@ public final class MainActivity extends Activity {
         @Override public void onSession(OnlineSession session) {
             runOnUiThread(() -> {
                 onlineSymbol = session.symbol;
+                reconnectAllowed = true;
                 onlineState = session.game;
                 getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit()
                         .putString(PREF_ROOM, session.game.roomCode)
@@ -496,18 +521,37 @@ public final class MainActivity extends Activity {
             });
         }
 
-        @Override public void onConnected() { }
+        @Override public void onConnected() {
+            reconnectAttempts = 0;
+            handler.removeCallbacks(reconnectRunnable);
+        }
 
         @Override public void onDisconnected() {
             runOnUiThread(() -> {
                 statusText.setText(R.string.online_disconnected);
                 announce(getString(R.string.online_disconnected));
+                if (onlineMode && reconnectAllowed && !isFinishing()) {
+                    reconnectAttempts++;
+                    long delay = Math.min(30000L, 1000L << Math.min(reconnectAttempts, 4));
+                    handler.removeCallbacks(reconnectRunnable);
+                    handler.postDelayed(reconnectRunnable, delay);
+                }
+            });
+        }
+
+        @Override public void onPresence(String symbol, boolean connected) {
+            if (symbol.equals(onlineSymbol)) return;
+            runOnUiThread(() -> {
+                String message = getString(connected ? R.string.opponent_connected
+                        : R.string.opponent_disconnected);
+                roomInformation.setText(message);
+                announce(message);
             });
         }
 
         @Override public void onError(String error) {
             runOnUiThread(() -> {
-                String message = getString(R.string.online_error, error);
+                String message = onlineErrorMessage(error);
                 statusText.setText(message);
                 announce(message);
             });
@@ -519,6 +563,7 @@ public final class MainActivity extends Activity {
         String symbol = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_SYMBOL, "");
         String token = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_TOKEN, "");
         if (room.isEmpty() || symbol.isEmpty() || token.isEmpty()) return;
+        reconnectAllowed = true;
         onlineSymbol = symbol;
         roomCodeInput.setText(room);
         statusText.setText(R.string.online_connecting);
@@ -544,5 +589,31 @@ public final class MainActivity extends Activity {
         if (destination < 0 || moved == '.') return "";
         Mark mark = moved == 'X' ? Mark.X : Mark.O;
         return actionAnnouncement(mark, source, destination);
+    }
+
+    private void leaveOnlineRoom() {
+        handler.removeCallbacks(reconnectRunnable);
+        reconnectAllowed = false;
+        onlineClient.disconnect();
+        getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit().clear().apply();
+        onlineState = null;
+        onlineSymbol = null;
+        selectedSource = -1;
+        roomCodeInput.setText("");
+        roomInformation.setText(R.string.room_left);
+        statusText.setText(R.string.room_left);
+        renderOnline(false);
+        announce(getString(R.string.room_left));
+    }
+
+    private String onlineErrorMessage(String error) {
+        switch (error) {
+            case "room_not_found": return getString(R.string.error_room_not_found);
+            case "room_unavailable": return getString(R.string.error_room_unavailable);
+            case "connection_failed":
+            case "not_connected": return getString(R.string.error_connection_failed);
+            case "not_your_turn": return getString(R.string.error_not_your_turn);
+            default: return getString(R.string.error_generic);
+        }
     }
 }

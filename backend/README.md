@@ -29,8 +29,11 @@ The development server starts at `http://127.0.0.1:8000`.
 Connect to:
 
 ```text
-/ws/v1/rooms/<code>/?token=<reconnect-token>
+/ws/v1/rooms/<code>/
 ```
+
+Send the reconnect token in the WebSocket handshake as
+`Authorization: Bearer <reconnect-token>`.
 
 Placement action:
 
@@ -46,6 +49,10 @@ Movement action:
 
 The server validates every action and broadcasts the authoritative game state
 to both players.
+
+Request a rematch after a finished game with `{"type":"rematch"}`. The board
+is reset only after both players request it. Presence messages report when a
+player connects or disconnects.
 
 ## Configuration
 
