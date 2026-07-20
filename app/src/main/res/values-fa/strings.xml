@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">بازی‌خونه</string>
     <string name="tic_tac_toe_title">دوز</string>
-    <string name="board_description">صفحه دوز سه در سه</string>
     <string name="restart_game">شروع دوباره</string>
     <string name="player_turn">نوبت: %1$s</string>
     <string name="player_won">%1$s برنده شد!</string>
