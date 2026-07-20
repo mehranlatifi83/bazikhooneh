@@ -16,6 +16,7 @@ public final class HomeActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (getActionBar() != null) getActionBar().hide();
         setContentView(R.layout.activity_home);
         renderGames();
         findViewById(R.id.open_profile).setOnClickListener(v -> {

@@ -1,6 +1,5 @@
 package ir.codelighthouse.bazikhooneh;
 
-import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -17,7 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public final class ProfileActivity extends Activity {
+public final class ProfileActivity extends NavigableActivity {
     private static final String[] COLORS = {"#2E7D32", "#C62828", "#1565C0", "#6A1B9A", "#EF6C00", "#455A64"};
     private EditText displayName;
     private Spinner avatarColor;

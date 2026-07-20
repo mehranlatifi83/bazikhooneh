@@ -1,6 +1,5 @@
 package ir.codelighthouse.bazikhooneh;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -11,7 +10,7 @@ import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 
-public final class OnlineLobbyActivity extends Activity {
+public final class OnlineLobbyActivity extends NavigableActivity {
     private EditText codeInput;
     private TextView status;
     private OnlineGameClient client;

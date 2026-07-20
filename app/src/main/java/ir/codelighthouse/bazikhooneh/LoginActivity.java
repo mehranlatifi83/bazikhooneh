@@ -1,6 +1,5 @@
 package ir.codelighthouse.bazikhooneh;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -10,7 +9,7 @@ import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 
-public final class LoginActivity extends Activity {
+public final class LoginActivity extends NavigableActivity {
     private EditText username;
     private EditText displayName;
     private EditText password;

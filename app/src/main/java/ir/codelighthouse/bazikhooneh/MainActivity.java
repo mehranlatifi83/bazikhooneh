@@ -1,6 +1,5 @@
 package ir.codelighthouse.bazikhooneh;
 
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
@@ -35,7 +34,7 @@ import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 
-public final class MainActivity extends Activity {
+public final class MainActivity extends NavigableActivity {
     public static final String EXTRA_MODE = "game_mode";
     public static final String EXTRA_DIFFICULTY = "bot_difficulty";
     private static final String STATE_ACTIONS = "state_actions";

@@ -4,11 +4,8 @@
     android:fillViewport="true" android:background="@color/screen_background">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="vertical" android:padding="24dp">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="@string/tic_tac_toe_title" android:textSize="32sp" android:textStyle="bold"
-            android:accessibilityHeading="true" />
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:text="@string/select_game_mode"
+            android:text="@string/select_game_mode"
             android:textColor="@color/text_secondary" android:textSize="18sp" />
         <Button android:id="@+id/menu_local" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="24dp" android:minHeight="68dp"
@@ -32,5 +29,8 @@
         <Button android:id="@+id/menu_online" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="12dp" android:minHeight="68dp"
             android:text="@string/mode_online_description" android:textAllCaps="false" android:textSize="18sp" />
+        <Button android:id="@+id/menu_guide" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="24dp" android:minHeight="56dp"
+            android:text="@string/tic_tac_toe_guide_title" android:textAllCaps="false" />
     </LinearLayout>
 </ScrollView>

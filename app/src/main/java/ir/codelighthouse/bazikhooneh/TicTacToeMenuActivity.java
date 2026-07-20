@@ -1,13 +1,12 @@
 package ir.codelighthouse.bazikhooneh;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioGroup;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 
-public final class TicTacToeMenuActivity extends Activity {
+public final class TicTacToeMenuActivity extends NavigableActivity {
     private RadioGroup difficulty;
 
     @Override protected void onCreate(Bundle state) {
@@ -22,6 +21,8 @@ public final class TicTacToeMenuActivity extends Activity {
         });
         findViewById(R.id.menu_start_bot).setOnClickListener(v -> openGame("bot", difficultyValue()));
         findViewById(R.id.menu_online).setOnClickListener(v -> openOnline());
+        findViewById(R.id.menu_guide).setOnClickListener(v ->
+                startActivity(new Intent(this, TicTacToeGuideActivity.class)));
     }
 
     private int difficultyValue() {

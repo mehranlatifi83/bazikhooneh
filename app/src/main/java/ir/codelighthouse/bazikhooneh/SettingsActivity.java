@@ -1,10 +1,9 @@
 package ir.codelighthouse.bazikhooneh;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.widget.CheckBox;
 
-public final class SettingsActivity extends Activity {
+public final class SettingsActivity extends NavigableActivity {
     public static final String PREFS = "game_settings";
     public static final String HAPTIC = "haptic";
     public static final String SOUND = "sound";
