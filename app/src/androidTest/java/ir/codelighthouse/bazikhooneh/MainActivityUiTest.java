@@ -1,9 +1,13 @@
 package ir.codelighthouse.bazikhooneh;
 
+import android.content.Context;
+import android.content.Intent;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -100,5 +104,19 @@ public final class MainActivityUiTest {
             assertEquals(activity.getString(R.string.player_move_turn,
                     activity.getString(R.string.mark_o)), status.getText().toString());
         });
+    }
+
+    @Test
+    public void onlineGameCanResumeBeforeServerStateArrives() {
+        Context context = ApplicationProvider.getApplicationContext();
+        context.getSharedPreferences("online_session", Context.MODE_PRIVATE).edit().clear().commit();
+        Intent intent = new Intent(context, MainActivity.class)
+                .putExtra(MainActivity.EXTRA_MODE, "online");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertNotNull(activity.findViewById(R.id.online_controls));
+                assertNotNull(activity.findViewById(R.id.game_status));
+            });
+        }
     }
 }

@@ -509,8 +509,9 @@ public final class MainActivity extends Activity {
             roomInformation.setText(R.string.rematch_requested);
         } else {
             rematchButton.setEnabled(true);
-            boolean opponentRequested = ("X".equals(onlineSymbol) && onlineState.rematchO)
-                    || ("O".equals(onlineSymbol) && onlineState.rematchX);
+            boolean opponentRequested = onlineState != null
+                    && (("X".equals(onlineSymbol) && onlineState.rematchO)
+                    || ("O".equals(onlineSymbol) && onlineState.rematchX));
             if (finished && opponentRequested) {
                 roomInformation.setText(R.string.rematch_opponent_requested);
             }
