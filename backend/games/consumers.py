@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.db import transaction
 
 from .engine import GameError
-from .models import Player, Room, token_hash
+from .models import Match, Player, Room, token_hash
 
 
 class RoomConsumer(AsyncJsonWebsocketConsumer):
@@ -139,6 +139,11 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
             game = room.game().apply(player.symbol, action)
             room.apply_game(game)
             room.save()
+            if room.state == Room.State.FINISHED:
+                match = room.matches.select_for_update().filter(finished_at__isnull=True).first()
+                if match:
+                    winner = match.x_account if game.status.value == "x_won" else match.o_account
+                    match.finish(game.status.value, winner)
             return room.public_state()
 
     @database_sync_to_async
@@ -151,6 +156,8 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 raise GameError("opponent_left")
             room.request_rematch(self.player.symbol)
             room.save()
+            if room.state == Room.State.ACTIVE:
+                Match.start_for_room(room)
             return room.public_state()
 
     @database_sync_to_async
@@ -163,4 +170,8 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 player.save(update_fields=("is_active", "last_seen_at"))
                 room.close_for_player(player.symbol)
                 room.save()
+                match = room.matches.select_for_update().filter(finished_at__isnull=True).first()
+                if match:
+                    winner = match.o_account if player.symbol == "X" else match.x_account
+                    match.finish(room.outcome_reason, winner)
             return room.public_state()

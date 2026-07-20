@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "channels",
     "rest_framework",
+    "accounts",
     "games",
 ]
 
@@ -83,8 +84,11 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = []
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ["accounts.authentication.AccountTokenAuthentication"],
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {"anon": os.getenv("API_ANON_RATE", "30/min")},
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
 }
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -93,8 +97,3 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
-}

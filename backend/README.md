@@ -18,11 +18,21 @@ The development server starts at `http://127.0.0.1:8000`.
 
 ## HTTP API
 
+- `POST /api/v1/accounts/register/` creates an account with a username,
+  display name, and password.
+- `POST /api/v1/accounts/login/` creates a revocable 30-day session.
+- `GET` or `PATCH /api/v1/accounts/me/` reads or updates the profile.
+- `POST /api/v1/accounts/logout/` revokes the current session.
 - `GET /health/`
 - `POST /api/v1/rooms/` creates a room and returns the X player's reconnect
   token.
 - `POST /api/v1/rooms/join/` with `{ "code": "ABC123" }` joins the room as O
   and returns that player's reconnect token.
+- `GET /api/v1/matches/` returns up to 50 completed matches for the signed-in
+  account.
+
+Room and match endpoints require `Authorization: Bearer <account-token>`.
+Local and bot games in the Android app do not require an account.
 
 ## WebSocket API
 

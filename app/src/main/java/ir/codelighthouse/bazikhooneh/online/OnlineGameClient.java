@@ -31,6 +31,7 @@ public final class OnlineGameClient {
     private final String baseUrl;
     private final Listener listener;
     private WebSocket socket;
+    private String accountToken = "";
 
     public OnlineGameClient(String baseUrl, Listener listener) {
         this.baseUrl = trimSlash(baseUrl);
@@ -39,6 +40,10 @@ public final class OnlineGameClient {
 
     public void createRoom() {
         post("/api/v1/rooms/", "{}");
+    }
+
+    public void setAccountToken(String token) {
+        accountToken = token == null ? "" : token;
     }
 
     public void joinRoom(String code) {
@@ -50,8 +55,10 @@ public final class OnlineGameClient {
     }
 
     private void post(String path, String body) {
-        Request request = new Request.Builder().url(baseUrl + path)
-                .post(RequestBody.create(body, JSON)).build();
+        Request.Builder builder = new Request.Builder().url(baseUrl + path)
+                .post(RequestBody.create(body, JSON));
+        if (!accountToken.isEmpty()) builder.header("Authorization", "Bearer " + accountToken);
+        Request request = builder.build();
         http.newCall(request).enqueue(new Callback() {
             @Override public void onFailure(Call call, IOException error) {
                 listener.onError("connection_failed");

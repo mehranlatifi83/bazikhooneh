@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Player, Room
+from .models import Match, Player, Room
 
 
 class PlayerInline(admin.TabularInline):
@@ -16,3 +16,10 @@ class RoomAdmin(admin.ModelAdmin):
     search_fields = ("code",)
     list_filter = ("state", "phase", "game_status")
     inlines = (PlayerInline,)
+
+
+@admin.register(Match)
+class MatchAdmin(admin.ModelAdmin):
+    list_display = ("room", "round_number", "x_account", "o_account", "winner", "outcome", "finished_at")
+    list_filter = ("outcome",)
+    search_fields = ("room__code", "x_account__username", "o_account__username")

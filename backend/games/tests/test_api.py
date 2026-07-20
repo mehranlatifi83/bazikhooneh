@@ -4,6 +4,13 @@ from games.models import Player, Room, token_hash
 
 
 class RoomApiTests(APITestCase):
+    def setUp(self):
+        response = self.client.post("/api/v1/accounts/register/", {
+            "username": "player_one", "display_name": "Player One",
+            "password": "secure-pass-123",
+        }, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access_token']}")
+
     def test_create_and_join_room(self):
         created = self.client.post("/api/v1/rooms/", {}, format="json")
         self.assertEqual(201, created.status_code)
@@ -14,6 +21,11 @@ class RoomApiTests(APITestCase):
             reconnect_token_hash=token_hash(created.data["reconnect_token"]),
         ).exists())
 
+        second = self.client.post("/api/v1/accounts/register/", {
+            "username": "player_two", "display_name": "Player Two",
+            "password": "secure-pass-456",
+        }, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {second.data['access_token']}")
         joined = self.client.post("/api/v1/rooms/join/", {"code": code.lower()}, format="json")
         self.assertEqual(200, joined.status_code)
         self.assertEqual("O", joined.data["symbol"])
@@ -22,10 +34,25 @@ class RoomApiTests(APITestCase):
     def test_third_player_cannot_join(self):
         created = self.client.post("/api/v1/rooms/", {}, format="json")
         code = created.data["game"]["room_code"]
+        second = self.client.post("/api/v1/accounts/register/", {
+            "username": "player_two", "display_name": "Player Two",
+            "password": "secure-pass-456",
+        }, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {second.data['access_token']}")
         self.client.post("/api/v1/rooms/join/", {"code": code}, format="json")
+        third = self.client.post("/api/v1/accounts/register/", {
+            "username": "player_three", "display_name": "Player Three",
+            "password": "secure-pass-789",
+        }, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {third.data['access_token']}")
         response = self.client.post("/api/v1/rooms/join/", {"code": code}, format="json")
         self.assertEqual(409, response.status_code)
 
     def test_unknown_room_returns_not_found(self):
         response = self.client.post("/api/v1/rooms/join/", {"code": "ABC123"}, format="json")
         self.assertEqual(404, response.status_code)
+
+    def test_room_creation_requires_account(self):
+        self.client.credentials()
+        response = self.client.post("/api/v1/rooms/", {}, format="json")
+        self.assertEqual(403, response.status_code)

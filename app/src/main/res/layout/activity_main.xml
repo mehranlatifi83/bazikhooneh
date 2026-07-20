@@ -73,6 +73,92 @@
             android:orientation="vertical"
             android:visibility="gone">
 
+            <LinearLayout
+                android:id="@+id/account_form"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/account_username_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/account_username"
+                    android:inputType="text"
+                    android:maxLength="30"
+                    android:minHeight="48dp"
+                    android:singleLine="true" />
+
+                <EditText
+                    android:id="@+id/account_display_name_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/account_display_name"
+                    android:inputType="textPersonName"
+                    android:maxLength="40"
+                    android:minHeight="48dp"
+                    android:singleLine="true" />
+
+                <EditText
+                    android:id="@+id/account_password_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/account_password"
+                    android:inputType="textPassword"
+                    android:minHeight="48dp"
+                    android:singleLine="true" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/account_login_button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:text="@string/account_login"
+                        android:textAllCaps="false" />
+
+                    <Button
+                        android:id="@+id/account_register_button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:text="@string/account_register"
+                        android:textAllCaps="false" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/account_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/account_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp" />
+
+                <Button
+                    android:id="@+id/account_logout_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/account_logout"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
             <EditText
                 android:id="@+id/room_code_input"
                 android:layout_width="match_parent"

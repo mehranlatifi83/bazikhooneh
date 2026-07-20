@@ -4,6 +4,7 @@ import string
 import uuid
 
 from django.db import models
+from django.utils import timezone
 
 from .engine import GameState, Phase, Status
 
@@ -99,12 +100,23 @@ class Room(models.Model):
             "rematch_o": self.rematch_o,
             "outcome_reason": self.outcome_reason,
             **self.game().as_dict(),
+            "players": [
+                {
+                    "symbol": player.symbol,
+                    "username": player.account.username if player.account else "",
+                    "display_name": player.account.display_name if player.account else "",
+                }
+                for player in self.players.select_related("account").filter(is_active=True).order_by("symbol")
+            ],
         }
 
 
 class Player(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     room = models.ForeignKey(Room, related_name="players", on_delete=models.CASCADE)
+    account = models.ForeignKey(
+        "accounts.Account", related_name="room_players", on_delete=models.PROTECT, null=True
+    )
     symbol = models.CharField(max_length=1)
     reconnect_token_hash = models.CharField(max_length=64, db_index=True)
     joined_at = models.DateTimeField(auto_now_add=True)
@@ -113,15 +125,61 @@ class Player(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=("room", "symbol"), name="unique_room_symbol")
+            models.UniqueConstraint(fields=("room", "symbol"), name="unique_room_symbol"),
+            models.UniqueConstraint(fields=("room", "account"), name="unique_room_account"),
         ]
 
     @classmethod
-    def create_with_token(cls, room: Room, symbol: str):
+    def create_with_token(cls, room: Room, symbol: str, account=None):
         token = secrets.token_urlsafe(32)
         player = cls.objects.create(
             room=room,
+            account=account,
             symbol=symbol,
             reconnect_token_hash=token_hash(token),
         )
         return player, token
+
+
+class Match(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    room = models.ForeignKey(Room, related_name="matches", on_delete=models.CASCADE)
+    round_number = models.PositiveIntegerField(default=1)
+    x_account = models.ForeignKey(
+        "accounts.Account", related_name="matches_as_x", on_delete=models.PROTECT
+    )
+    o_account = models.ForeignKey(
+        "accounts.Account", related_name="matches_as_o", on_delete=models.PROTECT
+    )
+    winner = models.ForeignKey(
+        "accounts.Account", related_name="matches_won", on_delete=models.PROTECT, null=True, blank=True
+    )
+    outcome = models.CharField(max_length=24, blank=True, default="")
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("room", "round_number"), name="unique_room_round")
+        ]
+        ordering = ("-started_at",)
+
+    @classmethod
+    def start_for_room(cls, room):
+        players = {player.symbol: player for player in room.players.select_related("account")}
+        if (not players.get("X") or not players.get("O")
+                or players["X"].account is None or players["O"].account is None):
+            return None
+        round_number = room.matches.count() + 1
+        return cls.objects.create(
+            room=room, round_number=round_number,
+            x_account=players["X"].account, o_account=players["O"].account,
+        )
+
+    def finish(self, outcome, winner=None):
+        if self.finished_at is not None:
+            return
+        self.outcome = outcome
+        self.winner = winner
+        self.finished_at = timezone.now()
+        self.save(update_fields=("outcome", "winner", "finished_at"))
