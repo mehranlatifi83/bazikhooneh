@@ -48,6 +48,13 @@
                 android:layout_height="48dp"
                 android:layout_marginStart="20dp"
                 android:text="@string/mode_play_bot" />
+
+            <RadioButton
+                android:id="@+id/mode_online"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="20dp"
+                android:text="@string/mode_online" />
         </RadioGroup>
 
         <Spinner
@@ -57,6 +64,60 @@
             android:layout_marginTop="8dp"
             android:contentDescription="@string/bot_difficulty"
             android:enabled="false" />
+
+        <LinearLayout
+            android:id="@+id/online_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/room_code_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/room_code_hint"
+                android:inputType="textCapCharacters"
+                android:maxLength="6"
+                android:minHeight="48dp"
+                android:singleLine="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/create_room_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="@string/create_room"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/join_room_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="@string/join_room"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/room_information"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:textColor="@color/text_primary"
+                android:textIsSelectable="true"
+                android:textSize="18sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/game_status"

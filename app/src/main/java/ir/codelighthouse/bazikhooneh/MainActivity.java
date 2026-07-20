@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -23,14 +25,22 @@ import ir.codelighthouse.bazikhooneh.game.tictactoe.Mark;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.MoveResult;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeBot;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeGame;
+import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
+import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
+import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 
 public final class MainActivity extends Activity {
     private static final String STATE_ACTIONS = "state_actions";
     private static final String STATE_BOT_MODE = "state_bot_mode";
+    private static final String STATE_ONLINE_MODE = "state_online_mode";
     private static final String STATE_DIFFICULTY = "state_difficulty";
     private static final String STATE_SELECTED_SOURCE = "state_selected_source";
     private static final String STATE_PENDING_ANNOUNCEMENT = "state_pending_announcement";
     private static final long BOT_MOVE_DELAY_MS = 500L;
+    private static final String ONLINE_PREFS = "online_session";
+    private static final String PREF_ROOM = "room";
+    private static final String PREF_SYMBOL = "symbol";
+    private static final String PREF_TOKEN = "token";
 
     private final TicTacToeGame game = new TicTacToeGame();
     private final TicTacToeBot bot = new TicTacToeBot();
@@ -38,10 +48,17 @@ public final class MainActivity extends Activity {
     private final Button[] cells = new Button[TicTacToeGame.CELL_COUNT];
     private TextView statusText;
     private Spinner difficultySpinner;
+    private LinearLayout onlineControls;
+    private EditText roomCodeInput;
+    private TextView roomInformation;
     private boolean botMode;
+    private boolean onlineMode;
     private boolean botThinking;
     private int selectedSource = -1;
     private String pendingHumanAnnouncement;
+    private OnlineGameClient onlineClient;
+    private OnlineGameState onlineState;
+    private String onlineSymbol;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +67,10 @@ public final class MainActivity extends Activity {
 
         statusText = findViewById(R.id.game_status);
         difficultySpinner = findViewById(R.id.difficulty_spinner);
+        onlineControls = findViewById(R.id.online_controls);
+        roomCodeInput = findViewById(R.id.room_code_input);
+        roomInformation = findViewById(R.id.room_information);
+        onlineClient = new OnlineGameClient(BuildConfig.API_BASE_URL, onlineListener);
         configureGameOptions(savedInstanceState);
         int[] cellIds = {
                 R.id.cell_0, R.id.cell_1, R.id.cell_2,
@@ -62,9 +83,14 @@ public final class MainActivity extends Activity {
             cells[index].setOnClickListener(view -> onCellClicked(cellIndex));
         }
         findViewById(R.id.restart_button).setOnClickListener(view -> restartGame());
+        findViewById(R.id.create_room_button).setOnClickListener(view -> createOnlineRoom());
+        findViewById(R.id.join_room_button).setOnClickListener(view -> joinOnlineRoom());
 
         restoreState(savedInstanceState);
         render(false);
+        if (onlineMode) {
+            restoreOnlineSession();
+        }
         if (botMode && game.getCurrentPlayer() == Mark.O) {
             scheduleBotAction();
         }
@@ -72,22 +98,29 @@ public final class MainActivity extends Activity {
 
     private void configureGameOptions(Bundle state) {
         botMode = state != null && state.getBoolean(STATE_BOT_MODE, false);
+        onlineMode = state != null && state.getBoolean(STATE_ONLINE_MODE, false);
         int difficultyPosition = state == null ? BotDifficulty.MEDIUM.ordinal()
                 : state.getInt(STATE_DIFFICULTY, BotDifficulty.MEDIUM.ordinal());
         RadioGroup modeGroup = findViewById(R.id.game_mode_group);
-        modeGroup.check(botMode ? R.id.mode_bot : R.id.mode_local);
+        modeGroup.check(onlineMode ? R.id.mode_online : botMode ? R.id.mode_bot : R.id.mode_local);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.bot_difficulties, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         difficultySpinner.setAdapter(adapter);
         difficultySpinner.setSelection(difficultyPosition, false);
-        difficultySpinner.setEnabled(botMode);
+        updateModeControls();
 
         modeGroup.setOnCheckedChangeListener((group, checkedId) -> {
             botMode = checkedId == R.id.mode_bot;
-            difficultySpinner.setEnabled(botMode);
+            onlineMode = checkedId == R.id.mode_online;
+            onlineClient.disconnect();
+            onlineState = null;
+            onlineSymbol = null;
+            roomInformation.setText("");
+            updateModeControls();
             restartGame();
+            if (onlineMode) restoreOnlineSession();
         });
         difficultySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             private boolean firstSelection = true;
@@ -109,6 +142,10 @@ public final class MainActivity extends Activity {
     }
 
     private void onCellClicked(int cellIndex) {
+        if (onlineMode) {
+            onOnlineCellClicked(cellIndex);
+            return;
+        }
         if (botThinking || (botMode && game.getCurrentPlayer() == Mark.O)) {
             return;
         }
@@ -227,11 +264,17 @@ public final class MainActivity extends Activity {
         pendingHumanAnnouncement = null;
         game.reset();
         render(false);
-        announce(getString(R.string.game_restarted));
+        if (!onlineMode) {
+            announce(getString(R.string.game_restarted));
+        }
         cells[0].requestFocus();
     }
 
     private void render(boolean animateMove) {
+        if (onlineMode) {
+            renderOnline(animateMove);
+            return;
+        }
         for (int index = 0; index < cells.length; index++) {
             Mark mark = game.getCell(index);
             Button cell = cells[index];
@@ -313,6 +356,7 @@ public final class MainActivity extends Activity {
         super.onSaveInstanceState(outState);
         outState.putIntegerArrayList(STATE_ACTIONS, new ArrayList<>(game.getActionHistory()));
         outState.putBoolean(STATE_BOT_MODE, botMode);
+        outState.putBoolean(STATE_ONLINE_MODE, onlineMode);
         outState.putInt(STATE_DIFFICULTY, selectedDifficulty().ordinal());
         outState.putInt(STATE_SELECTED_SOURCE, selectedSource);
         outState.putString(STATE_PENDING_ANNOUNCEMENT, pendingHumanAnnouncement);
@@ -321,6 +365,184 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         handler.removeCallbacksAndMessages(null);
+        onlineClient.disconnect();
         super.onDestroy();
+    }
+
+    private void updateModeControls() {
+        difficultySpinner.setEnabled(botMode);
+        difficultySpinner.setVisibility(botMode ? View.VISIBLE : View.GONE);
+        onlineControls.setVisibility(onlineMode ? View.VISIBLE : View.GONE);
+        findViewById(R.id.restart_button).setVisibility(onlineMode ? View.GONE : View.VISIBLE);
+    }
+
+    private void createOnlineRoom() {
+        beginOnlineRequest();
+        onlineClient.createRoom();
+    }
+
+    private void joinOnlineRoom() {
+        String code = roomCodeInput.getText().toString().trim().toUpperCase();
+        if (code.length() != 6) {
+            announce(getString(R.string.room_code_required));
+            roomCodeInput.requestFocus();
+            return;
+        }
+        beginOnlineRequest();
+        onlineClient.joinRoom(code);
+    }
+
+    private void beginOnlineRequest() {
+        selectedSource = -1;
+        onlineState = null;
+        roomInformation.setText("");
+        statusText.setText(R.string.online_connecting);
+        announce(getString(R.string.online_connecting));
+    }
+
+    private void onOnlineCellClicked(int index) {
+        if (onlineState == null || !"active".equals(onlineState.roomState)
+                || !onlineState.currentPlayer.equals(onlineSymbol)) {
+            return;
+        }
+        char value = onlineState.board.charAt(index);
+        if ("placement".equals(onlineState.phase)) {
+            if (value == '.') onlineClient.place(index);
+            else announce(getString(R.string.cell_occupied));
+            return;
+        }
+        if (value == onlineSymbol.charAt(0)) {
+            selectedSource = index;
+            renderOnline(false);
+            announce(getString(R.string.piece_selected, positionName(index)));
+        } else if (selectedSource < 0) {
+            announce(getString(R.string.online_select_own_piece));
+        } else if (value != '.') {
+            announce(getString(R.string.cell_occupied));
+        } else {
+            onlineClient.move(selectedSource, index);
+            selectedSource = -1;
+        }
+    }
+
+    private void renderOnline(boolean animateMove) {
+        for (int index = 0; index < cells.length; index++) {
+            char value = onlineState == null ? '.' : onlineState.board.charAt(index);
+            Button cell = cells[index];
+            cell.setText(value == '.' ? "" : String.valueOf(value));
+            boolean canPlay = onlineState != null && "active".equals(onlineState.roomState)
+                    && onlineState.currentPlayer.equals(onlineSymbol)
+                    && "active".equals(onlineState.status);
+            cell.setEnabled(canPlay);
+            cell.setAlpha(index == selectedSource ? 0.6f : 1f);
+            String readable = value == '.' ? getString(R.string.empty_cell)
+                    : markName(value == 'X' ? Mark.X : Mark.O);
+            String description = getString(R.string.cell_description, index / 3 + 1,
+                    index % 3 + 1, readable);
+            if (index == selectedSource) description += ", " + getString(R.string.selected);
+            cell.setContentDescription(description);
+            if (animateMove && value != '.') {
+                cell.animate().cancel();
+                cell.setScaleX(0.85f);
+                cell.setScaleY(0.85f);
+                cell.animate().scaleX(1f).scaleY(1f).setDuration(140).start();
+            }
+        }
+        if (onlineState != null) statusText.setText(onlineStatusMessage());
+    }
+
+    private String onlineStatusMessage() {
+        if ("waiting".equals(onlineState.roomState)) {
+            return getString(R.string.online_waiting, onlineState.roomCode);
+        }
+        if ("x_won".equals(onlineState.status)) return getString(R.string.player_won, markName(Mark.X));
+        if ("o_won".equals(onlineState.status)) return getString(R.string.player_won, markName(Mark.O));
+        if (onlineState.currentPlayer.equals(onlineSymbol)) {
+            return getString(R.string.online_your_turn, markName("X".equals(onlineSymbol) ? Mark.X : Mark.O));
+        }
+        return getString(R.string.online_opponent_turn, markName("X".equals(onlineSymbol) ? Mark.X : Mark.O));
+    }
+
+    private final OnlineGameClient.Listener onlineListener = new OnlineGameClient.Listener() {
+        @Override public void onSession(OnlineSession session) {
+            runOnUiThread(() -> {
+                onlineSymbol = session.symbol;
+                onlineState = session.game;
+                getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit()
+                        .putString(PREF_ROOM, session.game.roomCode)
+                        .putString(PREF_SYMBOL, session.symbol)
+                        .putString(PREF_TOKEN, session.token)
+                        .apply();
+                roomCodeInput.setText(session.game.roomCode);
+                String message = "waiting".equals(session.game.roomState)
+                        ? getString(R.string.room_created, session.game.roomCode)
+                        : getString(R.string.room_joined, session.game.roomCode,
+                                markName("X".equals(session.symbol) ? Mark.X : Mark.O));
+                roomInformation.setText(message);
+                renderOnline(false);
+                announce(message);
+            });
+        }
+
+        @Override public void onState(OnlineGameState state) {
+            runOnUiThread(() -> {
+                OnlineGameState previous = onlineState;
+                int oldVersion = onlineState == null ? -1 : onlineState.version;
+                onlineState = state;
+                renderOnline(state.version > oldVersion);
+                String action = onlineActionAnnouncement(previous, state);
+                announce(action.isEmpty() ? onlineStatusMessage()
+                        : action + " " + onlineStatusMessage());
+            });
+        }
+
+        @Override public void onConnected() { }
+
+        @Override public void onDisconnected() {
+            runOnUiThread(() -> {
+                statusText.setText(R.string.online_disconnected);
+                announce(getString(R.string.online_disconnected));
+            });
+        }
+
+        @Override public void onError(String error) {
+            runOnUiThread(() -> {
+                String message = getString(R.string.online_error, error);
+                statusText.setText(message);
+                announce(message);
+            });
+        }
+    };
+
+    private void restoreOnlineSession() {
+        String room = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_ROOM, "");
+        String symbol = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_SYMBOL, "");
+        String token = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_TOKEN, "");
+        if (room.isEmpty() || symbol.isEmpty() || token.isEmpty()) return;
+        onlineSymbol = symbol;
+        roomCodeInput.setText(room);
+        statusText.setText(R.string.online_connecting);
+        onlineClient.reconnect(room, token);
+    }
+
+    private String onlineActionAnnouncement(OnlineGameState previous, OnlineGameState current) {
+        if (previous == null || current.version <= previous.version
+                || previous.board.length() != current.board.length()) return "";
+        int source = -1;
+        int destination = -1;
+        char moved = '.';
+        for (int index = 0; index < current.board.length(); index++) {
+            char before = previous.board.charAt(index);
+            char after = current.board.charAt(index);
+            if (before == after) continue;
+            if (before != '.' && after == '.') source = index;
+            if (before == '.' && after != '.') {
+                destination = index;
+                moved = after;
+            }
+        }
+        if (destination < 0 || moved == '.') return "";
+        Mark mark = moved == 'X' ? Mark.X : Mark.O;
+        return actionAnnouncement(mark, source, destination);
     }
 }

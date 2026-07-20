@@ -1,4 +1,6 @@
 from django.db import transaction
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -46,4 +48,8 @@ class JoinRoomView(APIView):
         player, token = Player.create_with_token(room, "O")
         room.state = Room.State.ACTIVE
         room.save(update_fields=("state", "updated_at"))
+        state = room.public_state()
+        transaction.on_commit(lambda: async_to_sync(get_channel_layer().group_send)(
+            f"room_{room.code}", {"type": "game.state", "game": state}
+        ))
         return Response(player_payload(room, player, token), status=status.HTTP_200_OK)

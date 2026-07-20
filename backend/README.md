@@ -35,13 +35,13 @@ Connect to:
 Placement action:
 
 ```json
-{"type":"place","to":4,"action_id":"client-generated-id"}
+{"type":"action","action_id":"client-generated-id","action":{"kind":"place","destination":4}}
 ```
 
 Movement action:
 
 ```json
-{"type":"move","from":0,"to":4,"action_id":"client-generated-id"}
+{"type":"action","action_id":"client-generated-id","action":{"kind":"move","source":0,"destination":4}}
 ```
 
 The server validates every action and broadcasts the authoritative game state

@@ -21,5 +21,6 @@ __pycache__/
 /.venv/
 /backend/.env
 /backend/db.sqlite3
+/backend/.dev-db.sqlite3
 /backend/staticfiles/
 /.pytest_cache/

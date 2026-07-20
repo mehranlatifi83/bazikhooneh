@@ -16,6 +16,20 @@ movement phase after each player places their three pieces.
 - `app/`: Android client written in Java
 - `backend/`: Django multiplayer server ([setup and API](backend/README.md))
 
+## Online development
+
+Run the Django server, then expose it to an attached Android device:
+
+```powershell
+cd backend
+python manage.py runserver
+adb reverse tcp:8000 tcp:8000
+```
+
+For a hosted server, build with
+`gradlew -PapiBaseUrl=https://api.example.com assembleDebug`. Production must
+use HTTPS/WSS and disable cleartext traffic.
+
 ## Status
 
 This project is currently under development.
