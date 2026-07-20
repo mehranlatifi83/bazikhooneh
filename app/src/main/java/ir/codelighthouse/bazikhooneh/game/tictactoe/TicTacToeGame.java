@@ -1,4 +1,4 @@
-package ir.bazikhooneh.app.game.tictactoe;
+package ir.codelighthouse.bazikhooneh.game.tictactoe;
 
 import java.util.ArrayList;
 import java.util.Collections;

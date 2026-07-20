@@ -1,4 +1,4 @@
-package ir.bazikhooneh.app;
+package ir.codelighthouse.bazikhooneh;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
 	public void useAppContext() {
 		// Context of the app under test.
 		Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-		assertEquals("ir.bazikhooneh.app", appContext.getPackageName());
+		assertEquals("ir.codelighthouse.bazikhooneh", appContext.getPackageName());
 	}
 }

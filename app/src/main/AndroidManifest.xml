@@ -13,7 +13,7 @@
         android:theme="@style/Theme.BaziKhooneh"
         tools:targetApi="31">
         <activity
-            android:name="ir.bazikhooneh.app.MainActivity"
+            android:name="ir.codelighthouse.bazikhooneh.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,4 +1,4 @@
-package ir.bazikhooneh.app.game.tictactoe;
+package ir.codelighthouse.bazikhooneh.game.tictactoe;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package ir.bazikhooneh.app;
+package ir.codelighthouse.bazikhooneh;
 
 import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
@@ -11,10 +11,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 
-import ir.bazikhooneh.app.game.tictactoe.GameStatus;
-import ir.bazikhooneh.app.game.tictactoe.Mark;
-import ir.bazikhooneh.app.game.tictactoe.MoveResult;
-import ir.bazikhooneh.app.game.tictactoe.TicTacToeGame;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.GameStatus;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.Mark;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.MoveResult;
+import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeGame;
 
 public final class MainActivity extends AppCompatActivity {
     private static final String STATE_MOVES = "state_moves";

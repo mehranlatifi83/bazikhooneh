@@ -1,4 +1,4 @@
-package ir.bazikhooneh.app.game.tictactoe;
+package ir.codelighthouse.bazikhooneh.game.tictactoe;
 
 public enum GameStatus {
     IN_PROGRESS,

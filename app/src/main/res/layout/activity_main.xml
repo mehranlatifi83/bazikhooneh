@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:background="@color/screen_background"
-    tools:context="ir.bazikhooneh.app.MainActivity">
+    tools:context="ir.codelighthouse.bazikhooneh.MainActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
