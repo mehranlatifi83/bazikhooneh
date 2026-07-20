@@ -1,6 +1,7 @@
 package ir.codelighthouse.bazikhooneh;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -65,7 +66,17 @@ public final class LoginActivity extends Activity {
 
     private final AccountClient.Listener listener = new AccountClient.Listener() {
         @Override public void onSession(AccountSession session) {
-            runOnUiThread(() -> { new SessionStore(LoginActivity.this).save(session); setResult(RESULT_OK); finish(); });
+            runOnUiThread(() -> {
+                new SessionStore(LoginActivity.this).save(session);
+                String roomCode = getIntent().getStringExtra("room_code");
+                if (roomCode != null || getIntent().getBooleanExtra("open_online", false)) {
+                    Intent lobby = new Intent(LoginActivity.this, OnlineLobbyActivity.class);
+                    if (roomCode != null) lobby.putExtra("room_code", roomCode);
+                    startActivity(lobby);
+                }
+                setResult(RESULT_OK);
+                finish();
+            });
         }
         @Override public void onLoggedOut() { }
         @Override public void onError(String value) {

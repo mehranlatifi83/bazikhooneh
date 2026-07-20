@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="@color/screen_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tic_tac_toe_title" android:textSize="32sp" android:textStyle="bold"
+            android:accessibilityHeading="true" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:text="@string/select_game_mode"
+            android:textColor="@color/text_secondary" android:textSize="18sp" />
+        <Button android:id="@+id/menu_local" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="24dp" android:minHeight="68dp"
+            android:text="@string/mode_local_description" android:textAllCaps="false" android:textSize="18sp" />
+        <Button android:id="@+id/menu_bot" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="12dp" android:minHeight="68dp"
+            android:text="@string/mode_bot_description" android:textAllCaps="false" android:textSize="18sp" />
+        <RadioGroup android:id="@+id/menu_bot_difficulty" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center"
+            android:visibility="gone">
+            <RadioButton android:id="@+id/difficulty_easy" android:layout_width="wrap_content"
+                android:layout_height="48dp" android:text="@string/difficulty_easy" />
+            <RadioButton android:id="@+id/difficulty_medium" android:layout_width="wrap_content"
+                android:layout_height="48dp" android:checked="true" android:text="@string/difficulty_medium" />
+            <RadioButton android:id="@+id/difficulty_hard" android:layout_width="wrap_content"
+                android:layout_height="48dp" android:text="@string/difficulty_hard" />
+        </RadioGroup>
+        <Button android:id="@+id/menu_start_bot" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/start_game"
+            android:textAllCaps="false" android:visibility="gone" />
+        <Button android:id="@+id/menu_online" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="12dp" android:minHeight="68dp"
+            android:text="@string/mode_online_description" android:textAllCaps="false" android:textSize="18sp" />
+    </LinearLayout>
+</ScrollView>

@@ -36,6 +36,8 @@ import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 
 public final class MainActivity extends Activity {
+    public static final String EXTRA_MODE = "game_mode";
+    public static final String EXTRA_DIFFICULTY = "bot_difficulty";
     private static final String STATE_ACTIONS = "state_actions";
     private static final String STATE_BOT_MODE = "state_bot_mode";
     private static final String STATE_ONLINE_MODE = "state_online_mode";
@@ -122,10 +124,13 @@ public final class MainActivity extends Activity {
     }
 
     private void configureGameOptions(Bundle state) {
-        botMode = state != null && state.getBoolean(STATE_BOT_MODE, false);
+        String requestedMode = getIntent().getStringExtra(EXTRA_MODE);
+        botMode = state != null ? state.getBoolean(STATE_BOT_MODE, false)
+                : "bot".equals(requestedMode);
         onlineMode = state != null ? state.getBoolean(STATE_ONLINE_MODE, false)
-                : getIntent().hasExtra("room_code");
-        int difficultyPosition = state == null ? BotDifficulty.MEDIUM.ordinal()
+                : "online".equals(requestedMode);
+        int difficultyPosition = state == null ? getIntent().getIntExtra(
+                EXTRA_DIFFICULTY, BotDifficulty.MEDIUM.ordinal())
                 : state.getInt(STATE_DIFFICULTY, BotDifficulty.MEDIUM.ordinal());
         RadioGroup modeGroup = findViewById(R.id.game_mode_group);
         modeGroup.check(onlineMode ? R.id.mode_online : botMode ? R.id.mode_bot : R.id.mode_local);
@@ -400,8 +405,8 @@ public final class MainActivity extends Activity {
     }
 
     private void updateModeControls() {
-        difficultySpinner.setEnabled(botMode);
-        difficultySpinner.setVisibility(botMode ? View.VISIBLE : View.GONE);
+        difficultySpinner.setEnabled(false);
+        difficultySpinner.setVisibility(View.GONE);
         onlineControls.setVisibility(onlineMode ? View.VISIBLE : View.GONE);
         findViewById(R.id.restart_button).setVisibility(onlineMode ? View.GONE : View.VISIBLE);
     }

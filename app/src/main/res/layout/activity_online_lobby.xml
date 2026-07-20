@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="@color/screen_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="28dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/online_lobby_title" android:textSize="30sp" android:textStyle="bold"
+            android:accessibilityHeading="true" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:text="@string/online_lobby_description"
+            android:textColor="@color/text_secondary" android:textSize="17sp" />
+        <Button android:id="@+id/lobby_create" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="28dp" android:minHeight="64dp"
+            android:text="@string/create_room" android:textAllCaps="false" android:textSize="18sp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" android:gravity="center" android:text="@string/or_join_room" />
+        <EditText android:id="@+id/lobby_room_code" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="12dp"
+            android:hint="@string/room_code_hint" android:inputType="textCapCharacters"
+            android:maxLength="6" android:singleLine="true" />
+        <Button android:id="@+id/lobby_join" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="56dp"
+            android:text="@string/join_room" android:textAllCaps="false" />
+        <ProgressBar android:id="@+id/lobby_progress" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp" android:visibility="gone" />
+        <TextView android:id="@+id/lobby_status" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="center"
+            android:minHeight="48dp" android:textColor="@color/text_secondary" />
+    </LinearLayout>
+</ScrollView>

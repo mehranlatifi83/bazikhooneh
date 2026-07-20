@@ -30,7 +30,9 @@ public final class HomeActivity extends Activity {
         if (getIntent().getData() != null && "room".equals(getIntent().getData().getHost())) {
             String code = getIntent().getData().getLastPathSegment();
             if (code != null && code.length() == 6) {
-                startActivity(new Intent(this, MainActivity.class).putExtra("room_code", code));
+                SessionStore store = new SessionStore(this);
+                Class<?> destination = store.isSignedIn() ? OnlineLobbyActivity.class : LoginActivity.class;
+                startActivity(new Intent(this, destination).putExtra("room_code", code));
             }
         }
         if (!getSharedPreferences(APP_PREFS, MODE_PRIVATE).getBoolean("guide_seen", false)) {
