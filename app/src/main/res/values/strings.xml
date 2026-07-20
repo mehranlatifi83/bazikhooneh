@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">BaziKhooneh</string>
+    <string name="tic_tac_toe_title">Tic-Tac-Toe</string>
+    <string name="board_description">3 by 3 Tic-Tac-Toe board</string>
+    <string name="restart_game">Restart game</string>
+    <string name="player_turn">Turn: %1$s</string>
+    <string name="player_won">%1$s wins!</string>
+    <string name="game_draw">The game is a draw.</string>
+    <string name="game_restarted">New game started. X goes first.</string>
+    <string name="cell_occupied">This cell is already occupied.</string>
+    <string name="empty_cell">empty</string>
+    <string name="mark_x">X</string>
+    <string name="mark_o">O</string>
+    <string name="cell_description">Row %1$d, column %2$d, %3$s</string>
+    <string name="move_announcement">%1$s placed at row %2$d, column %3$d. %4$s’s turn.</string>
 </resources>

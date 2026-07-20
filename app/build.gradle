@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'ir.codelighthouse.myapplication'
+    namespace 'ir.bazikhooneh.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "ir.codelighthouse.myapplication"
+        applicationId "ir.bazikhooneh.app"
         minSdk 30
         targetSdk 34
         versionCode 1
