@@ -22,7 +22,14 @@ public class TicTacToeBotTest {
     }
 
     @Test
-    public void mediumBotBlocksBeforeTakingItsOwnWin() {
+    public void mediumBotTakesImmediateWinEvenWhenPlayerThreatens() {
+        TicTacToeGame game = gameAfter(0, 3, 1, 4, 8);
+        BotAction action = new TicTacToeBot().chooseAction(game, BotDifficulty.MEDIUM);
+        assertEquals(5, action.getDestination());
+    }
+
+    @Test
+    public void mediumBotBlocksWhenItCannotWinImmediately() {
         TicTacToeGame game = gameAfter(0, 3, 1);
         BotAction action = new TicTacToeBot().chooseAction(game, BotDifficulty.MEDIUM);
         assertEquals(2, action.getDestination());
@@ -35,7 +42,7 @@ public class TicTacToeBotTest {
         assertEquals(6, action.getDestination());
     }
 
-    @Test
+    @Test(timeout = 1500)
     public void hardBotReturnsLegalMovementAction() {
         TicTacToeGame game = gameAfter(0, 1, 2, 3, 7, 8);
         assertEquals(MoveResult.ACCEPTED, game.move(7, 4));
