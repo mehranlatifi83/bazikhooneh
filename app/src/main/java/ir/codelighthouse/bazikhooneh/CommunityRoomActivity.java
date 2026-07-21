@@ -26,9 +26,12 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private TextView status;
     private String ownUsername;
     private final Map<Long, TextView> messageViews = new HashMap<>();
+    private final Map<Long, View> messageActionViews = new HashMap<>();
     private final Handler reconnectHandler = new Handler(Looper.getMainLooper());
     private boolean destroyed;
     private boolean socketVerified;
+    private boolean reconnectScheduled;
+    private int reconnectAttempts;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state); setContentView(R.layout.activity_community_room);
@@ -112,16 +115,21 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
             client.moderateRoom(code,username,action,(d,e)->runOnUiThread(()->{if(e!=null)show(e);else client.details(code,(r,x)->runOnUiThread(()->{if(r!=null)renderRoom(r);}));}));return true;});menu.show();}
 
     private void renderMessages(JSONArray values) {
-        messages.removeAllViews(); messageViews.clear(); if(values==null)return;
+        messages.removeAllViews(); messageViews.clear();messageActionViews.clear(); if(values==null)return;
         for(int i=0;i<values.length();i++)addMessage(values.optJSONObject(i),false);
         scrollBottom();
     }
     private void addMessage(JSONObject item, boolean announce) {
         if(item==null)return;long id=item.optLong("id");if(id>0&&messageViews.containsKey(id))return; JSONObject sender=item.optJSONObject("sender");
         String name=sender==null?"":sender.optString("display_name");
-        TextView row=new TextView(this);row.setText(getString(R.string.community_message_item,name,item.optString("text")));
-        row.setTextSize(17);row.setPadding(12,12,12,12);row.setFocusable(true);messages.addView(row);
+        LinearLayout container=new LinearLayout(this);container.setOrientation(LinearLayout.VERTICAL);
+        TextView row=new TextView(this);boolean deleted=item.optBoolean("deleted");row.setText(deleted?getString(R.string.deleted_message):getString(R.string.community_message_item,name,item.optString("text")));
+        row.setTextSize(17);row.setPadding(12,12,12,12);row.setFocusable(true);container.addView(row);
+        Button actions=new Button(this);actions.setText(getString(R.string.message_actions_for,name));actions.setAllCaps(false);
+        actions.setMinHeight(dp(48));actions.setVisibility(deleted?View.GONE:View.VISIBLE);actions.setOnClickListener(v->showMessageMenu(actions,item));container.addView(actions);
+        messages.addView(container);
         messageViews.put(id,row);
+        messageActionViews.put(id,actions);
         String senderUsername=sender==null?"":sender.optString("username");
         row.setOnLongClickListener(v->{showMessageMenu(row,item);return true;});
         if(announce)row.announceForAccessibility(row.getText()); scrollBottom();
@@ -140,7 +148,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
             .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.delete_message,(d,w)->client.deleteMessage(code,id,(data,error)->runOnUiThread(()->{if(error!=null)show(error);}))).show();}
     private void updateMessage(JSONObject item){long id=item.optLong("id");TextView row=messageViews.get(id);if(row==null){addMessage(item,false);return;}
         JSONObject sender=item.optJSONObject("sender");row.setText(getString(R.string.community_message_item,sender==null?"":sender.optString("display_name"),item.optString("text")));}
-    private void removeMessage(long id){TextView row=messageViews.remove(id);if(row!=null){row.setText(R.string.deleted_message);row.setOnLongClickListener(null);row.announceForAccessibility(getString(R.string.deleted_message));}}
+    private void removeMessage(long id){TextView row=messageViews.get(id);View actions=messageActionViews.get(id);if(actions!=null)actions.setVisibility(View.GONE);if(row!=null){row.setText(R.string.deleted_message);row.setOnLongClickListener(null);row.announceForAccessibility(getString(R.string.deleted_message));}}
     private void scrollBottom(){findViewById(R.id.community_chat_scroll).post(()->
             ((ScrollView)findViewById(R.id.community_chat_scroll)).fullScroll(View.FOCUS_DOWN));}
     private void refreshMessages(){client.messages(code,(data,error)->runOnUiThread(()->{if(error!=null){show(error);return;}renderMessages(data.optJSONArray("results"));}));}
@@ -172,7 +180,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         if(!client.ping()){scheduleReconnect();return;}reconnectHandler.postDelayed(()->{if(!socketVerified&&!destroyed){client.disconnect();scheduleReconnect();}},5000);});}
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
         if("room_state".equals(type))renderRoom(event.optJSONObject("room"));
-        else if("pong".equals(type)){socketVerified=true;reconnectHandler.removeCallbacksAndMessages(null);show(getString(R.string.room_connected));}
+        else if("pong".equals(type)){socketVerified=true;reconnectScheduled=false;reconnectAttempts=0;reconnectHandler.removeCallbacksAndMessages(null);show(getString(R.string.room_connected));}
         else if("chat_message".equals(type))addMessage(event.optJSONObject("message"),true);
         else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
         else if("chat_deleted".equals(type))removeMessage(event.optLong("message_id"));
@@ -186,7 +194,9 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     });}
     @Override public void onClosed(){runOnUiThread(()->{show(getString(R.string.room_disconnected));scheduleReconnect();});}
     @Override public void onError(String error){runOnUiThread(()->{show(error);scheduleReconnect();});}
-    private void scheduleReconnect(){reconnectHandler.removeCallbacksAndMessages(null);if(!destroyed)reconnectHandler.postDelayed(()->client.connect(code,this),2000);}
+    private void scheduleReconnect(){if(destroyed||reconnectScheduled)return;reconnectScheduled=true;reconnectHandler.removeCallbacksAndMessages(null);
+        long delay=Math.min(30000,2000L<<Math.min(reconnectAttempts++,4));reconnectHandler.postDelayed(()->{reconnectScheduled=false;if(!destroyed)client.connect(code,this);},delay);}
     @Override protected void onResume(){super.onResume();if(client!=null)refreshMessages();}
     @Override protected void onDestroy(){destroyed=true;reconnectHandler.removeCallbacksAndMessages(null);if(client!=null)client.disconnect();super.onDestroy();}
+    private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
 }

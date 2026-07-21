@@ -319,4 +319,5 @@
     <string name="rooms_for_game">اتاق‌های مشترک برای %1$s. با عوض‌کردن بازی، اتاق و امکاناتش باقی می‌ماند.</string>
     <string name="message_send_failed">پیام ارسال نشد و متن آن نگه داشته شد. خطا: %1$s</string>
     <string name="room_verifying_connection">اتصال اتاق برقرار شد؛ در حال بررسی انتقال دوطرفهٔ داده…</string>
+    <string name="message_actions_for">عملیات پیامِ %1$s</string>
 </resources>

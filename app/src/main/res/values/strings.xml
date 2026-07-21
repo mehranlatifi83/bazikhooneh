@@ -319,4 +319,5 @@
     <string name="rooms_for_game">Shared rooms for %1$s. The room remains available when you switch games.</string>
     <string name="message_send_failed">Message was not sent. Your text was kept. Error: %1$s</string>
     <string name="room_verifying_connection">Connected to the room. Verifying two-way data transfer…</string>
+    <string name="message_actions_for">Message actions for %1$s</string>
 </resources>

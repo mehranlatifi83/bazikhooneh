@@ -17,7 +17,7 @@ public final class CommunityClient {
     private final String token;
     private final OkHttpClient http = new OkHttpClient.Builder()
             .pingInterval(20, TimeUnit.SECONDS).retryOnConnectionFailure(true).build();
-    private WebSocket socket;
+    private volatile WebSocket socket;
 
     public CommunityClient(String baseUrl, String token) {
         this.baseUrl = baseUrl.replaceAll("/$", "");
@@ -109,14 +109,22 @@ public final class CommunityClient {
         Request request = new Request.Builder().url(wsBase + "/ws/v1/community/" + code + "/")
                 .header("Authorization", "Bearer " + token).build();
         socket = http.newWebSocket(request, new WebSocketListener() {
-            @Override public void onOpen(WebSocket webSocket, Response response) { events.onOpen(); }
+            @Override public void onOpen(WebSocket webSocket, Response response) {
+                if (webSocket == socket) events.onOpen();
+            }
             @Override public void onMessage(WebSocket webSocket, String text) {
+                if (webSocket != socket) return;
                 try { events.onEvent(new JSONObject(text)); }
                 catch (Exception error) { events.onError("invalid_server_message"); }
             }
-            @Override public void onClosed(WebSocket webSocket, int code, String reason) { events.onClosed(); }
+            @Override public void onClosed(WebSocket webSocket, int code, String reason) {
+                if (webSocket == socket) { socket = null; events.onClosed(); }
+            }
             @Override public void onFailure(WebSocket webSocket, Throwable error, Response response) {
-                events.onError(error.getMessage() == null ? "connection_failed" : error.getMessage());
+                if (webSocket == socket) {
+                    socket = null;
+                    events.onError(error.getMessage() == null ? "connection_failed" : error.getMessage());
+                }
             }
         });
     }
@@ -145,7 +153,10 @@ public final class CommunityClient {
         JSONObject value = new JSONObject(); try { value.put("type", type); send(value); }
         catch (Exception ignored) { }
     }
-    public void disconnect() { if (socket != null) { socket.close(1000, "leaving"); socket = null; } }
+    public void disconnect() {
+        WebSocket current = socket; socket = null;
+        if (current != null) current.close(1000, "leaving");
+    }
 
     private void request(String method, String path, JSONObject body, Callback callback) {
         RequestBody requestBody = body == null ? null : RequestBody.create(
