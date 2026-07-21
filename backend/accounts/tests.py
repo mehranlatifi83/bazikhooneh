@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from django.core import mail
 
 from .models import Account, AccountToken
 from games.models import Match, Player, Room
@@ -67,3 +68,69 @@ class AccountApiTests(APITestCase):
         self.assertEqual({"played": 1, "wins": 1, "losses": 0}, profile.data["stats"])
         self.assertEqual("win", history.data["results"][0]["result"])
         self.assertEqual("opponent", history.data["results"][0]["opponent"]["username"])
+
+    def authenticated(self, username="first_user", email="first@example.com"):
+        response = self.client.post("/api/v1/accounts/register/", {
+            "username": username, "display_name": "First", "password": "old-password", "email": email
+        }, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access_token']}")
+        return response, Account.objects.get(username=username)
+
+    def test_username_change_requires_password_and_enforces_cooldown(self):
+        self.authenticated()
+        denied = self.client.post("/api/v1/accounts/username/", {
+            "username": "new_user", "current_password": "wrong-password"
+        }, format="json")
+        self.assertEqual(400, denied.status_code)
+        changed = self.client.post("/api/v1/accounts/username/", {
+            "username": "new_user", "current_password": "old-password"
+        }, format="json")
+        self.assertEqual(200, changed.status_code)
+        cooldown = self.client.post("/api/v1/accounts/username/", {
+            "username": "another_user", "current_password": "old-password"
+        }, format="json")
+        self.assertEqual(429, cooldown.status_code)
+
+    def test_password_change_revokes_other_sessions(self):
+        _, account = self.authenticated()
+        AccountToken.issue(account)
+        changed = self.client.post("/api/v1/accounts/password/", {
+            "current_password": "old-password", "new_password": "new-password"
+        }, format="json")
+        self.assertEqual(204, changed.status_code)
+        self.assertEqual(1, AccountToken.objects.filter(account=account).count())
+        self.assertTrue(account.__class__.objects.get(pk=account.pk).check_password("new-password"))
+
+    def test_email_verification_and_password_reset(self):
+        _, account = self.authenticated()
+        requested = self.client.post("/api/v1/accounts/email/request/", {"email": "verified@example.com"}, format="json")
+        verification_code = mail.outbox[-1].body.split(": ", 1)[1]
+        confirmed = self.client.post("/api/v1/accounts/email/confirm/", {
+            "code": verification_code
+        }, format="json")
+        self.assertEqual(200, confirmed.status_code)
+        self.assertTrue(confirmed.data["email_verified"])
+        self.client.credentials()
+        reset = self.client.post("/api/v1/accounts/password-reset/request/", {"email": "verified@example.com"}, format="json")
+        reset_code = mail.outbox[-1].body.split(": ", 1)[1]
+        result = self.client.post("/api/v1/accounts/password-reset/confirm/", {
+            "code": reset_code, "new_password": "reset-password"
+        }, format="json")
+        self.assertEqual(204, result.status_code)
+        self.assertTrue(Account.objects.get(pk=account.pk).check_password("reset-password"))
+
+    def test_friend_request_presence_and_game_invite(self):
+        first, first_account = self.authenticated()
+        self.client.credentials()
+        second = self.client.post("/api/v1/accounts/register/", {
+            "username": "second_user", "display_name": "Second", "password": "second-password"
+        }, format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {first.data['access_token']}")
+        self.assertEqual(201, self.client.post("/api/v1/accounts/friends/", {"username": "second_user"}, format="json").status_code)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {second.data['access_token']}")
+        friends = self.client.get("/api/v1/accounts/friends/")
+        request_id = friends.data["requests"][0]["request_id"]
+        self.assertEqual(200, self.client.post(f"/api/v1/accounts/friends/requests/{request_id}/accept/").status_code)
+        invited = self.client.post("/api/v1/accounts/invites/", {"username": "first_user"}, format="json")
+        self.assertEqual(201, invited.status_code)
+        self.assertEqual(6, len(invited.data["game"]["room_code"]))

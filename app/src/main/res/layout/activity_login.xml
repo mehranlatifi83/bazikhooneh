@@ -28,5 +28,8 @@
         <Button android:id="@+id/register_button" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
             android:text="@string/account_register" android:textAllCaps="false" />
+        <Button android:id="@+id/forgot_password" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="52dp"
+            android:text="@string/forgot_password" android:textAllCaps="false" />
     </LinearLayout>
 </ScrollView>

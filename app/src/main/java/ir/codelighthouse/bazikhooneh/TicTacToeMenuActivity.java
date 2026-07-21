@@ -23,6 +23,8 @@ public final class TicTacToeMenuActivity extends NavigableActivity {
         findViewById(R.id.menu_online).setOnClickListener(v -> openOnline());
         findViewById(R.id.menu_guide).setOnClickListener(v ->
                 startActivity(new Intent(this, TicTacToeGuideActivity.class)));
+        findViewById(R.id.menu_settings).setOnClickListener(v ->
+                startActivity(new Intent(this, TicTacToeSettingsActivity.class)));
     }
 
     private int difficultyValue() {

@@ -729,10 +729,10 @@ public final class MainActivity extends NavigableActivity {
     }
 
     private void applyPieceAppearance(Button cell, Mark mark) {
-        boolean large = getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-                .getBoolean(SettingsActivity.LARGE_TEXT, false);
-        boolean contrast = getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-                .getBoolean(SettingsActivity.HIGH_CONTRAST, false);
+        boolean large = getSharedPreferences(TicTacToeSettingsActivity.PREFS, MODE_PRIVATE)
+                .getBoolean(TicTacToeSettingsActivity.LARGE_TEXT, false);
+        boolean contrast = getSharedPreferences(TicTacToeSettingsActivity.PREFS, MODE_PRIVATE)
+                .getBoolean(TicTacToeSettingsActivity.HIGH_CONTRAST, false);
         cell.setTextSize(large ? 34 : 28);
         if (mark == Mark.X) cell.setTextColor(getColor(contrast ? R.color.black : R.color.piece_x));
         else if (mark == Mark.O) cell.setTextColor(getColor(contrast ? R.color.brand_primary_dark : R.color.piece_o));

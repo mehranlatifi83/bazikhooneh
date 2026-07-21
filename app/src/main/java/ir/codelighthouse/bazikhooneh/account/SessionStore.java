@@ -25,6 +25,7 @@ public final class SessionStore {
     public void updateDisplayName(String displayName) {
         preferences.edit().putString("display_name", displayName).apply();
     }
+    public void updateUsername(String username) { preferences.edit().putString("username", username).apply(); }
 
     public void clear() { preferences.edit().clear().apply(); }
 }

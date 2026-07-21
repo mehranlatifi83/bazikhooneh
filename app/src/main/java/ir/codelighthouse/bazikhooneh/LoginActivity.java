@@ -8,6 +8,7 @@ import android.widget.TextView;
 import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
 
 public final class LoginActivity extends NavigableActivity {
     private EditText username;
@@ -26,6 +27,8 @@ public final class LoginActivity extends NavigableActivity {
         client = new AccountClient(BuildConfig.API_BASE_URL, listener);
         findViewById(R.id.login_button).setOnClickListener(v -> login());
         findViewById(R.id.register_button).setOnClickListener(v -> register());
+        findViewById(R.id.forgot_password).setOnClickListener(v ->
+                startActivity(new Intent(this, PasswordResetActivity.class)));
     }
 
     private boolean validBaseFields() {
@@ -79,7 +82,7 @@ public final class LoginActivity extends NavigableActivity {
         }
         @Override public void onLoggedOut() { }
         @Override public void onError(String value) {
-            runOnUiThread(() -> showError(getString(R.string.account_error, value)));
+            runOnUiThread(() -> showError(AccountErrorMessages.get(LoginActivity.this, value)));
         }
     };
 }

@@ -32,5 +32,8 @@
         <Button android:id="@+id/menu_guide" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="24dp" android:minHeight="56dp"
             android:text="@string/tic_tac_toe_guide_title" android:textAllCaps="false" />
+        <Button android:id="@+id/menu_settings" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
+            android:text="@string/tic_tac_toe_settings" android:textAllCaps="false" />
     </LinearLayout>
 </ScrollView>

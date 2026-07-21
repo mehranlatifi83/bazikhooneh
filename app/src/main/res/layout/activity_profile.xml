@@ -26,6 +26,9 @@
             <Button android:id="@+id/profile_logout" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="52dp"
                 android:text="@string/account_logout" android:textAllCaps="false" />
+            <Button android:id="@+id/profile_security" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="52dp"
+                android:text="@string/account_security_title" android:textAllCaps="false" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="28dp" android:text="@string/profile_stats_heading"
                 android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />

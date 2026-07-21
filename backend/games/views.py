@@ -48,6 +48,9 @@ class JoinRoomView(APIView):
         if room.players.filter(account=request.user).exists():
             return Response({"error": "already_in_room"}, status=status.HTTP_409_CONFLICT)
         player, token = Player.create_with_token(room, "O", request.user)
+        from accounts.models import GameInvite
+        GameInvite.objects.filter(recipient=request.user, room_code=room.code,
+                                  accepted_at__isnull=True).update(accepted_at=room.updated_at)
         room.state = Room.State.ACTIVE
         room.save(update_fields=("state", "updated_at"))
         Match.start_for_room(room)

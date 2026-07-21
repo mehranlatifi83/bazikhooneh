@@ -2,6 +2,7 @@ package ir.codelighthouse.bazikhooneh;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -50,6 +51,8 @@ public final class ProfileActivity extends NavigableActivity {
         client = new ProfileClient(BuildConfig.API_BASE_URL, token, listener);
         findViewById(R.id.profile_save).setOnClickListener(v -> saveProfile());
         findViewById(R.id.profile_logout).setOnClickListener(v -> logout(token));
+        findViewById(R.id.profile_security).setOnClickListener(v ->
+                startActivity(new Intent(this, AccountSecurityActivity.class)));
         client.load();
     }
 

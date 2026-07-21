@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/screen_background">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/change_username_title" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/username_policy" android:textColor="@color/text_secondary" />
+  <EditText android:id="@+id/new_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/new_username" android:inputType="text" />
+  <EditText android:id="@+id/username_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/current_password" android:inputType="textPassword" />
+  <Button android:id="@+id/change_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/change_username" android:textAllCaps="false" />
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="28dp" android:text="@string/email_security_title" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <EditText android:id="@+id/account_email" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/email_address" android:inputType="textEmailAddress" />
+  <Button android:id="@+id/request_email_code" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/send_verification_code" android:textAllCaps="false" />
+  <EditText android:id="@+id/email_code" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/verification_code" />
+  <Button android:id="@+id/confirm_email_code" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/confirm_email" android:textAllCaps="false" />
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="28dp" android:text="@string/change_password_title" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <EditText android:id="@+id/current_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/current_password" android:inputType="textPassword" />
+  <EditText android:id="@+id/new_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/new_password" android:inputType="textPassword" />
+  <Button android:id="@+id/change_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/change_password" android:textAllCaps="false" />
+  <Button android:id="@+id/revoke_sessions" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/revoke_other_sessions" android:textAllCaps="false" />
+  <TextView android:id="@+id/security_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:minHeight="48dp" />
+ </LinearLayout>
+</ScrollView>

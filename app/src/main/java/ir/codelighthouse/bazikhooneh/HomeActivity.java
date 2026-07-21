@@ -28,6 +28,10 @@ public final class HomeActivity extends Activity {
                 startActivity(new Intent(this, SettingsActivity.class)));
         findViewById(R.id.open_guide).setOnClickListener(v ->
                 startActivity(new Intent(this, GuideActivity.class)));
+        findViewById(R.id.open_friends).setOnClickListener(v -> {
+            Class<?> destination = new SessionStore(this).isSignedIn() ? FriendsActivity.class : LoginActivity.class;
+            startActivity(new Intent(this, destination));
+        });
         if (getIntent().getData() != null && "room".equals(getIntent().getData().getHost())) {
             String code = getIntent().getData().getLastPathSegment();
             if (code != null && code.length() == 6) {

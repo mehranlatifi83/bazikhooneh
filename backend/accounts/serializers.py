@@ -13,6 +13,7 @@ class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=3, max_length=30)
     display_name = serializers.CharField(min_length=1, max_length=40)
     password = serializers.CharField(min_length=8, max_length=128, write_only=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def validate_username(self, value):
         value = value.strip().lower()
@@ -46,3 +47,19 @@ class ProfileUpdateSerializer(serializers.Serializer):
         if value not in AVATAR_COLORS:
             raise serializers.ValidationError("invalid_avatar_color")
         return value
+
+
+class UsernameChangeSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=30)
+    current_password = serializers.CharField(max_length=128, write_only=True)
+
+    def validate_username(self, value):
+        value = value.strip().lower()
+        if not USERNAME_PATTERN.fullmatch(value):
+            raise serializers.ValidationError("invalid_username")
+        return value
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(max_length=128, write_only=True)
+    new_password = serializers.CharField(min_length=8, max_length=128, write_only=True)
