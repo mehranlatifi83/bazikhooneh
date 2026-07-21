@@ -27,7 +27,8 @@ else
 fi
 
 setfacl -m "u:${APP_USER}:x" /root
-chown -R "${APP_USER}:${APP_USER}" "${APP_DIR}"
+chown -R root:"${APP_USER}" "${APP_DIR}"
+chmod -R g-w,o-rwx "${APP_DIR}"
 
 if [[ ! -f "${APP_DIR}/.env" ]]; then
   db_password="$(openssl rand -hex 32)"

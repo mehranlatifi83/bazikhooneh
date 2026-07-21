@@ -17,6 +17,7 @@ TimeoutStopSec=20
 KillSignal=SIGTERM
 PrivateTmp=true
 ProtectSystem=full
+ProtectHome=read-only
 NoNewPrivileges=true
 
 [Install]
