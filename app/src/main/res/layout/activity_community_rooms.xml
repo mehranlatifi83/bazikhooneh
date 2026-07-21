@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="@color/screen_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/community_rooms_description" android:textSize="17sp"
+            android:textColor="@color/text_secondary" />
+        <EditText android:id="@+id/community_title" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="20dp"
+            android:hint="@string/community_room_name" android:maxLength="80" />
+        <Button android:id="@+id/community_create" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="56dp"
+            android:text="@string/community_create_room" android:textAllCaps="false" />
+        <EditText android:id="@+id/community_code" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="20dp"
+            android:hint="@string/room_code_hint" android:maxLength="6"
+            android:inputType="textCapCharacters" />
+        <Button android:id="@+id/community_join" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="56dp"
+            android:text="@string/join_room" android:textAllCaps="false" />
+        <Button android:id="@+id/community_quick_match" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="56dp" android:layout_marginTop="12dp"
+            android:text="@string/quick_match" android:textAllCaps="false" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="28dp" android:text="@string/community_your_rooms"
+            android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+        <LinearLayout android:id="@+id/community_rooms_list" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical" />
+        <ProgressBar android:id="@+id/community_progress" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp" android:visibility="gone" />
+        <TextView android:id="@+id/community_status" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="48dp"
+            android:layout_marginTop="12dp" android:gravity="center" />
+    </LinearLayout>
+</ScrollView>

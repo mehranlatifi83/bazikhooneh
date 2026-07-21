@@ -21,6 +21,9 @@
         <Button android:id="@+id/open_profile" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="28dp" android:minHeight="56dp"
             android:text="@string/profile_title" android:textAllCaps="false" />
+        <Button android:id="@+id/open_community_rooms" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="64dp"
+            android:text="@string/open_community_rooms" android:textAllCaps="false" />
         <Button android:id="@+id/open_settings" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
             android:text="@string/settings_title" android:textAllCaps="false" />

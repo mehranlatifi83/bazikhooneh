@@ -90,6 +90,10 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         )
         if action_id:
             self.action_ids.append(action_id)
+        community = await self._record_community_event(content["action"], state)
+        if community:
+            await self.channel_layer.group_send(community["group"], {
+                "type": "community.event", "message": community["message"]})
 
     async def game_state(self, event):
         await self.send_json(
@@ -199,6 +203,20 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 if match:match.finish(room.outcome_reason,match.o_account if player.symbol=="X" else match.x_account)
             return room.public_state()
 
+    @database_sync_to_async
+    def _record_community_event(self, action, state):
+        from .models import CommunityEvent, CommunityGameSession
+        session = CommunityGameSession.objects.filter(tic_tac_toe_room__code=self.room_code).select_related(
+            "room").first()
+        if not session:
+            return None
+        event = CommunityEvent.objects.create(room=session.room, actor=self.player.account,
+            kind="game_action", payload={"game_key": session.game_key, "action": action,
+                                         "state": state, "session_id": session.id})
+        return {"group": f"community_{session.room.code}", "message": {
+            "event": "game_event", "id": event.id, "kind": event.kind,
+            "payload": event.payload, "created_at": event.created_at.isoformat()}}
+
 
 class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
@@ -240,4 +258,11 @@ class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
             if state["winner"]>=0:
                 room.state="finished";match=LudoMatch.objects.filter(room=room,finished_at__isnull=True).first();winner_seat=room.seats.filter(color=state["winner"]).first()
                 if match:match.winner=winner_seat.account if winner_seat else None;match.finished_at=timezone.now();match.save()
-            room.save();return ludo_payload(room)
+            room.save();payload=ludo_payload(room)
+            from .models import CommunityEvent,CommunityGameSession
+            session=CommunityGameSession.objects.filter(ludo_room=room).select_related("room").first()
+            if session:
+                CommunityEvent.objects.create(room=session.room,actor=self.seat.account,kind="game_action",
+                    payload={"game_key":"ludo","action":{"type":kind,"piece":content.get("piece")},
+                             "events":state.get("events",[]),"session_id":session.id})
+            return payload

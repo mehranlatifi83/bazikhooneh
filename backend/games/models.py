@@ -223,3 +223,185 @@ class LudoMatch(models.Model):
     participants=models.ManyToManyField("accounts.Account",related_name="ludo_matches")
     winner=models.ForeignKey("accounts.Account",on_delete=models.PROTECT,null=True,blank=True,related_name="ludo_matches_won")
     started_at=models.DateTimeField(auto_now_add=True);finished_at=models.DateTimeField(null=True,blank=True)
+
+
+class CommunityRoom(models.Model):
+    """A persistent social room that can host many consecutive games."""
+
+    class Privacy(models.TextChoices):
+        PUBLIC = "public", "Public"
+        PRIVATE = "private", "Private"
+
+    class JoinPolicy(models.TextChoices):
+        OPEN = "open", "Open"
+        REQUEST = "request", "Request approval"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=6, unique=True, db_index=True)
+    title = models.CharField(max_length=80)
+    owner = models.ForeignKey("accounts.Account", on_delete=models.PROTECT,
+                              related_name="owned_community_rooms")
+    privacy = models.CharField(max_length=12, choices=Privacy.choices, default=Privacy.PRIVATE)
+    join_policy = models.CharField(max_length=12, choices=JoinPolicy.choices, default=JoinPolicy.OPEN)
+    max_members = models.PositiveSmallIntegerField(default=16)
+    is_closed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def create_unique(cls, owner, title=""):
+        for _ in range(20):
+            code = generate_room_code()
+            if not cls.objects.filter(code=code).exists():
+                room = cls.objects.create(code=code, owner=owner,
+                                          title=title.strip()[:80] or f"Room {code}")
+                CommunityMembership.objects.create(room=room, account=owner, role="owner")
+                return room
+        raise RuntimeError("Could not generate a unique community room code")
+
+
+class CommunityMembership(models.Model):
+    class Role(models.TextChoices):
+        OWNER = "owner", "Owner"
+        ADMIN = "admin", "Admin"
+        MEMBER = "member", "Member"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        LEFT = "left", "Left"
+        BANNED = "banned", "Banned"
+
+    room = models.ForeignKey(CommunityRoom, on_delete=models.CASCADE, related_name="memberships")
+    account = models.ForeignKey("accounts.Account", on_delete=models.CASCADE,
+                                related_name="community_memberships")
+    role = models.CharField(max_length=10, choices=Role.choices, default=Role.MEMBER)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    chat_muted_until = models.DateTimeField(null=True, blank=True)
+    call_banned = models.BooleanField(default=False)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("room", "account"),
+                                                name="unique_community_membership")]
+
+    @property
+    def can_moderate(self):
+        return self.role in (self.Role.OWNER, self.Role.ADMIN)
+
+
+class CommunityJoinRequest(models.Model):
+    room = models.ForeignKey(CommunityRoom, on_delete=models.CASCADE, related_name="join_requests")
+    account = models.ForeignKey("accounts.Account", on_delete=models.CASCADE,
+                                related_name="community_join_requests")
+    status = models.CharField(max_length=12, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("room", "account"),
+                                                name="unique_community_join_request")]
+
+
+class CommunityMessage(models.Model):
+    room = models.ForeignKey(CommunityRoom, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey("accounts.Account", on_delete=models.PROTECT,
+                               related_name="community_messages")
+    text = models.CharField(max_length=2000)
+    reply_to = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL,
+                                 related_name="replies")
+    edited_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at", "id")
+
+
+class CommunityEvent(models.Model):
+    room = models.ForeignKey(CommunityRoom, on_delete=models.CASCADE, related_name="events")
+    actor = models.ForeignKey("accounts.Account", null=True, blank=True, on_delete=models.SET_NULL)
+    kind = models.CharField(max_length=40, db_index=True)
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at", "id")
+
+
+class CommunityGameSession(models.Model):
+    room = models.ForeignKey(CommunityRoom, on_delete=models.CASCADE, related_name="game_sessions")
+    game_key = models.CharField(max_length=40, db_index=True)
+    created_by = models.ForeignKey("accounts.Account", on_delete=models.PROTECT)
+    state = models.CharField(max_length=16, default="waiting")
+    tic_tac_toe_room = models.OneToOneField(Room, null=True, blank=True,
+                                            on_delete=models.SET_NULL, related_name="community_session")
+    ludo_room = models.OneToOneField(LudoRoom, null=True, blank=True,
+                                     on_delete=models.SET_NULL, related_name="community_session")
+    created_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+
+class CommunityCall(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        ENDED = "ended", "Ended"
+
+    class MicPolicy(models.TextChoices):
+        OPEN = "open", "Open"
+        REQUEST = "request", "Request permission"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    room = models.ForeignKey(CommunityRoom, on_delete=models.CASCADE, related_name="calls")
+    creator = models.ForeignKey("accounts.Account", on_delete=models.PROTECT,
+                                related_name="created_community_calls")
+    title = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.ACTIVE)
+    mic_policy = models.CharField(max_length=12, choices=MicPolicy.choices, default=MicPolicy.OPEN)
+    max_participants = models.PositiveSmallIntegerField(default=8)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+
+class CommunityCallParticipant(models.Model):
+    class Status(models.TextChoices):
+        JOINED = "joined", "Joined"
+        LEFT = "left", "Left"
+        KICKED = "kicked", "Kicked"
+
+    call = models.ForeignKey(CommunityCall, on_delete=models.CASCADE, related_name="participants")
+    account = models.ForeignKey("accounts.Account", on_delete=models.CASCADE,
+                                related_name="community_call_participations")
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.JOINED)
+    mic_enabled = models.BooleanField(default=True)
+    can_speak = models.BooleanField(default=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    left_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("call", "account"),
+                                                name="unique_community_call_participant")]
+
+
+class CommunitySpeakRequest(models.Model):
+    call = models.ForeignKey(CommunityCall, on_delete=models.CASCADE, related_name="speak_requests")
+    account = models.ForeignKey("accounts.Account", on_delete=models.CASCADE)
+    status = models.CharField(max_length=12, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("call", "account"),
+                                                name="unique_community_speak_request")]
+
+
+class MatchmakingTicket(models.Model):
+    account = models.OneToOneField("accounts.Account", on_delete=models.CASCADE,
+                                   related_name="matchmaking_ticket")
+    game_key = models.CharField(max_length=40, db_index=True)
+    status = models.CharField(max_length=12, default="waiting", db_index=True)
+    matched_room = models.ForeignKey(CommunityRoom, null=True, blank=True,
+                                     on_delete=models.SET_NULL, related_name="matchmaking_tickets")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

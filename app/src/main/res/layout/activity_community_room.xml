@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="16dp"
+    android:background="@color/screen_background">
+    <TextView android:id="@+id/community_room_header" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:textSize="22sp" android:textStyle="bold"
+        android:accessibilityHeading="true" />
+    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:id="@+id/community_start_call" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="@string/start_voice_call"
+                android:textAllCaps="false" />
+            <Button android:id="@+id/community_join_call" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="@string/join_voice_call"
+                android:textAllCaps="false" />
+            <Button android:id="@+id/community_start_tic" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="@string/start_tic_in_room"
+                android:textAllCaps="false" />
+            <Button android:id="@+id/community_start_ludo" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:text="@string/start_ludo_in_room"
+                android:textAllCaps="false" />
+        </LinearLayout>
+    </HorizontalScrollView>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:text="@string/community_members"
+        android:textStyle="bold" android:accessibilityHeading="true" />
+    <LinearLayout android:id="@+id/community_members_list" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="vertical" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:text="@string/community_chat"
+        android:textStyle="bold" android:accessibilityHeading="true" />
+    <ScrollView android:id="@+id/community_chat_scroll" android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+        <LinearLayout android:id="@+id/community_messages_list" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical" />
+    </ScrollView>
+    <TextView android:id="@+id/community_room_status" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="32dp"
+        android:accessibilityLiveRegion="polite" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText android:id="@+id/community_message_input" android:layout_width="0dp"
+            android:layout_height="wrap_content" android:layout_weight="1"
+            android:hint="@string/community_message_hint" android:maxLength="2000" />
+        <Button android:id="@+id/community_send" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:minWidth="72dp"
+            android:text="@string/send" android:textAllCaps="false" />
+    </LinearLayout>
+</LinearLayout>

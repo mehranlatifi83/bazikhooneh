@@ -114,6 +114,18 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@bazikhooneh.local
 EMAIL_DELIVERY_ENABLED = os.getenv("EMAIL_DELIVERY_ENABLED", "true" if DEBUG else "false").lower() == "true"
 ONLINE_RECONNECT_GRACE_SECONDS = int(os.getenv("ONLINE_RECONNECT_GRACE_SECONDS", "60"))
 
+TURN_HOST = os.environ.get("TURN_HOST", "91.107.131.14")
+TURN_USERNAME = os.environ.get("TURN_USERNAME", "")
+TURN_PASSWORD = os.environ.get("TURN_PASSWORD", "")
+WEBRTC_ICE_SERVERS = [{"urls": [f"stun:{TURN_HOST}:3478"]}]
+if TURN_USERNAME and TURN_PASSWORD:
+    WEBRTC_ICE_SERVERS.append({
+        "urls": [f"turn:{TURN_HOST}:3478?transport=udp",
+                 f"turn:{TURN_HOST}:3478?transport=tcp"],
+        "username": TURN_USERNAME,
+        "credential": TURN_PASSWORD,
+    })
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "false").lower() == "true"

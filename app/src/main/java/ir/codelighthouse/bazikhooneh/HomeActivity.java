@@ -30,6 +30,11 @@ public final class HomeActivity extends Activity {
         });
         findViewById(R.id.open_settings).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsActivity.class)));
+        findViewById(R.id.open_community_rooms).setOnClickListener(v -> {
+            Class<?> destination = new SessionStore(this).isSignedIn()
+                    ? CommunityRoomsActivity.class : LoginActivity.class;
+            startActivity(new Intent(this, destination));
+        });
         findViewById(R.id.open_guide).setOnClickListener(v ->
                 startActivity(new Intent(this, GuideActivity.class)));
         findViewById(R.id.open_friends).setOnClickListener(v -> {

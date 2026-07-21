@@ -239,4 +239,44 @@
     <string name="ludo_capture_target_opportunity">Piece %1$d can capture piece %2$d belonging to %3$s.</string>
     <string name="ludo_captured_piece">Piece %2$d belonging to %1$s was captured.</string>
     <string name="ludo_last_turn_log">Last turn report:\n%1$s</string>
+    <string name="community_rooms_title">Rooms</string>
+    <string name="community_room_title">Room</string>
+    <string name="community_rooms_description">Create a persistent room for chatting, optional calls, and playing different games together.</string>
+    <string name="community_room_name">Room name</string>
+    <string name="community_create_room">Create room</string>
+    <string name="community_your_rooms">Your rooms</string>
+    <string name="community_no_rooms">You have not joined a room yet.</string>
+    <string name="community_room_item">%1$s\nCode: %2$s\n%3$d members</string>
+    <string name="community_members">Members</string>
+    <string name="community_member_item">%1$s, @%2$s, %3$s</string>
+    <string name="community_chat">Room chat</string>
+    <string name="community_message_hint">Write a message</string>
+    <string name="community_message_item">%1$s: %2$s</string>
+    <string name="send">Send</string>
+    <string name="start_voice_call">Start voice call</string>
+    <string name="join_voice_call">Join voice call</string>
+    <string name="start_tic_in_room">Play tic-tac-toe</string>
+    <string name="start_ludo_in_room">Play Ludo</string>
+    <string name="voice_call_title">Voice call</string>
+    <string name="call_connecting">Connecting to the call…</string>
+    <string name="call_connected">Call connected</string>
+    <string name="call_reconnecting">Connection lost. Reconnecting…</string>
+    <string name="call_participant_joined">%1$s joined the call.</string>
+    <string name="call_participant_left">%1$s left the call.</string>
+    <string name="call_participant_item">%1$s, microphone %2$s</string>
+    <string name="microphone_on">on</string><string name="microphone_off">off</string>
+    <string name="mute_microphone">Mute microphone</string><string name="unmute_microphone">Unmute microphone</string>
+    <string name="use_speaker">Use speaker</string><string name="use_earpiece">Use earpiece</string>
+    <string name="raise_hand">Request to speak</string><string name="leave_call">Leave call</string>
+    <string name="call_permission_required">Microphone permission is required for calls.</string>
+    <string name="call_force_muted">A room administrator muted your microphone.</string>
+    <string name="call_kicked">You were removed from the call.</string>
+    <string name="room_connected">Connected to room.</string>
+    <string name="room_disconnected">Room connection was interrupted.</string>
+    <string name="open_community_rooms">Rooms and group play</string>
+    <string name="mute_room_chat">Mute room chat</string><string name="ban_from_call">Ban from calls</string>
+    <string name="ban_from_room">Ban from room</string><string name="make_room_admin">Make room administrator</string>
+    <string name="remove_room_admin">Remove administrator role</string><string name="force_mute">Force mute</string>
+    <string name="allow_to_speak">Allow to speak</string><string name="remove_from_call">Remove from call</string>
+    <string name="quick_match">Quick match: tic-tac-toe</string><string name="searching_for_players">Searching for another player…</string>
 </resources>

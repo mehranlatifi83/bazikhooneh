@@ -239,4 +239,44 @@
     <string name="ludo_capture_target_opportunity">مهره %1$d می‌تواند مهره %2$d متعلق به %3$s را بزند.</string>
     <string name="ludo_captured_piece">مهره %2$d متعلق به %1$s زده شد.</string>
     <string name="ludo_last_turn_log">گزارش آخرین نوبت:\n%1$s</string>
+    <string name="community_rooms_title">اتاق‌ها</string>
+    <string name="community_room_title">اتاق</string>
+    <string name="community_rooms_description">یک اتاق ماندگار برای گفتگو، تماس اختیاری و انجام بازی‌های مختلف با همان افراد بسازید.</string>
+    <string name="community_room_name">نام اتاق</string>
+    <string name="community_create_room">ساخت اتاق</string>
+    <string name="community_your_rooms">اتاق‌های شما</string>
+    <string name="community_no_rooms">هنوز عضو اتاقی نشده‌اید.</string>
+    <string name="community_room_item">%1$s\nکد: %2$s\n%3$d عضو</string>
+    <string name="community_members">اعضای اتاق</string>
+    <string name="community_member_item">%1$s، نام کاربری %2$s، نقش %3$s</string>
+    <string name="community_chat">گفتگوی اتاق</string>
+    <string name="community_message_hint">پیام خود را بنویسید</string>
+    <string name="community_message_item">%1$s: %2$s</string>
+    <string name="send">ارسال</string>
+    <string name="start_voice_call">شروع تماس صوتی</string>
+    <string name="join_voice_call">پیوستن به تماس صوتی</string>
+    <string name="start_tic_in_room">بازی دوز</string>
+    <string name="start_ludo_in_room">بازی منچ</string>
+    <string name="voice_call_title">تماس صوتی</string>
+    <string name="call_connecting">در حال اتصال به تماس…</string>
+    <string name="call_connected">تماس برقرار است</string>
+    <string name="call_reconnecting">ارتباط قطع شد؛ در حال اتصال دوباره…</string>
+    <string name="call_participant_joined">%1$s به تماس پیوست.</string>
+    <string name="call_participant_left">%1$s تماس را ترک کرد.</string>
+    <string name="call_participant_item">%1$s، میکروفون %2$s</string>
+    <string name="microphone_on">روشن</string><string name="microphone_off">خاموش</string>
+    <string name="mute_microphone">خاموش کردن میکروفون</string><string name="unmute_microphone">روشن کردن میکروفون</string>
+    <string name="use_speaker">پخش از بلندگو</string><string name="use_earpiece">پخش از گوشی</string>
+    <string name="raise_hand">درخواست اجازه صحبت</string><string name="leave_call">ترک تماس</string>
+    <string name="call_permission_required">برای تماس باید دسترسی میکروفون را فعال کنید.</string>
+    <string name="call_force_muted">مدیر اتاق میکروفون شما را خاموش کرد.</string>
+    <string name="call_kicked">مدیر شما را از تماس خارج کرد.</string>
+    <string name="room_connected">به اتاق متصل شدید.</string>
+    <string name="room_disconnected">ارتباط اتاق قطع شد.</string>
+    <string name="open_community_rooms">اتاق‌ها و بازی گروهی</string>
+    <string name="mute_room_chat">بی‌صدا کردن در گفتگو</string><string name="ban_from_call">محروم کردن از تماس‌ها</string>
+    <string name="ban_from_room">مسدود کردن از اتاق</string><string name="make_room_admin">تبدیل به مدیر اتاق</string>
+    <string name="remove_room_admin">گرفتن نقش مدیر</string><string name="force_mute">خاموش کردن اجباری میکروفون</string>
+    <string name="allow_to_speak">دادن اجازه صحبت</string><string name="remove_from_call">حذف از تماس</string>
+    <string name="quick_match">بازی سریع دوز</string><string name="searching_for_players">در حال جست‌وجوی بازیکن…</string>
 </resources>
