@@ -2,12 +2,16 @@ from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
 from rest_framework.test import APITestCase
 from django.core.cache import cache
+from django.test import override_settings
 
 from config.asgi import application
 from games.models import CommunityMembership, CommunityRoom
 
 
 class CommunityRoomApiTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+
     def register(self, username):
         response = self.client.post("/api/v1/accounts/register/", {
             "username": username, "display_name": username.title(),
@@ -75,6 +79,20 @@ class CommunityRoomApiTests(APITestCase):
         self.authenticate(member_token)
         self.assertEqual(403, self.client.post("/api/v1/community/rooms/join/", {
             "code": code}, format="json").status_code)
+
+    @override_settings(TURN_HOST="turn.example.test", TURN_SHARED_SECRET="test-secret",
+                       TURN_USERNAME="", TURN_PASSWORD="")
+    def test_ice_credentials_are_short_lived_and_user_specific(self):
+        token = self.register("turn_user")
+        self.authenticate(token)
+        response = self.client.get("/api/v1/webrtc/ice-servers/")
+        self.assertEqual(200, response.status_code)
+        turn = response.data["ice_servers"][1]
+        expiry, account_id = turn["username"].split(":", 1)
+        self.assertGreater(int(expiry), 0)
+        self.assertTrue(account_id)
+        self.assertTrue(turn["credential"])
+        self.assertIn("transport=udp", turn["urls"][0])
 
 
 class CommunityRoomWebSocketTests(APITestCase):

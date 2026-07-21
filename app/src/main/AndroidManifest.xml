@@ -29,7 +29,7 @@
         <activity android:name=".RegisterActivity" android:exported="false" android:label="@string/account_register" />
         <activity android:name=".CommunityRoomsActivity" android:exported="false" android:label="@string/community_rooms_title" />
         <activity android:name=".CommunityRoomActivity" android:exported="false" android:label="@string/community_room_title" />
-        <activity android:name=".VoiceCallActivity" android:exported="false" android:label="@string/voice_call_title" />
+        <activity android:name=".VoiceCallActivity" android:exported="false" android:label="@string/voice_call_title" android:launchMode="singleTop" />
         <activity android:name=".UsernameChangeActivity" android:exported="false" android:label="@string/change_username_title" />
         <activity android:name=".EmailVerificationActivity" android:exported="false" android:label="@string/email_security_title" />
         <activity android:name=".PasswordChangeActivity" android:exported="false" android:label="@string/change_password_title" />

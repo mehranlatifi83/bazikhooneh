@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import hmac
 import time
 from collections import deque
 from datetime import timedelta
@@ -14,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.models import AccountToken, hash_token
+from accounts.models import AccountNotification, AccountToken, hash_token
 from .ludo_engine import initial_state
 from .models import (
     CommunityCall, CommunityCallParticipant, CommunityEvent, CommunityGameSession,
@@ -93,6 +96,32 @@ def broadcast(room, event, payload):
         f"community_{room.code}", {"type": "community.event", "message": {
             "event": event, **payload,
         }})
+
+
+def ice_server_payload(account):
+    servers = [{"urls": [f"stun:{settings.TURN_HOST}:3478"]}]
+    if settings.TURN_SHARED_SECRET:
+        username = f"{int(time.time()) + 3600}:{account.id}"
+        digest = hmac.new(settings.TURN_SHARED_SECRET.encode(), username.encode(),
+                          hashlib.sha1).digest()
+        credential = base64.b64encode(digest).decode()
+    elif settings.TURN_USERNAME and settings.TURN_PASSWORD:
+        username, credential = settings.TURN_USERNAME, settings.TURN_PASSWORD
+    else:
+        return servers
+    servers.append({"urls": [f"turn:{settings.TURN_HOST}:3478?transport=udp",
+                              f"turn:{settings.TURN_HOST}:3478?transport=tcp"],
+                    "username": username, "credential": credential})
+    return servers
+
+
+def notify_room_members(room, actor, kind, title, body, data):
+    recipients = room.memberships.filter(status="active").exclude(
+        account=actor).values_list("account_id", flat=True)
+    AccountNotification.objects.bulk_create([
+        AccountNotification(account_id=account_id, kind=kind, title=title,
+                            body=body, data=data) for account_id in recipients
+    ])
 
 
 class CommunityRoomsView(APIView):
@@ -371,6 +400,9 @@ class CommunityCallView(APIView):
         CommunityCallParticipant.objects.create(call=call, account=request.user, can_speak=True)
         CommunityEvent.objects.create(room=room, actor=request.user, kind="call_started",
                                       payload={"call_id": str(call.id)})
+        notify_room_members(room, request.user, "room_call", "Voice call started",
+                            f"{request.user.display_name} started a voice call in {room.title}",
+                            {"room_code": room.code, "call_id": str(call.id)})
         transaction.on_commit(lambda: broadcast(room, "call_started", {"call": call_payload(call)}))
         return Response(call_payload(call), status=201)
 
@@ -460,6 +492,9 @@ class CommunityGameView(APIView):
             return Response({"error": "unsupported_game"}, status=400)
         CommunityEvent.objects.create(room=room, actor=request.user, kind="game_selected",
                                       payload={"game_key": game_key, "session_id": session.id})
+        notify_room_members(room, request.user, "room_game", "A game is ready",
+                            f"{request.user.display_name} selected a game in {room.title}",
+                            {"room_code": room.code, "game_key": game_key})
         transaction.on_commit(lambda: broadcast(room, "game_selected", {
             "game_key": game_key, "session_id": session.id,
             "legacy_room_code": legacy.code}))
@@ -470,7 +505,7 @@ class IceServersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"ice_servers": settings.WEBRTC_ICE_SERVERS})
+        return Response({"ice_servers": ice_server_payload(request.user)})
 
 
 class MatchmakingView(APIView):
@@ -592,7 +627,7 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
                 call = await self._join_call()
                 self.joined_call = True
                 await self.send_json({"event": "call_state", "call": call,
-                                      "ice_servers": settings.WEBRTC_ICE_SERVERS})
+                                      "ice_servers": ice_server_payload(self.membership.account)})
                 await self.channel_layer.group_send(self.group_name, {"type": "community.event",
                     "message": {"event": "call_participant_joined", "call": call,
                                 "account_id": self.account_id}})

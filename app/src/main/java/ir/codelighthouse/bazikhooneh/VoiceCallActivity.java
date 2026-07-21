@@ -23,6 +23,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
     private final Map<String, String> names = new HashMap<>();
     private final Map<String, String> usernames = new HashMap<>();
     private final Map<String, Boolean> micStates = new HashMap<>();
+    private final Map<String, List<IceCandidate>> pendingCandidates = new HashMap<>();
     private CommunityClient client;
     private PeerConnectionFactory factory;
     private AudioSource audioSource;
@@ -30,6 +31,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
     private String code, ownId, ownUsername;
     private boolean micEnabled = true, speakerEnabled = true, leaving;
     private boolean moderator;
+    private boolean reconnectScheduled;
     private long startedAt;
     private List<PeerConnection.IceServer> iceServers = new ArrayList<>();
     private TextView status, timer;
@@ -73,8 +75,8 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
         announce(getString(R.string.call_connecting));connect();handler.post(timerTask);
     }
 
-    private void connect(){if(leaving)return;client.connect(code,this);}
-    @Override public void onOpen(){client.joinCall();}
+    private void connect(){if(leaving)return;reconnectScheduled=false;client.connect(code,this);}
+    @Override public void onOpen(){reconnectScheduled=false;client.joinCall();}
     @Override public void onEvent(JSONObject event){runOnUiThread(()->handle(event));}
     private void handle(JSONObject event){String type=event.optString("event");
         if("call_state".equals(type)){readIce(event.optJSONArray("ice_servers"));JSONObject call=event.optJSONObject("call");
@@ -123,11 +125,17 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
         if("offer".equals(kind)){if(pc==null)pc=createPeer(from,false);if(pc==null)return;
             SessionDescription remote=new SessionDescription(SessionDescription.Type.OFFER,payload.optString("sdp"));
             PeerConnection finalPc=pc;pc.setRemoteDescription(new SimpleSdp(){@Override public void onSetSuccess(){
-                finalPc.createAnswer(new Sdp(from,finalPc,false),new MediaConstraints());}},remote);
-        }else if("answer".equals(kind)&&pc!=null)pc.setRemoteDescription(new SimpleSdp(),new SessionDescription(
+                flushCandidates(from,finalPc);finalPc.createAnswer(new Sdp(from,finalPc,false),new MediaConstraints());}},remote);
+        }else if("answer".equals(kind)&&pc!=null){PeerConnection finalPc=pc;pc.setRemoteDescription(new SimpleSdp(){
+            @Override public void onSetSuccess(){flushCandidates(from,finalPc);}},new SessionDescription(
                 SessionDescription.Type.ANSWER,payload.optString("sdp")));
-        else if("ice_candidate".equals(kind)&&pc!=null)pc.addIceCandidate(new IceCandidate(
-                payload.optString("sdpMid"),payload.optInt("sdpMLineIndex"),payload.optString("candidate")));}
+        }else if("ice_candidate".equals(kind)){IceCandidate candidate=new IceCandidate(
+                payload.optString("sdpMid"),payload.optInt("sdpMLineIndex"),payload.optString("candidate"));
+            if(pc!=null&&pc.getRemoteDescription()!=null)pc.addIceCandidate(candidate);
+            else pendingCandidates.computeIfAbsent(from,k->new ArrayList<>()).add(candidate);}}
+
+    private void flushCandidates(String remote,PeerConnection pc){List<IceCandidate> values=pendingCandidates.remove(remote);
+        if(values!=null)for(IceCandidate candidate:values)pc.addIceCandidate(candidate);}
 
     private final class Observer implements PeerConnection.Observer{private final String remote;Observer(String remote){this.remote=remote;}
         @Override public void onIceCandidate(IceCandidate c){JSONObject p=new JSONObject();try{p.put("sdpMid",c.sdpMid);p.put("sdpMLineIndex",c.sdpMLineIndex);p.put("candidate",c.sdp);client.sendSignal(remote,"ice_candidate",p);}catch(Exception ignored){}}
@@ -146,7 +154,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
     private static class SimpleSdp implements SdpObserver{public void onCreateSuccess(SessionDescription s){}public void onSetSuccess(){}
         public void onCreateFailure(String s){}public void onSetFailure(String s){}}
     private void removePeer(String id,boolean announce){PeerConnection pc=peers.remove(id);if(pc!=null){pc.close();pc.dispose();}
-        String name=names.remove(id);usernames.remove(id);micStates.remove(id);renderParticipants();if(announce&&name!=null)announce(getString(R.string.call_participant_left,name));}
+        pendingCandidates.remove(id);String name=names.remove(id);usernames.remove(id);micStates.remove(id);renderParticipants();if(announce&&name!=null)announce(getString(R.string.call_participant_left,name));}
     private void renderParticipants(){participants.removeAllViews();for(String id:names.keySet()){TextView row=new TextView(this);
         row.setText(getString(R.string.call_participant_item,names.get(id),getString(Boolean.TRUE.equals(micStates.get(id))?R.string.microphone_on:R.string.microphone_off)));
         row.setTextSize(18);row.setPadding(12,12,12,12);row.setFocusable(true);
@@ -162,8 +170,11 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
     private void announce(String text){status.setText(text);status.announceForAccessibility(text);}
     private long parseTime(String value){try{return java.time.Instant.parse(value).toEpochMilli();}catch(Exception ignored){return System.currentTimeMillis();}}
     private final Runnable timerTask=new Runnable(){public void run(){if(startedAt>0){long s=(System.currentTimeMillis()-startedAt)/1000;timer.setText(String.format(Locale.getDefault(),"%02d:%02d",s/60,s%60));}handler.postDelayed(this,1000);}};
-    @Override public void onClosed(){if(!leaving){runOnUiThread(()->announce(getString(R.string.call_reconnecting)));handler.postDelayed(this::connect,1500);}}
-    @Override public void onError(String error){if(!leaving){runOnUiThread(()->announce(getString(R.string.call_reconnecting)));handler.postDelayed(this::connect,2000);}}
+    private void scheduleReconnect(){if(leaving||reconnectScheduled)return;reconnectScheduled=true;runOnUiThread(()->{
+        announce(getString(R.string.call_reconnecting));for(String id:new ArrayList<>(peers.keySet()))removePeer(id,false);
+        handler.postDelayed(this::connect,1500);});}
+    @Override public void onClosed(){scheduleReconnect();}
+    @Override public void onError(String error){scheduleReconnect();}
     private void leave(){if(leaving)return;leaving=true;client.leaveCall();handler.postDelayed(this::finish,150);}
     @Override public void onBackPressed(){leave();}
     @Override protected void onDestroy(){leaving=true;handler.removeCallbacksAndMessages(null);if(client!=null)client.disconnect();

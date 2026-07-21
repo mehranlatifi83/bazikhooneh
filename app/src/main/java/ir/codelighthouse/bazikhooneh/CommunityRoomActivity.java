@@ -16,6 +16,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private String code;
     private boolean moderator;
     private boolean callActive;
+    private boolean startingGame;
     private LinearLayout members, messages;
     private TextView status;
     private final Handler reconnectHandler = new Handler(Looper.getMainLooper());
@@ -95,8 +96,8 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private void startCall(){client.startCall(code,false,(data,error)->runOnUiThread(()->{
         if(error!=null)show(error);else openCall();}));}
     private void openCall(){startActivity(new Intent(this,VoiceCallActivity.class).putExtra("room_code",code));}
-    private void startGame(String key){client.startGame(code,key,(data,error)->runOnUiThread(()->{
-        if(error!=null){show(error);return;} JSONObject player=data.optJSONObject("player");
+    private void startGame(String key){startingGame=true;client.startGame(code,key,(data,error)->runOnUiThread(()->{
+        if(error!=null){startingGame=false;show(error);return;} JSONObject player=data.optJSONObject("player");
         if("ludo".equals(key))openLudo(player);else openTic(player);}));}
     private void openTic(JSONObject player){if(player==null)return;JSONObject game=player.optJSONObject("game");
         getSharedPreferences("online_session",MODE_PRIVATE).edit().putString("room",game.optString("room_code"))
@@ -107,7 +108,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
                 .putInt("color",player.optInt("color")).putString("token",player.optString("reconnect_token")).apply();
         startActivity(new Intent(this,LudoOnlineActivity.class));}
     private void joinSelectedGame(JSONObject event){String key=event.optString("game_key"),legacy=event.optString("legacy_room_code");
-        if(moderator||legacy.isEmpty())return; CommunityClient.Callback cb=(data,error)->runOnUiThread(()->{
+        if(startingGame){startingGame=false;return;} if(legacy.isEmpty())return; CommunityClient.Callback cb=(data,error)->runOnUiThread(()->{
             if(error!=null)show(error);else if("ludo".equals(key))openLudo(data);else openTic(data);});
         if("ludo".equals(key))client.joinLudo(legacy,cb);else client.joinTicTacToe(legacy,cb);}
     private void show(String text){status.setText(text);status.announceForAccessibility(text);}
