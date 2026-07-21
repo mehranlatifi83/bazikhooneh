@@ -12,6 +12,10 @@ def hash_token(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def invite_expiry():
+    return timezone.now() + timedelta(hours=24)
+
+
 class Account(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=30, unique=True, db_index=True)
@@ -98,3 +102,50 @@ class GameInvite(models.Model):
     room_code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(default=invite_expiry)
+
+    @property
+    def is_expired(self):
+        return self.expires_at <= timezone.now()
+
+
+class UserBlock(models.Model):
+    blocker = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="blocks_made")
+    blocked = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="blocks_received")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("blocker", "blocked"), name="unique_user_block")]
+
+
+class UserReport(models.Model):
+    reporter = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="reports_made")
+    reported = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="reports_received")
+    reason = models.CharField(max_length=40)
+    details = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=16, default="open")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class AccountNotification(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="notifications")
+    kind = models.CharField(max_length=32)
+    title = models.CharField(max_length=120)
+    body = models.CharField(max_length=300)
+    data = models.JSONField(default=dict, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+
+class SecurityEvent(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="security_events")
+    event = models.CharField(max_length=40)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)

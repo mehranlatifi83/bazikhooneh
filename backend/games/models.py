@@ -28,6 +28,7 @@ class Room(models.Model):
         CLOSED = "closed", "Closed"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    game_key = models.CharField(max_length=40, default="three_piece_tic_tac_toe", db_index=True)
     code = models.CharField(max_length=6, unique=True, db_index=True)
     state = models.CharField(max_length=16, choices=State.choices, default=State.WAITING)
     board = models.CharField(max_length=9, default=".........")
@@ -94,6 +95,7 @@ class Room(models.Model):
     def public_state(self) -> dict:
         return {
             "room_code": self.code,
+            "game_key": self.game_key,
             "room_state": self.state,
             "version": self.version,
             "rematch_x": self.rematch_x,
@@ -144,6 +146,7 @@ class Player(models.Model):
 class Match(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     room = models.ForeignKey(Room, related_name="matches", on_delete=models.CASCADE)
+    game_key = models.CharField(max_length=40, default="three_piece_tic_tac_toe", db_index=True)
     round_number = models.PositiveIntegerField(default=1)
     x_account = models.ForeignKey(
         "accounts.Account", related_name="matches_as_x", on_delete=models.PROTECT
@@ -172,7 +175,7 @@ class Match(models.Model):
             return None
         round_number = room.matches.count() + 1
         return cls.objects.create(
-            room=room, round_number=round_number,
+            room=room, game_key=room.game_key, round_number=round_number,
             x_account=players["X"].account, o_account=players["O"].account,
         )
 

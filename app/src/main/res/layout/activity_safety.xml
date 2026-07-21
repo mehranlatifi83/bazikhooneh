@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/screen_background">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/safety_description" android:textSize="18sp" />
+  <EditText android:id="@+id/safety_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:hint="@string/account_username" />
+  <Button android:id="@+id/block_user" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/block_user" android:textAllCaps="false" />
+  <EditText android:id="@+id/report_reason" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/report_reason" />
+  <EditText android:id="@+id/report_details" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/report_details" android:maxLength="500" android:minLines="3" />
+  <Button android:id="@+id/report_user" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/report_user" android:textAllCaps="false" />
+  <TextView android:id="@+id/safety_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:accessibilityLiveRegion="polite" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:text="@string/blocked_users" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <LinearLayout android:id="@+id/blocked_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+ </LinearLayout>
+</ScrollView>

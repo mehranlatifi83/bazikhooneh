@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -20,6 +21,9 @@
         <activity android:name=".EmailVerificationActivity" android:exported="false" android:label="@string/email_security_title" />
         <activity android:name=".PasswordChangeActivity" android:exported="false" android:label="@string/change_password_title" />
         <activity android:name=".SessionsActivity" android:exported="false" android:label="@string/sessions_title" />
+        <activity android:name=".DeleteAccountActivity" android:exported="false" android:label="@string/delete_account_title" />
+        <activity android:name=".NotificationsActivity" android:exported="false" android:label="@string/notifications_title" />
+        <activity android:name=".SafetyActivity" android:exported="false" android:label="@string/safety_title" />
         <activity android:name=".FriendsActivity" android:exported="false" android:label="@string/friends_title" />
         <activity android:name=".AccountSecurityActivity" android:exported="false" android:label="@string/account_security_title" />
         <activity android:name=".PasswordResetActivity" android:exported="false" android:label="@string/forgot_password" />

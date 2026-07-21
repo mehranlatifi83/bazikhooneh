@@ -179,4 +179,26 @@
     <string name="use_different_email">استفاده از ایمیل دیگر</string>
     <string name="code_sent_to">کد ارسال‌شده به %1$s را وارد کنید.</string>
     <string name="cancel_action">انصراف</string>
+    <string name="username_format_help">۳ تا ۳۰ نویسه؛ حروف انگلیسی، عدد و زیرخط.</string>
+    <string name="confirm_password">تکرار گذرواژه</string><string name="show_password">نمایش گذرواژه</string>
+    <string name="passwords_do_not_match">دو گذرواژه یکسان نیستند.</string>
+    <string name="setting_reduce_motion">کاهش حرکت و پویانمایی</string>
+    <string name="setting_notifications">اعلان‌های بازی و اجتماعی</string>
+    <string name="setting_detailed_announcements">اعلام جزئیات بازی برای صفحه‌خوان</string>
+    <string name="delete_account_title">حذف حساب</string>
+    <string name="delete_account_warning">این کار حساب شما را برای همیشه غیرفعال و همه دستگاه‌ها را خارج می‌کند. برای تأیید، نام کاربری و گذرواژه فعلی را وارد کنید.</string>
+    <string name="type_username_to_confirm">نام کاربری خود را بنویسید</string>
+    <string name="notifications_title">اعلان‌ها</string><string name="notifications_description">درخواست‌های دوستی، دعوت‌ها و رویدادهای مهم بازی اینجا نمایش داده می‌شوند.</string>
+    <string name="mark_all_read">علامت‌گذاری همه به‌عنوان خوانده‌شده</string><string name="no_notifications">هنوز اعلانی ندارید.</string>
+    <string name="unread_notifications">اعلان‌های خوانده‌نشده: %1$d</string>
+    <string name="friends_list_heading">دوستان</string><string name="requests_heading">درخواست‌ها</string><string name="invites_heading">دعوت‌های بازی</string>
+    <string name="remove_friend">حذف دوست</string><string name="reject_request">رد درخواست</string>
+    <string name="cancel_friend_request">لغو درخواست برای %1$s</string>
+    <string name="username_search_help">برای جست‌وجو حداقل سه نویسه وارد کنید.</string><string name="no_users_found">کاربر مطابقی پیدا نشد.</string>
+    <string name="select_search_result">یک کاربر را از نتیجه جست‌وجو انتخاب کنید.</string><string name="user_search_result">%1$s، نام کاربری %2$s</string>
+    <string name="safety_title">ایمنی و حریم خصوصی</string><string name="safety_description">با مسدودکردن کاربر، ارتباط دوستی و دعوت متوقف می‌شود. همچنین می‌توانید گزارشی برای بررسی مدیران بفرستید.</string>
+    <string name="block_user">مسدودکردن کاربر</string><string name="report_reason">دلیل گزارش</string><string name="report_details">توضیحات بیشتر، اختیاری</string>
+    <string name="report_user">ارسال گزارش</string><string name="blocked_users">کاربران مسدودشده</string><string name="unblock_user">رفع مسدودی %1$s</string>
+    <string name="online_starting_countdown">شروع بازی تا %1$d…</string><string name="online_game_started">بازی شروع شد.</string>
+    <string name="username_remaining_days">%1$d روز باقی مانده</string><string name="username_remaining_hours">%1$d ساعت باقی مانده</string>
 </resources>

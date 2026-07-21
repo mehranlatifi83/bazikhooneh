@@ -5,4 +5,5 @@
  <Button android:id="@+id/open_email_verification" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="60dp" android:text="@string/email_security_title" android:textAllCaps="false" />
  <Button android:id="@+id/open_password_change" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="60dp" android:text="@string/change_password_title" android:textAllCaps="false" />
  <Button android:id="@+id/open_sessions" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="60dp" android:text="@string/sessions_title" android:textAllCaps="false" />
+ <Button android:id="@+id/open_account_delete" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:minHeight="60dp" android:text="@string/delete_account_title" android:textAllCaps="false" />
 </LinearLayout>

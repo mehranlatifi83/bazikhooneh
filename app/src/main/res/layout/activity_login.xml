@@ -13,6 +13,8 @@
         <EditText android:id="@+id/login_password" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:hint="@string/account_password"
             android:inputType="textPassword" android:singleLine="true" />
+        <CheckBox android:id="@+id/login_show_password" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/show_password" />
         <TextView android:id="@+id/login_error" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="8dp"
             android:textColor="@color/piece_x" android:visibility="gone" />

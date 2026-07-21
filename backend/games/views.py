@@ -76,6 +76,7 @@ class MatchHistoryView(APIView):
             results.append({
                 "id": str(match.id),
                 "room_code": match.room.code,
+                "game_key": match.game_key,
                 "round": match.round_number,
                 "symbol": own_symbol,
                 "opponent": {

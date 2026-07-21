@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.CheckBox;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
@@ -28,6 +31,9 @@ public final class LoginActivity extends NavigableActivity {
                 startActivity(new Intent(this, RegisterActivity.class)));
         findViewById(R.id.forgot_password).setOnClickListener(v ->
                 startActivity(new Intent(this, PasswordResetActivity.class)));
+        ((CheckBox)findViewById(R.id.login_show_password)).setOnCheckedChangeListener((button,shown)->{
+            int position=password.getSelectionStart();password.setTransformationMethod(shown?HideReturnsTransformationMethod.getInstance():PasswordTransformationMethod.getInstance());password.setSelection(Math.max(0,position));
+        });
     }
 
     private boolean validBaseFields() {

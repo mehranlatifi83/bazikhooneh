@@ -2,6 +2,7 @@ package ir.codelighthouse.bazikhooneh.online;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 public final class OnlineGameState {
     public final String roomCode;
@@ -14,6 +15,8 @@ public final class OnlineGameState {
     public final boolean rematchX;
     public final boolean rematchO;
     public final String outcomeReason;
+    public final String xDisplayName;
+    public final String oDisplayName;
 
     private OnlineGameState(JSONObject json) throws JSONException {
         roomCode = json.getString("room_code");
@@ -26,6 +29,9 @@ public final class OnlineGameState {
         rematchX = json.optBoolean("rematch_x", false);
         rematchO = json.optBoolean("rematch_o", false);
         outcomeReason = json.optString("outcome_reason", "");
+        String xName="",oName="";JSONArray players=json.optJSONArray("players");
+        for(int i=0;players!=null&&i<players.length();i++){JSONObject player=players.optJSONObject(i);if("X".equals(player.optString("symbol")))xName=player.optString("display_name");else if("O".equals(player.optString("symbol")))oName=player.optString("display_name");}
+        xDisplayName=xName;oDisplayName=oName;
     }
 
     public static OnlineGameState from(JSONObject json) throws JSONException {

@@ -1,34 +1,9 @@
 <resources>
-    <style name="Theme.BaziKhooneh" parent="android:style/Theme.Material">
-        <item name="android:colorAccent">@color/brand_primary</item>
-        <item name="android:windowBackground">@color/screen_background</item>
-        <item name="android:fontFamily">sans</item>
-        <item name="android:navigationBarColor">@color/screen_background</item>
-        <item name="android:statusBarColor">@color/screen_background</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:actionBarStyle">@style/Widget.BaziKhooneh.ActionBar</item>
-    </style>
-
-    <style name="Widget.BaziKhooneh.ActionBar" parent="android:style/Widget.Material.ActionBar.Solid">
-        <item name="android:background">@color/brand_primary</item>
-        <item name="android:titleTextStyle">@style/TextAppearance.BaziKhooneh.ActionBar.Title</item>
-    </style>
-
-    <style name="TextAppearance.BaziKhooneh.ActionBar.Title" parent="android:style/TextAppearance.Material.Widget.ActionBar.Title">
-        <item name="android:textColor">@android:color/white</item>
-    </style>
-
-    <style name="Widget.BaziKhooneh.BoardCell" parent="android:style/Widget.Material.Button">
-        <item name="android:layout_width">92dp</item>
-        <item name="android:layout_height">92dp</item>
-        <item name="android:layout_margin">4dp</item>
-        <item name="android:background">@drawable/board_cell_background</item>
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="android:textSize">36sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:minWidth">48dp</item>
-        <item name="android:minHeight">48dp</item>
-        <item name="android:padding">0dp</item>
-        <item name="android:stateListAnimator">@null</item>
-    </style>
+ <style name="Theme.BaziKhooneh" parent="android:style/Theme.Material">
+  <item name="android:colorAccent">@color/brand_primary</item><item name="android:windowBackground">@color/screen_background</item>
+  <item name="android:fontFamily">sans</item><item name="android:navigationBarColor">@color/screen_background</item>
+  <item name="android:statusBarColor">@color/screen_background</item><item name="android:windowLightStatusBar">false</item>
+  <item name="android:actionBarStyle">@style/Widget.BaziKhooneh.ActionBar</item>
+  <item name="android:buttonStyle">@style/Widget.BaziKhooneh.Button</item><item name="android:editTextStyle">@style/Widget.BaziKhooneh.EditText</item>
+ </style>
 </resources>

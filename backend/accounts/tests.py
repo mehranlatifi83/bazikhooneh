@@ -1,5 +1,6 @@
 from rest_framework.test import APITestCase
 from django.core import mail
+from django.contrib.auth.models import User
 
 from .models import Account, AccountToken
 from games.models import Match, Player, Room
@@ -65,7 +66,8 @@ class AccountApiTests(APITestCase):
         profile = self.client.get("/api/v1/accounts/me/")
         history = self.client.get("/api/v1/matches/")
 
-        self.assertEqual({"played": 1, "wins": 1, "losses": 0}, profile.data["stats"])
+        self.assertEqual(1, profile.data["stats"]["played"])
+        self.assertEqual("three_piece_tic_tac_toe", profile.data["stats"]["by_game"][0]["game_key"])
         self.assertEqual("win", history.data["results"][0]["result"])
         self.assertEqual("opponent", history.data["results"][0]["opponent"]["username"])
 
@@ -134,3 +136,24 @@ class AccountApiTests(APITestCase):
         invited = self.client.post("/api/v1/accounts/invites/", {"username": "first_user"}, format="json")
         self.assertEqual(201, invited.status_code)
         self.assertEqual(6, len(invited.data["game"]["room_code"]))
+
+    def test_django_admin_credentials_create_matching_game_account(self):
+        User.objects.create_superuser("site_admin", "admin@example.com", "admin-password")
+        response=self.client.post("/api/v1/accounts/login/",{"username":"site_admin","password":"admin-password"},format="json")
+        self.assertEqual(200,response.status_code)
+        self.assertTrue(Account.objects.get(username="site_admin").check_password("admin-password"))
+
+    def test_search_reject_remove_block_report_and_notifications(self):
+        first,_=self.authenticated()
+        self.client.credentials()
+        second=self.client.post("/api/v1/accounts/register/",{"username":"second_user","display_name":"Second","password":"second-password"},format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {first.data['access_token']}")
+        self.assertEqual(1,len(self.client.get("/api/v1/accounts/users/search/?q=second").data["results"]))
+        self.client.post("/api/v1/accounts/friends/",{"username":"second_user"},format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {second.data['access_token']}")
+        notification=self.client.get("/api/v1/accounts/notifications/")
+        self.assertEqual(1,notification.data["unread"])
+        request_id=self.client.get("/api/v1/accounts/friends/").data["requests"][0]["request_id"]
+        self.assertEqual(204,self.client.delete(f"/api/v1/accounts/friends/requests/{request_id}/").status_code)
+        self.assertEqual(201,self.client.post("/api/v1/accounts/blocks/",{"username":"first_user"},format="json").status_code)
+        self.assertEqual(201,self.client.post("/api/v1/accounts/reports/",{"username":"first_user","reason":"abuse"},format="json").status_code)

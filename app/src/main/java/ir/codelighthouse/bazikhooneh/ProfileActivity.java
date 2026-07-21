@@ -53,6 +53,8 @@ public final class ProfileActivity extends NavigableActivity {
         findViewById(R.id.profile_logout).setOnClickListener(v -> logout(token));
         findViewById(R.id.profile_security).setOnClickListener(v ->
                 startActivity(new Intent(this, AccountSecurityActivity.class)));
+        findViewById(R.id.profile_safety).setOnClickListener(v ->
+                startActivity(new Intent(this, SafetyActivity.class)));
         client.load();
     }
 

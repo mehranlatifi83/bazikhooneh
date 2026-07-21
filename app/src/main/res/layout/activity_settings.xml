@@ -11,4 +11,10 @@
         android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_large_text" />
     <CheckBox android:id="@+id/setting_high_contrast" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_high_contrast" />
+    <CheckBox android:id="@+id/setting_reduce_motion" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_reduce_motion" />
+    <CheckBox android:id="@+id/setting_notifications" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_notifications" />
+    <CheckBox android:id="@+id/setting_detailed_announcements" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_detailed_announcements" />
 </LinearLayout>

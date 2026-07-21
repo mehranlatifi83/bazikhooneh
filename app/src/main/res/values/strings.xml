@@ -179,4 +179,26 @@
     <string name="use_different_email">Use a different email</string>
     <string name="code_sent_to">Enter the code sent to %1$s.</string>
     <string name="cancel_action">Cancel</string>
+    <string name="username_format_help">3–30 characters: English letters, numbers, and underscore.</string>
+    <string name="confirm_password">Confirm password</string><string name="show_password">Show password</string>
+    <string name="passwords_do_not_match">The two passwords do not match.</string>
+    <string name="setting_reduce_motion">Reduce motion and animations</string>
+    <string name="setting_notifications">Game and social notifications</string>
+    <string name="setting_detailed_announcements">Detailed screen-reader game announcements</string>
+    <string name="delete_account_title">Delete account</string>
+    <string name="delete_account_warning">This permanently disables your account and signs out every device. Type your username and current password to confirm.</string>
+    <string name="type_username_to_confirm">Type your username</string>
+    <string name="notifications_title">Notifications</string><string name="notifications_description">Friend requests, invitations, and important game events appear here.</string>
+    <string name="mark_all_read">Mark all as read</string><string name="no_notifications">No notifications yet.</string>
+    <string name="unread_notifications">Unread notifications: %1$d</string>
+    <string name="friends_list_heading">Friends</string><string name="requests_heading">Requests</string><string name="invites_heading">Game invitations</string>
+    <string name="remove_friend">Remove friend</string><string name="reject_request">Reject request</string>
+    <string name="cancel_friend_request">Cancel request to %1$s</string>
+    <string name="username_search_help">Enter at least three characters to search.</string><string name="no_users_found">No matching users found.</string>
+    <string name="select_search_result">Select a user from the search results.</string><string name="user_search_result">%1$s, @%2$s</string>
+    <string name="safety_title">Safety and privacy</string><string name="safety_description">Block a user to stop friendship and invitation interactions, or submit a report for administrator review.</string>
+    <string name="block_user">Block user</string><string name="report_reason">Reason for report</string><string name="report_details">Additional details (optional)</string>
+    <string name="report_user">Submit report</string><string name="blocked_users">Blocked users</string><string name="unblock_user">Unblock @%1$s</string>
+    <string name="online_starting_countdown">Game starts in %1$d…</string><string name="online_game_started">Game started.</string>
+    <string name="username_remaining_days">%1$d days remaining</string><string name="username_remaining_hours">%1$d hours remaining</string>
 </resources>

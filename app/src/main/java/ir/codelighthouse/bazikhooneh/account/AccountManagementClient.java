@@ -25,6 +25,7 @@ public final class AccountManagementClient {
     public void get(String operation, String path) { request(operation, path, "GET", null); }
     public void post(String operation, String path, JSONObject body) { request(operation, path, "POST", body); }
     public void delete(String operation, String path) { request(operation, path, "DELETE", null); }
+    public void delete(String operation, String path, JSONObject body) { request(operation, path, "DELETE", body); }
     private void request(String operation, String path, String method, JSONObject body) {
         Request.Builder builder = new Request.Builder().url(baseUrl + path);
         if (!token.isEmpty()) builder.header("Authorization", "Bearer " + token);

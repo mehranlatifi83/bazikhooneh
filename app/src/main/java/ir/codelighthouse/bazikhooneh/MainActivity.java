@@ -72,6 +72,7 @@ public final class MainActivity extends NavigableActivity {
     private boolean reconnectAllowed;
     private boolean onlineActionPending;
     private boolean leavingRoom;
+    private long onlineStartAt;
     private String accountToken = "";
     private ToneGenerator toneGenerator;
     private final Runnable reconnectRunnable = this::restoreOnlineSession;
@@ -359,7 +360,8 @@ public final class MainActivity extends NavigableActivity {
     }
 
     private void announce(String message) {
-        statusText.announceForAccessibility(message.trim());
+        boolean detailed=getSharedPreferences(SettingsActivity.PREFS,MODE_PRIVATE).getBoolean(SettingsActivity.DETAILED_ANNOUNCEMENTS,true);
+        statusText.announceForAccessibility((detailed?message:statusText.getText().toString()).trim());
     }
 
     private void restoreState(Bundle state) {
@@ -481,7 +483,7 @@ public final class MainActivity extends NavigableActivity {
             Button cell = cells[index];
             cell.setText(value == '.' ? "" : String.valueOf(value));
             applyPieceAppearance(cell, value == '.' ? Mark.EMPTY : value == 'X' ? Mark.X : Mark.O);
-            boolean canPlay = onlineState != null && "active".equals(onlineState.roomState)
+            boolean canPlay = onlineState != null && "active".equals(onlineState.roomState) && android.os.SystemClock.elapsedRealtime() >= onlineStartAt
                     && onlineState.currentPlayer.equals(onlineSymbol)
                     && "active".equals(onlineState.status) && !onlineActionPending;
             cell.setEnabled(canPlay);
@@ -524,6 +526,7 @@ public final class MainActivity extends NavigableActivity {
         if ("waiting".equals(onlineState.roomState)) {
             return getString(R.string.online_waiting, onlineState.roomCode);
         }
+        if(android.os.SystemClock.elapsedRealtime()<onlineStartAt)return getString(R.string.online_starting_countdown,Math.max(1,(onlineStartAt-android.os.SystemClock.elapsedRealtime()+999)/1000));
         if ("x_won".equals(onlineState.status)) return getString(R.string.player_won, markName(Mark.X));
         if ("o_won".equals(onlineState.status)) return getString(R.string.player_won, markName(Mark.O));
         if (onlineState.currentPlayer.equals(onlineSymbol)) {
@@ -559,6 +562,7 @@ public final class MainActivity extends NavigableActivity {
                 OnlineGameState previous = onlineState;
                 int oldVersion = onlineState == null ? -1 : onlineState.version;
                 onlineState = state;
+                if(previous!=null&&"waiting".equals(previous.roomState)&&"active".equals(state.roomState))startOnlineCountdown();
                 onlineActionPending = false;
                 if (leavingRoom && state.outcomeReason.equals(
                         onlineSymbol.toLowerCase() + "_left")) {
@@ -619,6 +623,8 @@ public final class MainActivity extends NavigableActivity {
             });
         }
     };
+
+    private void startOnlineCountdown(){onlineStartAt=android.os.SystemClock.elapsedRealtime()+3000;renderOnline(false);Runnable tick=new Runnable(){public void run(){if(android.os.SystemClock.elapsedRealtime()<onlineStartAt){statusText.setText(onlineStatusMessage());handler.postDelayed(this,1000);}else{renderOnline(false);announce(getString(R.string.online_game_started));}}};handler.post(tick);}
 
     private void restoreOnlineSession() {
         String room = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_ROOM, "");

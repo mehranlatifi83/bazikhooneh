@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
+import android.widget.CheckBox;
 import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
@@ -12,10 +15,13 @@ import ir.codelighthouse.bazikhooneh.account.SessionStore;
 public final class RegisterActivity extends NavigableActivity {
     private AccountClient client;
     @Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_register);
-        client=new AccountClient(BuildConfig.API_BASE_URL,listener);findViewById(R.id.register_submit).setOnClickListener(v->register());}
+        client=new AccountClient(BuildConfig.API_BASE_URL,listener);findViewById(R.id.register_submit).setOnClickListener(v->register());
+        ((CheckBox)findViewById(R.id.register_show_password)).setOnCheckedChangeListener((b,shown)->{toggle(R.id.register_password,shown);toggle(R.id.register_password_confirm,shown);});}
+    private void toggle(int id,boolean shown){EditText field=findViewById(id);int position=field.getSelectionStart();field.setTransformationMethod(shown?HideReturnsTransformationMethod.getInstance():PasswordTransformationMethod.getInstance());field.setSelection(Math.max(0,position));}
     private String text(int id){return ((EditText)findViewById(id)).getText().toString().trim();}
     private void register(){String username=text(R.id.register_username),name=text(R.id.register_display_name),password=text(R.id.register_password);
-        if(username.length()<3||password.length()<8||name.isEmpty()){show(getString(R.string.registration_fields_required));return;}
+        if(!username.matches("[A-Za-z0-9_]{3,30}")||password.length()<8||name.isEmpty()){show(getString(R.string.registration_fields_required));return;}
+        if(!password.equals(text(R.id.register_password_confirm))){show(getString(R.string.passwords_do_not_match));return;}
         setLoading(true);client.register(username,name,password);}
     private void setLoading(boolean value){findViewById(R.id.register_progress).setVisibility(value?View.VISIBLE:View.GONE);findViewById(R.id.register_submit).setEnabled(!value);}
     private void show(String value){TextView status=findViewById(R.id.register_error);status.setText(value);status.setVisibility(View.VISIBLE);status.announceForAccessibility(value);setLoading(false);}

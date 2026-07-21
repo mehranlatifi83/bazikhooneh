@@ -27,6 +27,9 @@
         <Button android:id="@+id/open_friends" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
             android:text="@string/friends_title" android:textAllCaps="false" />
+        <Button android:id="@+id/open_notifications" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
+            android:text="@string/notifications_title" android:textAllCaps="false" />
         <Button android:id="@+id/open_guide" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
             android:text="@string/guide_title" android:textAllCaps="false" />

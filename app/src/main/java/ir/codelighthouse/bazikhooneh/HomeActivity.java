@@ -6,16 +6,20 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.content.Context;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.account.NotificationSync;
 import ir.codelighthouse.bazikhooneh.catalog.GameCatalog;
 import ir.codelighthouse.bazikhooneh.catalog.GameDefinition;
 
 public final class HomeActivity extends Activity {
     private static final String ACCOUNT_PREFS = "account_session";
     private static final String APP_PREFS = "app_state";
+    @Override protected void attachBaseContext(Context base) { super.attachBaseContext(AppDisplay.wrap(base)); }
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (AppDisplay.reduceMotion(this)) getWindow().setWindowAnimations(0);
         if (getActionBar() != null) getActionBar().hide();
         setContentView(R.layout.activity_home);
         renderGames();
@@ -30,6 +34,10 @@ public final class HomeActivity extends Activity {
                 startActivity(new Intent(this, GuideActivity.class)));
         findViewById(R.id.open_friends).setOnClickListener(v -> {
             Class<?> destination = new SessionStore(this).isSignedIn() ? FriendsActivity.class : LoginActivity.class;
+            startActivity(new Intent(this, destination));
+        });
+        findViewById(R.id.open_notifications).setOnClickListener(v -> {
+            Class<?> destination = new SessionStore(this).isSignedIn() ? NotificationsActivity.class : LoginActivity.class;
             startActivity(new Intent(this, destination));
         });
         if (getIntent().getData() != null && "room".equals(getIntent().getData().getHost())) {
@@ -55,6 +63,7 @@ public final class HomeActivity extends Activity {
                 : getString(R.string.home_welcome, displayName));
         ((Button) findViewById(R.id.open_profile)).setText(
                 new SessionStore(this).isSignedIn() ? R.string.profile_title : R.string.account_login);
+        NotificationSync.refresh(this);
     }
 
     private void renderGames() {

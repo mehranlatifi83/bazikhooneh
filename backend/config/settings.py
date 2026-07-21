@@ -85,8 +85,13 @@ else:
 AUTH_PASSWORD_VALIDATORS = []
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["accounts.authentication.AccountTokenAuthentication"],
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": os.getenv("API_ANON_RATE", "30/min")},
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.ScopedRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": os.getenv("API_ANON_RATE", "30/min"),
+        "login": os.getenv("API_LOGIN_RATE", "100/min" if DEBUG else "10/min"),
+        "sensitive": os.getenv("API_SENSITIVE_RATE", "30/min" if DEBUG else "5/min"),
+        "social": os.getenv("API_SOCIAL_RATE", "100/min" if DEBUG else "30/min"),
+    },
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="24dp" android:background="@color/screen_background">
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/delete_account_warning" android:textSize="18sp" />
+ <EditText android:id="@+id/delete_confirmation" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:hint="@string/type_username_to_confirm" />
+ <EditText android:id="@+id/delete_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/current_password" android:inputType="textPassword" />
+ <Button android:id="@+id/delete_account" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/delete_account_title" android:textAllCaps="false" />
+ <TextView android:id="@+id/delete_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:accessibilityLiveRegion="polite" />
+</LinearLayout>

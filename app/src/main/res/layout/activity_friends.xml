@@ -13,6 +13,11 @@
    <Button android:id="@+id/cancel_friend_action" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/cancel_action" android:textAllCaps="false" style="?android:attr/borderlessButtonStyle" />
   </LinearLayout>
   <TextView android:id="@+id/friends_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="42dp" android:layout_marginTop="12dp" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/friends_list_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
   <LinearLayout android:id="@+id/friends_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/requests_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <LinearLayout android:id="@+id/requests_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/invites_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <LinearLayout android:id="@+id/invites_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
  </LinearLayout>
 </ScrollView>
