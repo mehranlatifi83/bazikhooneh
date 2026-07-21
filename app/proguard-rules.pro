@@ -12,10 +12,15 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep useful release crash traces without exposing local source file names.
+-keepattributes SourceFile,LineNumberTable,RuntimeVisibleAnnotations,AnnotationDefault,Signature,InnerClasses,EnclosingMethod
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# WebRTC calls Java methods from native code. The SDK ships consumer rules, but
+# keeping this small Java bridge is safer than risking call failures after obfuscation.
+# The large native .so files are unaffected by this rule.
+-keep class org.webrtc.** { *; }
+
+# Android instantiates these framework components by class name.
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Service

@@ -14,6 +14,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+/app/release/
+*.apk
+*.aab
+*.jks
+*.keystore
 
 # Python / Django
 __pycache__/

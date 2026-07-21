@@ -18,6 +18,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
         manifestPlaceholders = [usesCleartextTraffic: "false"]
+        resourceConfigurations += ['en', 'fa']
     }
     buildFeatures {
         buildConfig true
@@ -28,7 +29,8 @@ android {
             manifestPlaceholders.usesCleartextTraffic = "true"
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
