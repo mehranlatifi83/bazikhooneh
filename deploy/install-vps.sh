@@ -16,6 +16,8 @@ if ! id "${APP_USER}" >/dev/null 2>&1; then
   useradd --system --user-group --home-dir "${APP_DIR}" --shell /usr/sbin/nologin "${APP_USER}"
 fi
 
+git config --global --add safe.directory "${APP_DIR}"
+
 if [[ ! -d "${APP_DIR}/.git" ]]; then
   git clone --branch dev --single-branch "${REPO_URL}" "${APP_DIR}"
 else
