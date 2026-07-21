@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import re
 import time
 from collections import deque
 from datetime import timedelta
@@ -70,6 +71,10 @@ def room_payload(room, account=None):
     membership = None
     if account:
         membership = room.memberships.filter(account=account).first()
+    pending_requests = []
+    if membership and membership.can_moderate:
+        pending_requests = [{"id": item.id, "account": account_payload(item.account)} for item in
+                            room.join_requests.select_related("account").filter(status="pending")]
     return {"id": str(room.id), "code": room.code, "title": room.title,
             "privacy": room.privacy, "join_policy": room.join_policy,
             "max_members": room.max_members, "is_closed": room.is_closed,
@@ -77,6 +82,7 @@ def room_payload(room, account=None):
             "members": [member_payload(item) for item in
                         room.memberships.select_related("account").filter(status="active")],
             "active_call": call_payload(active_call),
+            "pending_join_requests": pending_requests,
             "active_game": ({"id": active_game.id, "game_key": active_game.game_key,
                              "state": active_game.state,
                              "legacy_room_code": active_game.tic_tac_toe_room.code
@@ -128,8 +134,9 @@ class CommunityRoomsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        rooms = CommunityRoom.objects.filter(
-            memberships__account=request.user, memberships__status="active", is_closed=False
+        rooms = CommunityRoom.objects.filter(Q(
+            memberships__account=request.user, memberships__status="active") |
+            Q(privacy=CommunityRoom.Privacy.PUBLIC), is_closed=False
         ).distinct().order_by("-updated_at")
         return Response({"results": [room_payload(room, request.user) for room in rooms]})
 
@@ -167,9 +174,21 @@ class CommunityRoomView(APIView):
         membership = active_membership(room, request.user) if room else None
         if not membership or not membership.can_moderate:
             return Response({"error": "not_allowed"}, status=403)
-        for key in ("title", "privacy", "join_policy"):
-            if key in request.data:
-                setattr(room, key, str(request.data[key]).strip())
+        if "title" in request.data:
+            title = str(request.data["title"]).strip()
+            if not title or len(title) > 80:
+                return Response({"error": "invalid_title"}, status=400)
+            room.title = title
+        if "privacy" in request.data:
+            privacy = str(request.data["privacy"])
+            if privacy not in CommunityRoom.Privacy.values:
+                return Response({"error": "invalid_privacy"}, status=400)
+            room.privacy = privacy
+        if "join_policy" in request.data:
+            join_policy = str(request.data["join_policy"])
+            if join_policy not in CommunityRoom.JoinPolicy.values:
+                return Response({"error": "invalid_join_policy"}, status=400)
+            room.join_policy = join_policy
         if "max_members" in request.data:
             room.max_members = max(2, min(32, int(request.data["max_members"])))
         room.save()
@@ -517,6 +536,7 @@ class MatchmakingView(APIView):
         if not ticket:
             return Response({"status": "idle"})
         return Response({"status": ticket.status, "game_key": ticket.game_key,
+                         "player": ticket.game_credentials or None,
                          "room": room_payload(ticket.matched_room, request.user)
                          if ticket.matched_room else None})
 
@@ -540,12 +560,33 @@ class MatchmakingView(APIView):
         room.max_members = 4 if game_key == "ludo" else 2
         room.save()
         CommunityMembership.objects.create(room=room, account=request.user, role="member")
+        first_credentials = {}
+        second_credentials = {}
+        if game_key == "three_piece_tic_tac_toe":
+            legacy = Room.create_unique()
+            first_player, first_token = Player.create_with_token(legacy, "X", other.account)
+            second_player, second_token = Player.create_with_token(legacy, "O", request.user)
+            legacy.state = Room.State.ACTIVE
+            legacy.save(update_fields=("state", "updated_at"))
+            Match.start_for_room(legacy)
+            CommunityGameSession.objects.create(room=room, game_key=game_key,
+                                                created_by=other.account,
+                                                tic_tac_toe_room=legacy,
+                                                state="active")
+            first_credentials = player_payload(legacy, first_player, first_token)
+            second_credentials = player_payload(legacy, second_player, second_token)
+            CommunityEvent.objects.create(room=room, actor=other.account,
+                                          kind="game_selected",
+                                          payload={"game_key": game_key})
         other.status = "matched"
         other.matched_room = room
-        other.save()
+        other.game_credentials = first_credentials
+        other.save(update_fields=("status", "matched_room", "game_credentials", "updated_at"))
         MatchmakingTicket.objects.create(account=request.user, game_key=game_key,
-                                          status="matched", matched_room=room)
-        return Response({"status": "matched", "room": room_payload(room, request.user)})
+                                          status="matched", matched_room=room,
+                                          game_credentials=second_credentials)
+        return Response({"status": "matched", "room": room_payload(room, request.user),
+                         "player": second_credentials or None})
 
     def delete(self, request):
         MatchmakingTicket.objects.filter(account=request.user, status="waiting").delete()
@@ -716,9 +757,24 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
             raise ValueError("not_a_member")
         if member.chat_muted_until and member.chat_muted_until > timezone.now():
             raise ValueError("chat_muted")
-        reply = CommunityMessage.objects.filter(id=reply_to, room=member.room).first() if reply_to else None
-        return message_payload(CommunityMessage.objects.create(
-            room=member.room, sender=member.account, text=text, reply_to=reply))
+        reply = CommunityMessage.objects.select_related("sender").filter(
+            id=reply_to, room=member.room).first() if reply_to else None
+        message = CommunityMessage.objects.create(
+            room=member.room, sender=member.account, text=text, reply_to=reply)
+        usernames = set(re.findall(r"(?<![\w@])@([a-zA-Z0-9_]{3,30})", text.lower()))
+        recipients = set(member.room.memberships.filter(
+            status="active", account__username__in=usernames).exclude(
+            account=member.account).values_list("account_id", flat=True))
+        if reply and reply.sender_id != member.account_id:
+            recipients.add(reply.sender_id)
+        AccountNotification.objects.bulk_create([
+            AccountNotification(account_id=account_id, kind="room_message",
+                title="New room message",
+                body=f"{member.account.display_name} mentioned or replied to you in {member.room.title}",
+                data={"room_code": member.room.code, "message_id": message.id})
+            for account_id in recipients
+        ])
+        return message_payload(message)
 
     @database_sync_to_async
     def _join_call(self):

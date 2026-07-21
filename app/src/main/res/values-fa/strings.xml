@@ -279,4 +279,36 @@
     <string name="remove_room_admin">گرفتن نقش مدیر</string><string name="force_mute">خاموش کردن اجباری میکروفون</string>
     <string name="allow_to_speak">دادن اجازه صحبت</string><string name="remove_from_call">حذف از تماس</string>
     <string name="quick_match">بازی سریع دوز</string><string name="searching_for_players">در حال جست‌وجوی بازیکن…</string>
+    <string name="room_history">تاریخچهٔ اتاق</string>
+    <string name="room_history_count">%1$d رویداد اخیر اتاق</string>
+    <string name="no_room_history">هنوز رویدادی در اتاق ثبت نشده است.</string>
+    <string name="system_actor">سیستم</string>
+    <string name="event_room_created">%1$s اتاق را ساخت.</string>
+    <string name="event_member_joined">%1$s وارد اتاق شد.</string>
+    <string name="event_member_left">%1$s از اتاق خارج شد.</string>
+    <string name="event_call_started">%1$s تماس صوتی را شروع کرد.</string>
+    <string name="event_game_selected">%1$s یک بازی انتخاب کرد.</string>
+    <string name="event_game_action">%1$s یک حرکت بازی انجام داد.</string>
+    <string name="event_generic">%1$s: %2$s</string>
+    <string name="edit_message">ویرایش پیام</string>
+    <string name="delete_message">حذف پیام</string>
+    <string name="delete_message_confirmation">این پیام برای همه حذف شود؟</string>
+    <string name="deleted_message">پیام حذف‌شده</string>
+    <string name="save">ذخیره</string>
+    <string name="leaderboard_title">آمار و جدول رتبه‌بندی</string>
+    <string name="player_stats_value">امتیاز شما: %1$d\nدوز: %2$d بازی، %3$d برد\nمنچ: %4$d بازی، %5$d برد</string>
+    <string name="leaderboard_item">رتبهٔ %1$d، %2$s، نام کاربری %3$s. امتیاز %4$d. برد دوز %5$d. برد منچ %6$d.</string>
+    <string name="empty_leaderboard">جدول رتبه‌بندی هنوز خالی است.</string>
+    <string name="room_settings">تنظیمات اتاق</string>
+    <string name="leave_room_confirmation">از این اتاق خارج می‌شوید؟ اگر مالک باشید، مالکیت به یکی از اعضا منتقل می‌شود.</string>
+    <string name="public_room">اتاق عمومی</string>
+    <string name="require_join_approval">ورود اعضای جدید نیاز به تأیید داشته باشد</string>
+    <string name="join_request_message">%1$s می‌خواهد وارد این اتاق شود.</string>
+    <string name="approve">تأیید</string>
+    <string name="reject">رد</string>
+    <string name="join_request_sent">درخواست ورود شما برای مدیران اتاق ارسال شد.</string>
+    <string name="end_call">پایان تماس برای همه</string>
+    <string name="end_call_confirmation">این تماس صوتی برای همه پایان یابد؟</string>
+    <string name="reply_message">پاسخ</string>
+    <string name="replying_to">در پاسخ به %1$s</string>
 </resources>

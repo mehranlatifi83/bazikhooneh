@@ -6,6 +6,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.*;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
@@ -17,8 +19,13 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private boolean moderator;
     private boolean callActive;
     private boolean startingGame;
+    private JSONObject currentRoom;
+    private long shownJoinRequest;
+    private long replyToMessage;
     private LinearLayout members, messages;
     private TextView status;
+    private String ownUsername;
+    private final Map<Long, TextView> messageViews = new HashMap<>();
     private final Handler reconnectHandler = new Handler(Looper.getMainLooper());
     private boolean destroyed;
 
@@ -26,6 +33,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         super.onCreate(state); setContentView(R.layout.activity_community_room);
         code = getIntent().getStringExtra("room_code");
         SessionStore store = new SessionStore(this);
+        ownUsername = store.username();
         if (!store.isSignedIn() || code == null) { finish(); return; }
         client = new CommunityClient(BuildConfig.API_BASE_URL, store.token());
         members = findViewById(R.id.community_members_list);
@@ -36,6 +44,10 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         findViewById(R.id.community_join_call).setOnClickListener(v -> openCall());
         findViewById(R.id.community_start_tic).setOnClickListener(v -> startGame("three_piece_tic_tac_toe"));
         findViewById(R.id.community_start_ludo).setOnClickListener(v -> startGame("ludo"));
+        findViewById(R.id.community_history).setOnClickListener(v -> startActivity(
+                new Intent(this, RoomEventsActivity.class).putExtra("room_code", code)));
+        findViewById(R.id.community_settings).setOnClickListener(v -> showRoomSettings());
+        findViewById(R.id.community_leave).setOnClickListener(v -> confirmLeave());
         client.details(code, (data, error) -> runOnUiThread(() -> {
             if (error != null) { show(error); return; } renderRoom(data);
         }));
@@ -46,6 +58,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     }
 
     private void renderRoom(JSONObject room) {
+        if(room==null)return;currentRoom=room;
         ((TextView)findViewById(R.id.community_room_header)).setText(
                 room.optString("title") + " — " + code);
         JSONObject own = room.optJSONObject("membership");
@@ -56,6 +69,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         findViewById(R.id.community_join_call).setVisibility(callActive ? View.VISIBLE : View.GONE);
         findViewById(R.id.community_start_tic).setVisibility(moderator ? View.VISIBLE : View.GONE);
         findViewById(R.id.community_start_ludo).setVisibility(moderator ? View.VISIBLE : View.GONE);
+        findViewById(R.id.community_settings).setVisibility(moderator ? View.VISIBLE : View.GONE);
         members.removeAllViews();
         JSONArray values = room.optJSONArray("members");
         if (values != null) for (int i=0; i<values.length(); i++) {
@@ -66,7 +80,21 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
             if(moderator&&!item.optString("username").equalsIgnoreCase(new SessionStore(this).username())){
                 row.setOnLongClickListener(v->{showMemberMenu(row,item.optString("username"),item.optString("role"));return true;});}
         }
+        JSONArray requests=room.optJSONArray("pending_join_requests");
+        if(moderator&&requests!=null&&requests.length()>0)showJoinRequest(requests.optJSONObject(0));
     }
+    private void showJoinRequest(JSONObject request){if(request==null||shownJoinRequest==request.optLong("id"))return;shownJoinRequest=request.optLong("id");JSONObject account=request.optJSONObject("account");String name=account==null?"":account.optString("display_name");
+        new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.join_request_message,name))
+                .setNegativeButton(R.string.reject,(d,w)->resolveRequest(request.optLong("id"),false))
+                .setPositiveButton(R.string.approve,(d,w)->resolveRequest(request.optLong("id"),true)).show();}
+    private void resolveRequest(long id,boolean approve){client.resolveJoinRequest(code,id,approve,(data,error)->runOnUiThread(()->{shownJoinRequest=0;if(error!=null)show(error);else client.details(code,(room,e)->runOnUiThread(()->renderRoom(room)));}));}
+    private void showRoomSettings(){if(currentRoom==null)return;LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);int pad=Math.round(16*getResources().getDisplayMetrics().density);form.setPadding(pad,pad,pad,pad);
+        EditText title=new EditText(this);title.setHint(R.string.community_room_name);title.setText(currentRoom.optString("title"));form.addView(title);
+        CheckBox publicRoom=new CheckBox(this);publicRoom.setText(R.string.public_room);publicRoom.setChecked("public".equals(currentRoom.optString("privacy")));form.addView(publicRoom);
+        CheckBox approval=new CheckBox(this);approval.setText(R.string.require_join_approval);approval.setChecked("request".equals(currentRoom.optString("join_policy")));form.addView(approval);
+        new android.app.AlertDialog.Builder(this).setTitle(R.string.room_settings).setView(form).setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.save,(d,w)->client.updateRoom(code,title.getText().toString().trim(),publicRoom.isChecked()?"public":"private",approval.isChecked()?"request":"open",(room,error)->runOnUiThread(()->{if(error!=null)show(error);else renderRoom(room);}))).show();}
+    private void confirmLeave(){new android.app.AlertDialog.Builder(this).setMessage(R.string.leave_room_confirmation).setNegativeButton(android.R.string.cancel,null)
+            .setPositiveButton(R.string.leave_room,(d,w)->client.leave(code,(data,error)->runOnUiThread(()->{if(error!=null)show(error);else finish();}))).show();}
     private void showMemberMenu(View anchor,String username,String role){PopupMenu menu=new PopupMenu(this,anchor);
         menu.getMenu().add(R.string.mute_room_chat);menu.getMenu().add(R.string.ban_from_call);menu.getMenu().add(R.string.ban_from_room);
         if("member".equals(role))menu.getMenu().add(R.string.make_room_admin);else if("admin".equals(role))menu.getMenu().add(R.string.remove_room_admin);
@@ -78,7 +106,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
             client.moderateRoom(code,username,action,(d,e)->runOnUiThread(()->{if(e!=null)show(e);else client.details(code,(r,x)->runOnUiThread(()->{if(r!=null)renderRoom(r);}));}));return true;});menu.show();}
 
     private void renderMessages(JSONArray values) {
-        messages.removeAllViews(); if(values==null)return;
+        messages.removeAllViews(); messageViews.clear(); if(values==null)return;
         for(int i=0;i<values.length();i++)addMessage(values.optJSONObject(i),false);
         scrollBottom();
     }
@@ -87,12 +115,30 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         String name=sender==null?"":sender.optString("display_name");
         TextView row=new TextView(this);row.setText(getString(R.string.community_message_item,name,item.optString("text")));
         row.setTextSize(17);row.setPadding(12,12,12,12);row.setFocusable(true);messages.addView(row);
+        long id=item.optLong("id");messageViews.put(id,row);
+        String senderUsername=sender==null?"":sender.optString("username");
+        row.setOnLongClickListener(v->{showMessageMenu(row,item);return true;});
         if(announce)row.announceForAccessibility(row.getText()); scrollBottom();
     }
+    private void showMessageMenu(View anchor,JSONObject message){PopupMenu menu=new PopupMenu(this,anchor);
+        JSONObject sender=message.optJSONObject("sender");boolean own=sender!=null&&sender.optString("username").equalsIgnoreCase(ownUsername);
+        menu.getMenu().add(R.string.reply_message);
+        if(own)menu.getMenu().add(R.string.edit_message);if(own||moderator)menu.getMenu().add(R.string.delete_message);
+        menu.setOnMenuItemClickListener(item->{if(item.getTitle().equals(getString(R.string.reply_message)))selectReply(message);else if(item.getTitle().equals(getString(R.string.edit_message)))editMessage(message);else deleteMessage(message.optLong("id"));return true;});menu.show();}
+    private void selectReply(JSONObject message){replyToMessage=message.optLong("id");JSONObject sender=message.optJSONObject("sender");EditText input=findViewById(R.id.community_message_input);
+        input.setHint(getString(R.string.replying_to,sender==null?"":sender.optString("display_name")));input.requestFocus();}
+    private void editMessage(JSONObject message){final EditText input=new EditText(this);input.setText(message.optString("text"));input.setSelection(input.length());
+        new android.app.AlertDialog.Builder(this).setTitle(R.string.edit_message).setView(input).setNegativeButton(android.R.string.cancel,null)
+                .setPositiveButton(R.string.save,(dialog,which)->{String value=input.getText().toString().trim();if(!value.isEmpty())client.editMessage(code,message.optLong("id"),value,(d,e)->runOnUiThread(()->{if(e!=null)show(e);}));}).show();}
+    private void deleteMessage(long id){new android.app.AlertDialog.Builder(this).setMessage(R.string.delete_message_confirmation)
+            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.delete_message,(d,w)->client.deleteMessage(code,id,(data,error)->runOnUiThread(()->{if(error!=null)show(error);}))).show();}
+    private void updateMessage(JSONObject item){long id=item.optLong("id");TextView row=messageViews.get(id);if(row==null){addMessage(item,false);return;}
+        JSONObject sender=item.optJSONObject("sender");row.setText(getString(R.string.community_message_item,sender==null?"":sender.optString("display_name"),item.optString("text")));}
+    private void removeMessage(long id){TextView row=messageViews.remove(id);if(row!=null){row.setText(R.string.deleted_message);row.setOnLongClickListener(null);row.announceForAccessibility(getString(R.string.deleted_message));}}
     private void scrollBottom(){findViewById(R.id.community_chat_scroll).post(()->
             ((ScrollView)findViewById(R.id.community_chat_scroll)).fullScroll(View.FOCUS_DOWN));}
     private void send(){EditText input=findViewById(R.id.community_message_input);String text=input.getText().toString().trim();
-        if(!text.isEmpty()){client.sendChat(text);input.setText("");}}
+        if(!text.isEmpty()){client.sendChat(text,replyToMessage);replyToMessage=0;input.setText("");input.setHint(R.string.community_message_hint);}}
     private void startCall(){client.startCall(code,false,(data,error)->runOnUiThread(()->{
         if(error!=null)show(error);else openCall();}));}
     private void openCall(){startActivity(new Intent(this,VoiceCallActivity.class).putExtra("room_code",code));}
@@ -116,7 +162,11 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
         if("room_state".equals(type))renderRoom(event.optJSONObject("room"));
         else if("chat_message".equals(type))addMessage(event.optJSONObject("message"),true);
+        else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
+        else if("chat_deleted".equals(type))removeMessage(event.optLong("message_id"));
         else if("game_selected".equals(type))joinSelectedGame(event);
+        else if("join_request".equals(type)&&moderator){JSONObject request=new JSONObject();try{request.put("id",event.optLong("request_id"));request.put("account",event.optJSONObject("account"));}catch(Exception ignored){}showJoinRequest(request);}
+        else if("room_updated".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("call_started".equals(type)||"call_ended".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("member_joined".equals(type)||"member_left".equals(type)||"moderation".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
     });}

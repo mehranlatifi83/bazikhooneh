@@ -45,11 +45,15 @@ public final class HomeActivity extends Activity {
             Class<?> destination = new SessionStore(this).isSignedIn() ? NotificationsActivity.class : LoginActivity.class;
             startActivity(new Intent(this, destination));
         });
+        findViewById(R.id.open_leaderboard).setOnClickListener(v -> {
+            Class<?> destination = new SessionStore(this).isSignedIn() ? LeaderboardActivity.class : LoginActivity.class;
+            startActivity(new Intent(this, destination));
+        });
         if (getIntent().getData() != null && "room".equals(getIntent().getData().getHost())) {
             String code = getIntent().getData().getLastPathSegment();
             if (code != null && code.length() == 6) {
                 SessionStore store = new SessionStore(this);
-                Class<?> destination = store.isSignedIn() ? OnlineLobbyActivity.class : LoginActivity.class;
+                Class<?> destination = store.isSignedIn() ? CommunityRoomActivity.class : LoginActivity.class;
                 startActivity(new Intent(this, destination).putExtra("room_code", code));
             }
         }

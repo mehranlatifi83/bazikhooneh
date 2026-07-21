@@ -38,9 +38,32 @@ public final class CommunityClient {
     public void details(String code, Callback callback) {
         request("GET", "/api/v1/community/rooms/" + code + "/", null, callback);
     }
+    public void leave(String code, Callback callback) {
+        request("POST", "/api/v1/community/rooms/" + code + "/leave/", new JSONObject(), callback);
+    }
+    public void updateRoom(String code, String title, String privacy, String joinPolicy, Callback callback) {
+        JSONObject body=new JSONObject();try{body.put("title",title);body.put("privacy",privacy);body.put("join_policy",joinPolicy);}catch(Exception ignored){}
+        request("PATCH", "/api/v1/community/rooms/" + code + "/", body, callback);
+    }
+    public void resolveJoinRequest(String code,long requestId,boolean approve,Callback callback){
+        JSONObject body=new JSONObject();try{body.put("action",approve?"approve":"reject");}catch(Exception ignored){}
+        request("POST","/api/v1/community/rooms/"+code+"/join-requests/"+requestId+"/",body,callback);
+    }
     public void messages(String code, Callback callback) {
         request("GET", "/api/v1/community/rooms/" + code + "/messages/", null, callback);
     }
+    public void events(String code, Callback callback) {
+        request("GET", "/api/v1/community/rooms/" + code + "/events/", null, callback);
+    }
+    public void editMessage(String code, long id, String text, Callback callback) {
+        JSONObject body = new JSONObject(); try { body.put("text", text); } catch (Exception ignored) { }
+        request("PATCH", "/api/v1/community/rooms/" + code + "/messages/" + id + "/", body, callback);
+    }
+    public void deleteMessage(String code, long id, Callback callback) {
+        request("DELETE", "/api/v1/community/rooms/" + code + "/messages/" + id + "/", null, callback);
+    }
+    public void stats(Callback callback) { request("GET", "/api/v1/stats/me/", null, callback); }
+    public void leaderboard(Callback callback) { request("GET", "/api/v1/leaderboard/", null, callback); }
     public void startCall(String code, boolean requestToSpeak, Callback callback) {
         JSONObject body = new JSONObject();
         try { body.put("mic_policy", requestToSpeak ? "request" : "open"); body.put("max_participants", 4); }
@@ -99,8 +122,11 @@ public final class CommunityClient {
 
     public boolean send(JSONObject message) { return socket != null && socket.send(message.toString()); }
     public void sendChat(String text) {
+        sendChat(text, 0);
+    }
+    public void sendChat(String text, long replyTo) {
         JSONObject value = new JSONObject();
-        try { value.put("type", "chat.send"); value.put("text", text); send(value); }
+        try { value.put("type", "chat.send"); value.put("text", text); if(replyTo>0)value.put("reply_to",replyTo); send(value); }
         catch (Exception ignored) { }
     }
     public void joinCall() { sendType("call.join"); }

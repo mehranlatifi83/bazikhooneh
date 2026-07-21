@@ -50,7 +50,7 @@ public final class CommunityRoomsActivity extends NavigableActivity {
                 room.optString("code"), room.optJSONArray("members") == null ? 0
                         : room.optJSONArray("members").length()));
         button.setMinHeight(dp(72));
-        button.setOnClickListener(v -> open(room.optString("code")));
+        button.setOnClickListener(v -> {if(room.optJSONObject("membership")!=null)open(room.optString("code"));else joinCode(room.optString("code"));});
         list.addView(button, new LinearLayout.LayoutParams(-1, -2));
     }
 
@@ -64,8 +64,11 @@ public final class CommunityRoomsActivity extends NavigableActivity {
     private void join() {
         String code = ((EditText) findViewById(R.id.community_code)).getText().toString().trim().toUpperCase();
         if (code.length() != 6) { show(getString(R.string.room_code_required)); return; }
+        joinCode(code);
+    }
+    private void joinCode(String code) {
         loading(true); client.join(code, (data, error) -> runOnUiThread(() -> {
-            loading(false); if (error != null) show(error); else open(code);
+            loading(false); if (error != null) show(error); else if("join_requested".equals(data.optString("detail")))show(getString(R.string.join_request_sent));else open(code);
         }));
     }
 
@@ -79,8 +82,11 @@ public final class CommunityRoomsActivity extends NavigableActivity {
 
     private void handleMatch(JSONObject data) {
         if (data != null && "matched".equals(data.optString("status"))) {
-            loading(false); JSONObject room = data.optJSONObject("room");
-            if (room != null) open(room.optString("code"));
+            loading(false); JSONObject player=data.optJSONObject("player");
+            if(player!=null){JSONObject game=player.optJSONObject("game");getSharedPreferences("online_session",MODE_PRIVATE).edit()
+                    .putString("room",game.optString("room_code")).putString("symbol",player.optString("symbol"))
+                    .putString("token",player.optString("reconnect_token")).apply();startActivity(new Intent(this,MainActivity.class).putExtra(MainActivity.EXTRA_MODE,"online"));}
+            else {JSONObject room = data.optJSONObject("room");if (room != null) open(room.optString("code"));}
             return;
         }
         matchmakingHandler.postDelayed(() -> client.matchmakingStatus((next, error) -> runOnUiThread(() -> {

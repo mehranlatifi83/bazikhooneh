@@ -403,5 +403,6 @@ class MatchmakingTicket(models.Model):
     status = models.CharField(max_length=12, default="waiting", db_index=True)
     matched_room = models.ForeignKey(CommunityRoom, null=True, blank=True,
                                      on_delete=models.SET_NULL, related_name="matchmaking_tickets")
+    game_credentials = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

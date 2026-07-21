@@ -3,9 +3,13 @@
     <cloud-backup>
         <exclude domain="sharedpref" path="account_session.xml" />
         <exclude domain="sharedpref" path="online_session.xml" />
+        <exclude domain="sharedpref" path="ludo_online.xml" />
+        <exclude domain="sharedpref" path="notification_state.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="account_session.xml" />
         <exclude domain="sharedpref" path="online_session.xml" />
+        <exclude domain="sharedpref" path="ludo_online.xml" />
+        <exclude domain="sharedpref" path="notification_state.xml" />
     </device-transfer>
 </data-extraction-rules>

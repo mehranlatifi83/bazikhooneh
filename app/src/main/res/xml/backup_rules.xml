@@ -2,4 +2,6 @@
 <full-backup-content>
     <exclude domain="sharedpref" path="account_session.xml" />
     <exclude domain="sharedpref" path="online_session.xml" />
+    <exclude domain="sharedpref" path="ludo_online.xml" />
+    <exclude domain="sharedpref" path="notification_state.xml" />
 </full-backup-content>

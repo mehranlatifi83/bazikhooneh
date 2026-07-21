@@ -9,9 +9,11 @@
     <TextView android:id="@+id/call_timer" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:textSize="20sp" android:gravity="center"
         android:layout_marginTop="8dp" />
-    <LinearLayout android:id="@+id/call_participants" android:layout_width="match_parent"
-        android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical"
-        android:layout_marginTop="20dp" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:layout_marginTop="20dp" android:fillViewport="true">
+        <LinearLayout android:id="@+id/call_participants" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical" />
+    </ScrollView>
     <Button android:id="@+id/call_toggle_mic" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="64dp"
         android:text="@string/mute_microphone" android:textAllCaps="false" />
@@ -21,6 +23,9 @@
     <Button android:id="@+id/call_raise_hand" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="56dp"
         android:text="@string/raise_hand" android:textAllCaps="false" android:visibility="gone" />
+    <Button android:id="@+id/call_end" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="56dp"
+        android:text="@string/end_call" android:textAllCaps="false" android:visibility="gone" />
     <Button android:id="@+id/call_leave" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="64dp"
         android:text="@string/leave_call" android:textAllCaps="false" />

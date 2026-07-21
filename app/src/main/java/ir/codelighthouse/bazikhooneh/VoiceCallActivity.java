@@ -48,6 +48,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
         findViewById(R.id.call_toggle_mic).setOnClickListener(v->toggleMic());
         findViewById(R.id.call_toggle_speaker).setOnClickListener(v->toggleSpeaker());
         findViewById(R.id.call_raise_hand).setOnClickListener(v->client.raiseHand());
+        findViewById(R.id.call_end).setOnClickListener(v->confirmEndCall());
         findViewById(R.id.call_leave).setOnClickListener(v->leave());
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},AUDIO_PERMISSION);
@@ -84,6 +85,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
                 JSONArray moderators=call.optJSONArray("moderator_ids");if(moderators!=null)for(int i=0;i<moderators.length();i++)if(moderators.optString(i).equals(ownId))moderator=true;
                 if(values!=null)for(int i=0;i<values.length();i++)upsert(values.optJSONObject(i));}
             if(call!=null){JSONArray moderators=call.optJSONArray("moderator_ids");if(moderators!=null)for(int i=0;i<moderators.length();i++)if(moderators.optString(i).equals(ownId))moderator=true;}
+            findViewById(R.id.call_end).setVisibility(moderator?View.VISIBLE:View.GONE);
             announce(getString(R.string.call_connected));renderParticipants();}
         else if("call_participant_joined".equals(type)){JSONObject call=event.optJSONObject("call");
             if(call!=null){JSONArray values=call.optJSONArray("participants");if(values!=null)for(int i=0;i<values.length();i++)upsert(values.optJSONObject(i));}
@@ -167,6 +169,8 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
     private void updateMicButton(){((Button)findViewById(R.id.call_toggle_mic)).setText(micEnabled?R.string.mute_microphone:R.string.unmute_microphone);}
     private void toggleSpeaker(){speakerEnabled=!speakerEnabled;AudioManager manager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
         manager.setSpeakerphoneOn(speakerEnabled);((Button)findViewById(R.id.call_toggle_speaker)).setText(speakerEnabled?R.string.use_earpiece:R.string.use_speaker);}
+    private void confirmEndCall(){new android.app.AlertDialog.Builder(this).setMessage(R.string.end_call_confirmation)
+            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.end_call,(d,w)->client.endCall(code,(data,error)->runOnUiThread(()->{if(error!=null)announce(error);else leave();}))).show();}
     private void announce(String text){status.setText(text);status.announceForAccessibility(text);}
     private long parseTime(String value){try{return java.time.Instant.parse(value).toEpochMilli();}catch(Exception ignored){return System.currentTimeMillis();}}
     private final Runnable timerTask=new Runnable(){public void run(){if(startedAt>0){long s=(System.currentTimeMillis()-startedAt)/1000;timer.setText(String.format(Locale.getDefault(),"%02d:%02d",s/60,s%60));}handler.postDelayed(this,1000);}};

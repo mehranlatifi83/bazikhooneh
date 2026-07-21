@@ -94,6 +94,25 @@ class CommunityRoomApiTests(APITestCase):
         self.assertTrue(turn["credential"])
         self.assertIn("transport=udp", turn["urls"][0])
 
+    def test_tic_matchmaking_starts_game_for_both_players(self):
+        first_token = self.register("quick_first")
+        self.authenticate(first_token)
+        waiting = self.client.post("/api/v1/matchmaking/", {
+            "game_key": "three_piece_tic_tac_toe"}, format="json")
+        self.assertEqual(202, waiting.status_code)
+        second_token = self.register("quick_second")
+        self.authenticate(second_token)
+        matched = self.client.post("/api/v1/matchmaking/", {
+            "game_key": "three_piece_tic_tac_toe"}, format="json")
+        self.assertEqual(200, matched.status_code)
+        self.assertEqual("O", matched.data["player"]["symbol"])
+        self.authenticate(first_token)
+        first = self.client.get("/api/v1/matchmaking/")
+        self.assertEqual("matched", first.data["status"])
+        self.assertEqual("X", first.data["player"]["symbol"])
+        self.assertEqual(matched.data["player"]["game"]["room_code"],
+                         first.data["player"]["game"]["room_code"])
+
 
 class CommunityRoomWebSocketTests(APITestCase):
     def setUp(self):

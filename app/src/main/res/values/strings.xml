@@ -279,4 +279,36 @@
     <string name="remove_room_admin">Remove administrator role</string><string name="force_mute">Force mute</string>
     <string name="allow_to_speak">Allow to speak</string><string name="remove_from_call">Remove from call</string>
     <string name="quick_match">Quick match: tic-tac-toe</string><string name="searching_for_players">Searching for another player…</string>
+    <string name="room_history">Room history</string>
+    <string name="room_history_count">%1$d recent room events</string>
+    <string name="no_room_history">No room events yet.</string>
+    <string name="system_actor">System</string>
+    <string name="event_room_created">%1$s created the room.</string>
+    <string name="event_member_joined">%1$s joined the room.</string>
+    <string name="event_member_left">%1$s left the room.</string>
+    <string name="event_call_started">%1$s started a voice call.</string>
+    <string name="event_game_selected">%1$s selected a game.</string>
+    <string name="event_game_action">%1$s made a game move.</string>
+    <string name="event_generic">%1$s: %2$s</string>
+    <string name="edit_message">Edit message</string>
+    <string name="delete_message">Delete message</string>
+    <string name="delete_message_confirmation">Delete this message for everyone?</string>
+    <string name="deleted_message">Deleted message</string>
+    <string name="save">Save</string>
+    <string name="leaderboard_title">Stats and leaderboard</string>
+    <string name="player_stats_value">Your score: %1$d\nTic-tac-toe: %2$d played, %3$d wins\nLudo: %4$d played, %5$d wins</string>
+    <string name="leaderboard_item">Rank %1$d, %2$s, @%3$s. Score %4$d. Tic-tac-toe wins %5$d. Ludo wins %6$d.</string>
+    <string name="empty_leaderboard">The leaderboard is empty.</string>
+    <string name="room_settings">Room settings</string>
+    <string name="leave_room_confirmation">Leave this room? If you are the owner, ownership will transfer to another member.</string>
+    <string name="public_room">Public room</string>
+    <string name="require_join_approval">Require approval before joining</string>
+    <string name="join_request_message">%1$s wants to join this room.</string>
+    <string name="approve">Approve</string>
+    <string name="reject">Reject</string>
+    <string name="join_request_sent">Your join request was sent to the room moderators.</string>
+    <string name="end_call">End call for everyone</string>
+    <string name="end_call_confirmation">End this voice call for everyone?</string>
+    <string name="reply_message">Reply</string>
+    <string name="replying_to">Replying to %1$s</string>
 </resources>
