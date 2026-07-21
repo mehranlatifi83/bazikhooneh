@@ -112,9 +112,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@bazikhooneh.local")
 EMAIL_DELIVERY_ENABLED = os.getenv("EMAIL_DELIVERY_ENABLED", "true" if DEBUG else "false").lower() == "true"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
 ONLINE_RECONNECT_GRACE_SECONDS = int(os.getenv("ONLINE_RECONNECT_GRACE_SECONDS", "60"))
 
-TURN_HOST = os.environ.get("TURN_HOST", "91.107.131.14")
+TURN_HOST = os.environ.get("TURN_HOST", "bazikhooneh.codelighthouse.ir")
 TURN_USERNAME = os.environ.get("TURN_USERNAME", "")
 TURN_PASSWORD = os.environ.get("TURN_PASSWORD", "")
 TURN_SHARED_SECRET = os.environ.get("TURN_SHARED_SECRET", "")

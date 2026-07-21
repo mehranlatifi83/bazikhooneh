@@ -105,8 +105,8 @@ public final class CommunityClient {
     public void connect(String code, Events events) {
         disconnect();
         String wsBase = baseUrl.replaceFirst("^https", "wss").replaceFirst("^http", "ws");
-        Request request = new Request.Builder().url(wsBase + "/ws/v1/community/" + code
-                + "/?token=" + token).build();
+        Request request = new Request.Builder().url(wsBase + "/ws/v1/community/" + code + "/")
+                .header("Authorization", "Bearer " + token).build();
         socket = http.newWebSocket(request, new WebSocketListener() {
             @Override public void onOpen(WebSocket webSocket, Response response) { events.onOpen(); }
             @Override public void onMessage(WebSocket webSocket, String text) {

@@ -220,7 +220,7 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
 
 class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
-        self.message_times=deque();self.room_code=self.scope["url_route"]["kwargs"]["code"].upper();query=self.scope.get("query_string",b"").decode();self.token=next((item.partition("=")[2] for item in query.split("&") if item.partition("=")[0]=="token"),"");self.seat=await self._authenticate()
+        self.message_times=deque();self.room_code=self.scope["url_route"]["kwargs"]["code"].upper();self.token=self._auth_token();self.seat=await self._authenticate()
         if not self.seat:await self.close(code=4401);return
         self.group_name=f"ludo_{self.room_code}";await self.channel_layer.group_add(self.group_name,self.channel_name);await self.accept();await self.send_json({"type":"state","payload":await self._payload()})
     async def disconnect(self,code):
@@ -231,6 +231,13 @@ class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
         except ValueError as error:await self.send_json({"type":"error","error":str(error)});return
         await self.channel_layer.group_send(self.group_name,{"type":"ludo.state","payload":payload})
     async def ludo_state(self,event):await self.send_json({"type":"state","payload":event["payload"]})
+    def _auth_token(self):
+        for key,value in self.scope.get("headers",[]):
+            if key.lower()==b"authorization":
+                authorization=value.decode("utf-8")
+                if authorization.startswith("Bearer "):return authorization[7:]
+        query=self.scope.get("query_string",b"").decode()
+        return next((item.partition("=")[2] for item in query.split("&") if item.partition("=")[0]=="token"),"")
     def _within_rate_limit(self):
         now=time.monotonic()
         while self.message_times and now-self.message_times[0]>10:self.message_times.popleft()

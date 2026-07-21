@@ -130,8 +130,9 @@ class CommunityRoomWebSocketTests(APITestCase):
 
     async def _flow(self):
         socket = WebsocketCommunicator(
-            application, f"/ws/v1/community/{self.code}/?token={self.token}",
-            headers=[(b"host", b"localhost")])
+            application, f"/ws/v1/community/{self.code}/",
+            headers=[(b"host", b"localhost"),
+                     (b"authorization", f"Bearer {self.token}".encode())])
         self.assertTrue((await socket.connect())[0])
         self.assertEqual("room_state", (await socket.receive_json_from())["event"])
         self.assertEqual("presence", (await socket.receive_json_from())["event"])

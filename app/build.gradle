@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
 }
 
-def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'https://91.107.131.14'
+def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'https://bazikhooneh.codelighthouse.ir'
 
 android {
     namespace 'ir.codelighthouse.bazikhooneh'

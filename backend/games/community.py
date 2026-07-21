@@ -716,6 +716,11 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(message)
 
     def _token(self):
+        for key, value in self.scope.get("headers", []):
+            if key.lower() == b"authorization":
+                authorization = value.decode("utf-8")
+                if authorization.startswith("Bearer "):
+                    return authorization[7:]
         query = self.scope.get("query_string", b"").decode()
         return next((part.partition("=")[2] for part in query.split("&")
                      if part.partition("=")[0] == "token"), "")

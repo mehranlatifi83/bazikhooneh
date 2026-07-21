@@ -5,7 +5,7 @@ APP_NAME="bazikhooneh"
 APP_DIR="/root/${APP_NAME}"
 APP_USER="bazikhooneh"
 REPO_URL="https://github.com/mehranlatifi83/bazikhooneh.git"
-PUBLIC_IP="91.107.131.14"
+PUBLIC_DOMAIN="bazikhooneh.codelighthouse.ir"
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Run this installer as root." >&2
@@ -36,8 +36,8 @@ if [[ ! -f "${APP_DIR}/.env" ]]; then
   cat >"${APP_DIR}/.env" <<ENV
 DJANGO_SECRET_KEY=${secret_key}
 DJANGO_DEBUG=false
-DJANGO_ALLOWED_HOSTS=${PUBLIC_IP}
-DJANGO_CSRF_TRUSTED_ORIGINS=https://${PUBLIC_IP}
+DJANGO_ALLOWED_HOSTS=${PUBLIC_DOMAIN}
+DJANGO_CSRF_TRUSTED_ORIGINS=https://${PUBLIC_DOMAIN}
 DJANGO_SECURE_SSL_REDIRECT=true
 DJANGO_HSTS_SECONDS=31536000
 DB_ENGINE=django.db.backends.postgresql
@@ -51,7 +51,8 @@ REDIS_URL=redis://127.0.0.1:6379/1
 STATIC_ROOT=/var/www/bazikhooneh-static
 EMAIL_DELIVERY_ENABLED=false
 EMAIL_BACKEND=django.core.mail.backends.dummy.EmailBackend
-DEFAULT_FROM_EMAIL=no-reply@${PUBLIC_IP}
+DEFAULT_FROM_EMAIL=no-reply@${PUBLIC_DOMAIN}
+TURN_HOST=${PUBLIC_DOMAIN}
 ENV
   chown root:"${APP_USER}" "${APP_DIR}/.env"
   chmod 640 "${APP_DIR}/.env"
