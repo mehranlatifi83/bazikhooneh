@@ -44,6 +44,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         findViewById(R.id.community_join_call).setOnClickListener(v -> openCall());
         findViewById(R.id.community_start_tic).setOnClickListener(v -> startGame("three_piece_tic_tac_toe"));
         findViewById(R.id.community_start_ludo).setOnClickListener(v -> startGame("ludo"));
+        findViewById(R.id.community_join_game).setOnClickListener(v -> joinActiveGame());
         findViewById(R.id.community_history).setOnClickListener(v -> startActivity(
                 new Intent(this, RoomEventsActivity.class).putExtra("room_code", code)));
         findViewById(R.id.community_settings).setOnClickListener(v -> showRoomSettings());
@@ -70,6 +71,12 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         findViewById(R.id.community_start_tic).setVisibility(moderator ? View.VISIBLE : View.GONE);
         findViewById(R.id.community_start_ludo).setVisibility(moderator ? View.VISIBLE : View.GONE);
         findViewById(R.id.community_settings).setVisibility(moderator ? View.VISIBLE : View.GONE);
+        JSONObject activeGame=room.optJSONObject("active_game");View panel=findViewById(R.id.community_active_game_panel);
+        panel.setVisibility(activeGame==null?View.GONE:View.VISIBLE);
+        if(activeGame!=null){String gameName=getString("ludo".equals(activeGame.optString("game_key"))?R.string.ludo_title:R.string.tic_tac_toe_title);
+            JSONArray participants=activeGame.optJSONArray("participants");((TextView)findViewById(R.id.community_active_game_status)).setText(
+                    getString(R.string.active_room_game,gameName,participants==null?0:participants.length(),activeGame.optInt("capacity")));
+            ((Button)findViewById(R.id.community_join_game)).setText(activeGame.optBoolean("is_participant")?R.string.resume_active_game:R.string.join_active_game);}
         members.removeAllViews();
         JSONArray values = room.optJSONArray("members");
         if (values != null) for (int i=0; i<values.length(); i++) {
@@ -142,6 +149,8 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private void startCall(){client.startCall(code,false,(data,error)->runOnUiThread(()->{
         if(error!=null)show(error);else openCall();}));}
     private void openCall(){startActivity(new Intent(this,VoiceCallActivity.class).putExtra("room_code",code));}
+    private void joinActiveGame(){client.joinGame(code,(data,error)->runOnUiThread(()->{if(error!=null){show(error);return;}openGamePayload(data);}));}
+    private void openGamePayload(JSONObject data){if(data==null)return;String key=data.optString("game_key");JSONObject player=data.optJSONObject("player");if("ludo".equals(key))openLudo(player);else openTic(player);}
     private void startGame(String key){startingGame=true;client.startGame(code,key,(data,error)->runOnUiThread(()->{
         if(error!=null){startingGame=false;show(error);return;} JSONObject player=data.optJSONObject("player");
         if("ludo".equals(key))openLudo(player);else openTic(player);}));}
@@ -153,10 +162,9 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         getSharedPreferences("ludo_online",MODE_PRIVATE).edit().putString("room",player.optString("room_code"))
                 .putInt("color",player.optInt("color")).putString("token",player.optString("reconnect_token")).apply();
         startActivity(new Intent(this,LudoOnlineActivity.class));}
-    private void joinSelectedGame(JSONObject event){String key=event.optString("game_key"),legacy=event.optString("legacy_room_code");
-        if(startingGame){startingGame=false;return;} if(legacy.isEmpty())return; CommunityClient.Callback cb=(data,error)->runOnUiThread(()->{
-            if(error!=null)show(error);else if("ludo".equals(key))openLudo(data);else openTic(data);});
-        if("ludo".equals(key))client.joinLudo(legacy,cb);else client.joinTicTacToe(legacy,cb);}
+    private void joinSelectedGame(JSONObject event){if(startingGame){startingGame=false;return;}String name=getString("ludo".equals(event.optString("game_key"))?R.string.ludo_title:R.string.tic_tac_toe_title);
+        new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.room_game_started,name))
+                .setNegativeButton(R.string.not_now,null).setPositiveButton(R.string.join_active_game,(d,w)->joinActiveGame()).show();}
     private void show(String text){status.setText(text);status.announceForAccessibility(text);}
     @Override public void onOpen(){runOnUiThread(()->show(getString(R.string.room_connected)));}
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
@@ -165,6 +173,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
         else if("chat_deleted".equals(type))removeMessage(event.optLong("message_id"));
         else if("game_selected".equals(type))joinSelectedGame(event);
+        else if("game_participant_joined".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("join_request".equals(type)&&moderator){JSONObject request=new JSONObject();try{request.put("id",event.optLong("request_id"));request.put("account",event.optJSONObject("account"));}catch(Exception ignored){}showJoinRequest(request);}
         else if("room_updated".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("call_started".equals(type)||"call_ended".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));

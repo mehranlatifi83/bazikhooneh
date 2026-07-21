@@ -135,7 +135,8 @@ class AccountApiTests(APITestCase):
         self.assertEqual(200, self.client.post(f"/api/v1/accounts/friends/requests/{request_id}/accept/").status_code)
         invited = self.client.post("/api/v1/accounts/invites/", {"username": "first_user"}, format="json")
         self.assertEqual(201, invited.status_code)
-        self.assertEqual(6, len(invited.data["game"]["room_code"]))
+        self.assertEqual(6, len(invited.data["room"]["code"]))
+        self.assertGreaterEqual(invited.data["room"]["max_members"], 4)
 
     def test_django_admin_credentials_create_matching_game_account(self):
         User.objects.create_superuser("site_admin", "admin@example.com", "admin-password")

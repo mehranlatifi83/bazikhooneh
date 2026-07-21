@@ -53,8 +53,8 @@ public final class HomeActivity extends Activity {
             String code = getIntent().getData().getLastPathSegment();
             if (code != null && code.length() == 6) {
                 SessionStore store = new SessionStore(this);
-                Class<?> destination = store.isSignedIn() ? CommunityRoomActivity.class : LoginActivity.class;
-                startActivity(new Intent(this, destination).putExtra("room_code", code));
+                Class<?> destination = store.isSignedIn() ? CommunityRoomsActivity.class : LoginActivity.class;
+                startActivity(new Intent(this, destination).putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE, code));
             }
         }
         if (!getSharedPreferences(APP_PREFS, MODE_PRIVATE).getBoolean("guide_seen", false)) {

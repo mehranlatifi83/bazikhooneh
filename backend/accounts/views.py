@@ -329,17 +329,19 @@ class InvitesView(APIView):
         invites=GameInvite.objects.filter(recipient=request.user,accepted_at__isnull=True,expires_at__gt=timezone.now()).select_related("sender").order_by("-created_at")[:20]
         return Response({"results":[{"id":i.id,"game_key":i.game_key,"room_code":i.room_code,"expires_at":i.expires_at.isoformat(),"sender":account_summary(i.sender)} for i in invites]})
     def post(self,request):
-        from games.models import Player, Room
+        from games.models import CommunityRoom
+        from games.community import room_payload
         recipient=Account.objects.filter(username=str(request.data.get("username","")).strip().lower()).first()
         if not recipient:return Response({"error":"user_not_found"},status=404)
         friends=Friendship.objects.filter(status=Friendship.STATUS_ACCEPTED).filter(models.Q(requester=request.user,recipient=recipient)|models.Q(requester=recipient,recipient=request.user)).exists()
         if not friends:return Response({"error":"not_friends"},status=403)
-        room=Room.create_unique(); player,raw=Player.create_with_token(room,"X",request.user)
-        invite=GameInvite.objects.create(sender=request.user,recipient=recipient,game_key="tic_tac_toe",room_code=room.code)
-        AccountNotification.objects.create(account=recipient,kind="game_invite",title="Game invitation",body=f"@{request.user.username} invited you to play",data={"invite_id":invite.id,"game_key":invite.game_key,"room_code":room.code})
-        from games.views import player_payload
-        payload=player_payload(room,player,raw); payload["invite_id"]=invite.id
-        return Response(payload,status=201)
+        game_key=str(request.data.get("game_key","three_piece_tic_tac_toe"))
+        if game_key not in ("three_piece_tic_tac_toe","ludo"):
+            return Response({"error":"unsupported_game"},status=400)
+        room=CommunityRoom.create_unique(request.user,f"{request.user.display_name}'s game room")
+        invite=GameInvite.objects.create(sender=request.user,recipient=recipient,game_key=game_key,room_code=room.code)
+        AccountNotification.objects.create(account=recipient,kind="game_invite",title="Game room invitation",body=f"@{request.user.username} invited you to a shared room",data={"invite_id":invite.id,"game_key":invite.game_key,"room_code":room.code})
+        return Response({"invite_id":invite.id,"room":room_payload(room,request.user)},status=201)
 
 
 class NotificationsView(APIView):

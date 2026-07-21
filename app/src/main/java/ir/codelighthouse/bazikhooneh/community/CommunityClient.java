@@ -46,7 +46,7 @@ public final class CommunityClient {
         request("PATCH", "/api/v1/community/rooms/" + code + "/", body, callback);
     }
     public void resolveJoinRequest(String code,long requestId,boolean approve,Callback callback){
-        JSONObject body=new JSONObject();try{body.put("action",approve?"approve":"reject");}catch(Exception ignored){}
+        JSONObject body=new JSONObject();try{body.put("action",approve?"approve":"deny");}catch(Exception ignored){}
         request("POST","/api/v1/community/rooms/"+code+"/join-requests/"+requestId+"/",body,callback);
     }
     public void messages(String code, Callback callback) {
@@ -77,6 +77,9 @@ public final class CommunityClient {
         JSONObject body = new JSONObject(); try { body.put("game_key", gameKey); } catch (Exception ignored) { }
         request("POST", "/api/v1/community/rooms/" + code + "/game/", body, callback);
     }
+    public void joinGame(String code, Callback callback) {
+        request("POST", "/api/v1/community/rooms/" + code + "/game/join/", new JSONObject(), callback);
+    }
     public void moderateRoom(String code, String username, String action, Callback callback) {
         JSONObject body = new JSONObject(); try { body.put("username", username); body.put("action", action); }
         catch (Exception ignored) { }
@@ -86,14 +89,6 @@ public final class CommunityClient {
         JSONObject body = new JSONObject(); try { body.put("username", username); body.put("action", action); }
         catch (Exception ignored) { }
         request("POST", "/api/v1/community/rooms/" + code + "/call/moderate/", body, callback);
-    }
-    public void joinTicTacToe(String legacyCode, Callback callback) {
-        JSONObject body = new JSONObject(); try { body.put("code", legacyCode); } catch (Exception ignored) { }
-        request("POST", "/api/v1/rooms/join/", body, callback);
-    }
-    public void joinLudo(String legacyCode, Callback callback) {
-        JSONObject body = new JSONObject(); try { body.put("code", legacyCode); } catch (Exception ignored) { }
-        request("POST", "/api/v1/ludo/rooms/join/", body, callback);
     }
     public void quickMatch(String gameKey, Callback callback) {
         JSONObject body = new JSONObject(); try { body.put("game_key", gameKey); } catch (Exception ignored) { }

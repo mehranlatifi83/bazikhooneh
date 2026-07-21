@@ -70,9 +70,11 @@ public final class LoginActivity extends NavigableActivity {
             runOnUiThread(() -> {
                 new SessionStore(LoginActivity.this).save(session);
                 String roomCode = getIntent().getStringExtra("room_code");
+                String gameKey = getIntent().getStringExtra(CommunityRoomsActivity.EXTRA_GAME_KEY);
                 if (roomCode != null || getIntent().getBooleanExtra("open_online", false)) {
-                    Intent lobby = new Intent(LoginActivity.this, OnlineLobbyActivity.class);
-                    if (roomCode != null) lobby.putExtra("room_code", roomCode);
+                    Intent lobby = new Intent(LoginActivity.this, CommunityRoomsActivity.class);
+                    if (roomCode != null) lobby.putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE, roomCode);
+                    if (gameKey != null) lobby.putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY, gameKey);
                     startActivity(lobby);
                 }
                 setResult(RESULT_OK);

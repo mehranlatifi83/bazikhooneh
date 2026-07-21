@@ -311,4 +311,10 @@
     <string name="end_call_confirmation">End this voice call for everyone?</string>
     <string name="reply_message">Reply</string>
     <string name="replying_to">Replying to %1$s</string>
+    <string name="join_active_game">Join current game</string>
+    <string name="resume_active_game">Resume current game</string>
+    <string name="active_room_game">Current game: %1$s. Players: %2$d of %3$d.</string>
+    <string name="room_game_started">A %1$s game started in this room. Join it?</string>
+    <string name="not_now">Not now</string>
+    <string name="rooms_for_game">Shared rooms for %1$s. The room remains available when you switch games.</string>
 </resources>

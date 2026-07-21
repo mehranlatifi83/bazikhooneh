@@ -311,4 +311,10 @@
     <string name="end_call_confirmation">این تماس صوتی برای همه پایان یابد؟</string>
     <string name="reply_message">پاسخ</string>
     <string name="replying_to">در پاسخ به %1$s</string>
+    <string name="join_active_game">پیوستن به بازی فعلی</string>
+    <string name="resume_active_game">ادامهٔ بازی فعلی</string>
+    <string name="active_room_game">بازی فعلی: %1$s. بازیکنان: %2$d از %3$d.</string>
+    <string name="room_game_started">بازی %1$s در این اتاق شروع شد. می‌خواهید وارد شوید؟</string>
+    <string name="not_now">فعلاً نه</string>
+    <string name="rooms_for_game">اتاق‌های مشترک برای %1$s. با عوض‌کردن بازی، اتاق و امکاناتش باقی می‌ماند.</string>
 </resources>

@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import re
+import secrets
 import time
 from collections import deque
 from datetime import timedelta
@@ -24,7 +25,7 @@ from .models import (
     CommunityCall, CommunityCallParticipant, CommunityEvent, CommunityGameSession,
     CommunityJoinRequest, CommunityMembership, CommunityMessage, CommunityRoom,
     CommunitySpeakRequest, LudoMatch, LudoRoom, LudoSeat, Match, MatchmakingTicket,
-    Player, Room,
+    Player, Room, token_hash,
 )
 from .views import ludo_payload, player_payload
 
@@ -75,6 +76,24 @@ def room_payload(room, account=None):
     if membership and membership.can_moderate:
         pending_requests = [{"id": item.id, "account": account_payload(item.account)} for item in
                             room.join_requests.select_related("account").filter(status="pending")]
+    active_game_payload = None
+    if active_game:
+        legacy = active_game.tic_tac_toe_room or active_game.ludo_room
+        if active_game.game_key == "three_piece_tic_tac_toe":
+            participants = [account_payload(item.account) for item in
+                            legacy.players.select_related("account").filter(
+                                is_active=True, account__isnull=False)]
+            capacity = 2
+        else:
+            participants = [account_payload(item.account) for item in
+                            legacy.seats.select_related("account").filter(
+                                active=True, is_bot=False, account__isnull=False)]
+            capacity = 4
+        active_game_payload = {"id": active_game.id, "game_key": active_game.game_key,
+                               "state": active_game.state, "participants": participants,
+                               "capacity": capacity,
+                               "is_participant": bool(account and any(
+                                   value["id"] == str(account.id) for value in participants))}
     return {"id": str(room.id), "code": room.code, "title": room.title,
             "privacy": room.privacy, "join_policy": room.join_policy,
             "max_members": room.max_members, "is_closed": room.is_closed,
@@ -83,12 +102,7 @@ def room_payload(room, account=None):
                         room.memberships.select_related("account").filter(status="active")],
             "active_call": call_payload(active_call),
             "pending_join_requests": pending_requests,
-            "active_game": ({"id": active_game.id, "game_key": active_game.game_key,
-                             "state": active_game.state,
-                             "legacy_room_code": active_game.tic_tac_toe_room.code
-                             if active_game.tic_tac_toe_room else
-                             (active_game.ludo_room.code if active_game.ludo_room else None)}
-                            if active_game else None),
+            "active_game": active_game_payload,
             "websocket_path": f"/ws/v1/community/{room.code}/"}
 
 
@@ -220,6 +234,9 @@ class CommunityJoinView(APIView):
         membership.status = CommunityMembership.Status.ACTIVE
         membership.save()
         CommunityEvent.objects.create(room=room, actor=request.user, kind="member_joined")
+        from accounts.models import GameInvite
+        GameInvite.objects.filter(recipient=request.user, room_code=room.code,
+                                  accepted_at__isnull=True).update(accepted_at=timezone.now())
         transaction.on_commit(lambda: broadcast(room, "member_joined", {
             "member": member_payload(membership)}))
         return Response(room_payload(room, request.user))
@@ -515,9 +532,70 @@ class CommunityGameView(APIView):
                             f"{request.user.display_name} selected a game in {room.title}",
                             {"room_code": room.code, "game_key": game_key})
         transaction.on_commit(lambda: broadcast(room, "game_selected", {
-            "game_key": game_key, "session_id": session.id,
-            "legacy_room_code": legacy.code}))
+            "game_key": game_key, "session_id": session.id}))
         return Response({"session_id": session.id, "game_key": game_key, "player": payload}, status=201)
+
+
+class CommunityGameJoinView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, code):
+        room = CommunityRoom.objects.select_for_update().filter(code=code.upper()).first()
+        member = active_membership(room, request.user) if room else None
+        session = room.game_sessions.select_for_update().filter(
+            state__in=("waiting", "active")).order_by("-created_at").first() if room else None
+        if not member:
+            return Response({"error": "not_a_member"}, status=403)
+        if not session:
+            return Response({"error": "no_active_game"}, status=404)
+        if session.game_key == "three_piece_tic_tac_toe":
+            legacy = session.tic_tac_toe_room
+            existing = legacy.players.filter(account=request.user).first()
+            if existing:
+                token = secrets.token_urlsafe(32)
+                existing.reconnect_token_hash = token_hash(token)
+                existing.is_active = True
+                existing.save(update_fields=("reconnect_token_hash", "is_active", "last_seen_at"))
+                player = existing
+            else:
+                if legacy.players.filter(is_active=True).count() >= 2:
+                    return Response({"error": "game_full"}, status=409)
+                symbol = "O" if legacy.players.filter(symbol="X", is_active=True).exists() else "X"
+                player, token = Player.create_with_token(legacy, symbol, request.user)
+            if legacy.players.filter(is_active=True).count() == 2 and legacy.state == Room.State.WAITING:
+                legacy.state = Room.State.ACTIVE
+                legacy.save(update_fields=("state", "updated_at"))
+                Match.start_for_room(legacy)
+                session.state = "active"
+                session.save(update_fields=("state",))
+            payload = player_payload(legacy, player, token)
+        elif session.game_key == "ludo":
+            legacy = session.ludo_room
+            existing = legacy.seats.filter(account=request.user, is_bot=False).first()
+            if existing:
+                token = secrets.token_urlsafe(32)
+                existing.reconnect_token_hash = token_hash(token)
+                existing.active = True
+                existing.save(update_fields=("reconnect_token_hash", "active", "last_seen_at"))
+                seat = existing
+            else:
+                used = set(legacy.seats.filter(active=True).values_list("color", flat=True))
+                color = next((value for value in range(4) if value not in used), None)
+                if color is None:
+                    return Response({"error": "game_full"}, status=409)
+                seat, token = LudoSeat.create_human(legacy, color, request.user)
+            payload = ludo_payload(legacy, seat, token)
+        else:
+            return Response({"error": "unsupported_game"}, status=400)
+        CommunityEvent.objects.create(room=room, actor=request.user, kind="game_joined",
+                                      payload={"game_key": session.game_key,
+                                               "session_id": session.id})
+        transaction.on_commit(lambda: broadcast(room, "game_participant_joined", {
+            "game_key": session.game_key, "session_id": session.id,
+            "account": account_payload(request.user)}))
+        return Response({"session_id": session.id, "game_key": session.game_key,
+                         "player": payload})
 
 
 class IceServersView(APIView):
@@ -575,6 +653,18 @@ class MatchmakingView(APIView):
                                                 state="active")
             first_credentials = player_payload(legacy, first_player, first_token)
             second_credentials = player_payload(legacy, second_player, second_token)
+            CommunityEvent.objects.create(room=room, actor=other.account,
+                                          kind="game_selected",
+                                          payload={"game_key": game_key})
+        else:
+            legacy = LudoRoom.create_unique(other.account)
+            first_seat, first_token = LudoSeat.create_human(legacy, 0, other.account)
+            second_seat, second_token = LudoSeat.create_human(legacy, 1, request.user)
+            CommunityGameSession.objects.create(room=room, game_key=game_key,
+                                                created_by=other.account,
+                                                ludo_room=legacy)
+            first_credentials = ludo_payload(legacy, first_seat, first_token)
+            second_credentials = ludo_payload(legacy, second_seat, second_token)
             CommunityEvent.objects.create(room=room, actor=other.account,
                                           kind="game_selected",
                                           payload={"game_key": game_key})

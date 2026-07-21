@@ -113,6 +113,40 @@ class CommunityRoomApiTests(APITestCase):
         self.assertEqual(matched.data["player"]["game"]["room_code"],
                          first.data["player"]["game"]["room_code"])
 
+    def test_member_joins_game_through_shared_room(self):
+        owner_token = self.register("game_owner")
+        self.authenticate(owner_token)
+        code = self.client.post("/api/v1/community/rooms/", {
+            "title": "One room for everything"}, format="json").data["code"]
+        started = self.client.post(f"/api/v1/community/rooms/{code}/game/", {
+            "game_key": "three_piece_tic_tac_toe"}, format="json")
+        self.assertEqual(201, started.status_code)
+
+        member_token = self.register("game_member")
+        self.authenticate(member_token)
+        self.assertEqual(200, self.client.post("/api/v1/community/rooms/join/", {
+            "code": code}, format="json").status_code)
+        joined = self.client.post(f"/api/v1/community/rooms/{code}/game/join/", {}, format="json")
+        self.assertEqual(200, joined.status_code)
+        self.assertEqual("O", joined.data["player"]["symbol"])
+        details = self.client.get(f"/api/v1/community/rooms/{code}/")
+        self.assertEqual(2, len(details.data["active_game"]["participants"]))
+        self.assertTrue(details.data["active_game"]["is_participant"])
+        self.assertNotIn("legacy_room_code", details.data["active_game"])
+
+    def test_ludo_matchmaking_creates_shared_game_session(self):
+        first_token = self.register("ludo_first")
+        self.authenticate(first_token)
+        self.assertEqual(202, self.client.post("/api/v1/matchmaking/", {
+            "game_key": "ludo"}, format="json").status_code)
+        second_token = self.register("ludo_second")
+        self.authenticate(second_token)
+        matched = self.client.post("/api/v1/matchmaking/", {
+            "game_key": "ludo"}, format="json")
+        self.assertEqual(200, matched.status_code)
+        self.assertEqual("ludo", matched.data["room"]["active_game"]["game_key"])
+        self.assertEqual(2, len(matched.data["room"]["active_game"]["participants"]))
+
 
 class CommunityRoomWebSocketTests(APITestCase):
     def setUp(self):

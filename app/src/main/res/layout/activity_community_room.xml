@@ -33,6 +33,15 @@
                 android:textAllCaps="false" />
         </LinearLayout>
     </HorizontalScrollView>
+    <LinearLayout android:id="@+id/community_active_game_panel" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone"
+        android:paddingTop="8dp" android:paddingBottom="8dp">
+        <TextView android:id="@+id/community_active_game_status" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textSize="17sp" android:accessibilityLiveRegion="polite" />
+        <Button android:id="@+id/community_join_game" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:minHeight="56dp"
+            android:text="@string/join_active_game" android:textAllCaps="false" />
+    </LinearLayout>
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="8dp" android:text="@string/community_members"
         android:textStyle="bold" android:accessibilityHeading="true" />

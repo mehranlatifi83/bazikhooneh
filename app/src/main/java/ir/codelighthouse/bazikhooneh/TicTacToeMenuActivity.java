@@ -40,9 +40,11 @@ public final class TicTacToeMenuActivity extends NavigableActivity {
 
     private void openOnline() {
         if (!new SessionStore(this).isSignedIn()) {
-            startActivity(new Intent(this, LoginActivity.class).putExtra("open_online", true));
+            startActivity(new Intent(this, LoginActivity.class).putExtra("open_online", true)
+                    .putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY,"three_piece_tic_tac_toe"));
             return;
         }
-        startActivity(new Intent(this, OnlineLobbyActivity.class));
+        startActivity(new Intent(this, CommunityRoomsActivity.class)
+                .putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY,"three_piece_tic_tac_toe"));
     }
 }
