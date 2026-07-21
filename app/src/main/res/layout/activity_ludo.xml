@@ -2,6 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@color/screen_background">
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
   <TextView android:id="@+id/ludo_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="52dp" android:textSize="20sp" android:textStyle="bold" />
+  <TextView android:id="@+id/ludo_event_log" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:paddingTop="8dp" android:paddingBottom="8dp" android:textSize="16sp" android:focusable="true" android:visibility="gone" />
   <LinearLayout android:id="@+id/ludo_online_controls" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
    <TextView android:id="@+id/ludo_room_info" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp" />
    <Button android:id="@+id/ludo_share_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/share_room" />

@@ -235,4 +235,7 @@
     <string name="ludo_named_player">%1$s, player %2$d, %3$s</string>
     <string name="ludo_capture_opportunity">Piece %1$d can capture %2$d opponent piece(s).</string>
     <string name="ludo_piece_action_capture">Piece %1$d, currently %2$s; captures an opponent piece</string>
+    <string name="ludo_capture_target_opportunity">Piece %1$d can capture piece %2$d belonging to %3$s.</string>
+    <string name="ludo_captured_piece">Piece %2$d belonging to %1$s was captured.</string>
+    <string name="ludo_last_turn_log">Last turn report:\n%1$s</string>
 </resources>

@@ -235,4 +235,7 @@
     <string name="ludo_named_player">%1$s، بازیکن %2$d، %3$s</string>
     <string name="ludo_capture_opportunity">مهره %1$d می‌تواند %2$d مهره حریف را بزند.</string>
     <string name="ludo_piece_action_capture">مهره %1$d، اکنون %2$s؛ با این حرکت مهره حریف زده می‌شود</string>
+    <string name="ludo_capture_target_opportunity">مهره %1$d می‌تواند مهره %2$d متعلق به %3$s را بزند.</string>
+    <string name="ludo_captured_piece">مهره %2$d متعلق به %1$s زده شد.</string>
+    <string name="ludo_last_turn_log">گزارش آخرین نوبت:\n%1$s</string>
 </resources>

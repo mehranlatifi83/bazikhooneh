@@ -10,3 +10,7 @@ class LudoEngineTests(SimpleTestCase):
         state=initial_state(third_six_penalty=True);roll(state,6);move(state,0);roll(state,6);move(state,0);roll(state,6);self.assertEqual(1,state["current_player"])
     def test_third_six_is_allowed_by_default(self):
         state=initial_state();roll(state,6);move(state,0);roll(state,6);move(state,0);self.assertTrue(roll(state,6));self.assertEqual(0,state["current_player"])
+    def test_capture_event_identifies_victim_player_and_piece(self):
+        state=initial_state();state["positions"][0][0]=13;state["positions"][1][0]=1
+        roll(state,1);move(state,0)
+        self.assertEqual([[1,0]],state["last_event"]["captured"])
