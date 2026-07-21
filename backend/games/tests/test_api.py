@@ -52,6 +52,15 @@ class RoomApiTests(APITestCase):
         response = self.client.post("/api/v1/rooms/join/", {"code": "ABC123"}, format="json")
         self.assertEqual(404, response.status_code)
 
+    def test_ludo_room_fills_empty_seats_with_bots(self):
+        created=self.client.post("/api/v1/ludo/rooms/")
+        self.assertEqual(201,created.status_code)
+        code=created.data["room_code"]
+        started=self.client.post(f"/api/v1/ludo/rooms/{code}/start/")
+        self.assertEqual(200,started.status_code)
+        self.assertEqual(4,len(started.data["seats"]))
+        self.assertEqual(3,sum(1 for seat in started.data["seats"] if seat["is_bot"]))
+
     def test_room_creation_requires_account(self):
         self.client.credentials()
         response = self.client.post("/api/v1/rooms/", {}, format="json")

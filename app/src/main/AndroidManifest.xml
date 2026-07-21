@@ -27,6 +27,11 @@
         <activity android:name=".DeleteAccountActivity" android:exported="false" android:label="@string/delete_account_title" />
         <activity android:name=".NotificationsActivity" android:exported="false" android:label="@string/notifications_title" />
         <activity android:name=".SafetyActivity" android:exported="false" android:label="@string/safety_title" />
+        <activity android:name=".LudoMenuActivity" android:exported="false" android:label="@string/ludo_title" />
+        <activity android:name=".LudoGuideActivity" android:exported="false" android:label="@string/ludo_guide_title" />
+        <activity android:name=".LudoActivity" android:exported="false" android:label="@string/ludo_title" />
+        <activity android:name=".LudoOnlineLobbyActivity" android:exported="false" android:label="@string/ludo_online_title" />
+        <activity android:name=".LudoOnlineActivity" android:exported="false" android:label="@string/ludo_online_title" />
         <activity android:name=".FriendsActivity" android:exported="false" android:label="@string/friends_title" />
         <activity android:name=".AccountSecurityActivity" android:exported="false" android:label="@string/account_security_title" />
         <activity android:name=".PasswordResetActivity" android:exported="false" android:label="@string/forgot_password" />

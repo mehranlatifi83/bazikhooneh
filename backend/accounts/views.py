@@ -17,14 +17,18 @@ from .serializers import (LoginSerializer, PasswordChangeSerializer, ProfileUpda
 
 def profile_payload(account):
     from django.db.models import Q
-    from games.models import Match
+    from games.models import Match, LudoMatch
 
     completed = Match.objects.filter(
         Q(x_account=account) | Q(o_account=account), finished_at__isnull=False
     )
     wins = completed.filter(winner=account).count()
+    ludo_completed = LudoMatch.objects.filter(participants=account, finished_at__isnull=False)
+    ludo_wins = ludo_completed.filter(winner=account).count()
     by_game = [{"game_key": item["game_key"], "played": item["played"]}
                for item in completed.values("game_key").annotate(played=models.Count("id"))]
+    if ludo_completed.exists():
+        by_game.append({"game_key": "ludo", "played": ludo_completed.count()})
     return {
         "id": str(account.id),
         "username": account.username,
@@ -37,9 +41,9 @@ def profile_payload(account):
         if account.username_changed_at else None,
         "created_at": account.created_at.isoformat(),
         "stats": {
-            "played": completed.count(),
-            "wins": wins,
-            "losses": completed.exclude(winner=account).count(),
+            "played": completed.count() + ludo_completed.count(),
+            "wins": wins + ludo_wins,
+            "losses": completed.exclude(winner=account).count() + ludo_completed.exclude(winner=account).count(),
             "by_game": by_game,
         },
     }

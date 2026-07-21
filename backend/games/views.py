@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 
-from .models import Match, Player, Room
+from .models import Match, Player, Room, LudoRoom, LudoSeat, LudoMatch, token_hash
+from .ludo_engine import initial_state, run_bots
 from .serializers import JoinRoomSerializer
 
 
@@ -89,4 +90,59 @@ class MatchHistoryView(APIView):
                 "started_at": match.started_at.isoformat(),
                 "finished_at": match.finished_at.isoformat(),
             })
+        ludo_matches = LudoMatch.objects.select_related("room", "winner").prefetch_related("participants").filter(
+            participants=request.user, finished_at__isnull=False,
+        )[:50]
+        for match in ludo_matches:
+            opponents = [participant for participant in match.participants.all() if participant.id != request.user.id]
+            results.append({
+                "id": str(match.id), "room_code": match.room.code, "game_key": "ludo", "round": 1,
+                "symbol": "", "opponents": [{"username": item.username, "display_name": item.display_name,
+                                                "avatar_color": item.avatar_color} for item in opponents],
+                "result": "win" if match.winner_id == request.user.id else "loss", "outcome": "finished",
+                "started_at": match.started_at.isoformat(), "finished_at": match.finished_at.isoformat(),
+            })
+        results.sort(key=lambda item: item["finished_at"], reverse=True)
+        results = results[:50]
         return Response({"results": results})
+
+
+def ludo_payload(room,seat=None,token=None):
+    data={"room_code":room.code,"room_state":room.state,"version":room.version,"game":room.game_state,"host":room.host.username,"seats":[{"color":s.color,"is_bot":s.is_bot,"username":s.account.username if s.account else "","display_name":s.account.display_name if s.account else f"Bot {s.color+1}"} for s in room.seats.select_related("account").order_by("color")]}
+    if seat is not None:data.update(color=seat.color,reconnect_token=token,websocket_path=f"/ws/v1/ludo/{room.code}/")
+    return data
+
+
+class CreateLudoRoomView(APIView):
+    permission_classes=[IsAuthenticated]
+    @transaction.atomic
+    def post(self,request):
+        room=LudoRoom.create_unique(request.user);seat,token=LudoSeat.create_human(room,0,request.user);return Response(ludo_payload(room,seat,token),status=201)
+
+
+class JoinLudoRoomView(APIView):
+    permission_classes=[IsAuthenticated]
+    @transaction.atomic
+    def post(self,request):
+        code=str(request.data.get("code","")).strip().upper();room=LudoRoom.objects.select_for_update().filter(code=code).first()
+        if not room:return Response({"error":"room_not_found"},status=404)
+        if room.state!="waiting" or room.seats.count()>=4:return Response({"error":"room_unavailable"},status=409)
+        if room.seats.filter(account=request.user).exists():return Response({"error":"already_in_room"},status=409)
+        used=set(room.seats.values_list("color",flat=True));color=next(value for value in range(4) if value not in used);seat,token=LudoSeat.create_human(room,color,request.user);return Response(ludo_payload(room,seat,token))
+
+
+class StartLudoRoomView(APIView):
+    permission_classes=[IsAuthenticated]
+    @transaction.atomic
+    def post(self,request,code):
+        room=LudoRoom.objects.select_for_update().filter(code=code.upper(),host=request.user,state="waiting").first()
+        if not room:return Response({"error":"room_unavailable"},status=409)
+        used=set(room.seats.values_list("color",flat=True))
+        for color in range(4):
+            if color not in used:LudoSeat.objects.create(room=room,color=color,is_bot=True)
+        bots=[False]*4
+        for seat in room.seats.all():bots[seat.color]=seat.is_bot
+        room.game_state=initial_state([True]*4,bots);room.state="active";room.version+=1;room.save()
+        match=LudoMatch.objects.create(room=room);match.participants.set(room.seats.filter(account__isnull=False).values_list("account_id",flat=True))
+        transaction.on_commit(lambda:async_to_sync(get_channel_layer().group_send)(f"ludo_{room.code}",{"type":"ludo.state","payload":ludo_payload(room)}))
+        return Response(ludo_payload(room))

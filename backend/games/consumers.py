@@ -10,6 +10,8 @@ from django.utils import timezone
 
 from .engine import GameError
 from .models import Match, Player, Room, token_hash
+from .models import LudoRoom,LudoSeat,LudoMatch
+from .ludo_engine import roll as ludo_roll,move as ludo_move,run_bots
 
 
 class RoomConsumer(AsyncJsonWebsocketConsumer):
@@ -171,44 +173,71 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         with transaction.atomic():
             room = Room.objects.select_for_update().get(code=self.room_code)
             player = Player.objects.get(id=self.player.id)
-            if room.state != Room.State.ACTIVE:
-                raise GameError("room_not_active")
-            game = room.game().apply(player.symbol, action)
-            room.apply_game(game)
-            room.save()
+            if room.state != Room.State.ACTIVE: raise GameError("room_not_active")
+            game = room.game().apply(player.symbol, action);room.apply_game(game);room.save()
             if room.state == Room.State.FINISHED:
                 match = room.matches.select_for_update().filter(finished_at__isnull=True).first()
-                if match:
-                    winner = match.x_account if game.status.value == "x_won" else match.o_account
-                    match.finish(game.status.value, winner)
+                if match: match.finish(game.status.value, match.x_account if game.status.value == "x_won" else match.o_account)
             return room.public_state()
 
     @database_sync_to_async
     def _request_rematch(self):
         with transaction.atomic():
-            room = Room.objects.select_for_update().get(code=self.room_code)
-            if room.state != Room.State.FINISHED:
-                raise GameError("game_not_finished")
-            if room.players.filter(is_active=True).count() != 2:
-                raise GameError("opponent_left")
-            room.request_rematch(self.player.symbol)
-            room.save()
-            if room.state == Room.State.ACTIVE:
-                Match.start_for_room(room)
+            room=Room.objects.select_for_update().get(code=self.room_code)
+            if room.state!=Room.State.FINISHED:raise GameError("game_not_finished")
+            if room.players.filter(is_active=True).count()!=2:raise GameError("opponent_left")
+            room.request_rematch(self.player.symbol);room.save()
+            if room.state==Room.State.ACTIVE:Match.start_for_room(room)
             return room.public_state()
 
     @database_sync_to_async
     def _leave_room(self):
         with transaction.atomic():
-            room = Room.objects.select_for_update().get(code=self.room_code)
-            player = Player.objects.select_for_update().get(id=self.player.id)
+            room=Room.objects.select_for_update().get(code=self.room_code);player=Player.objects.select_for_update().get(id=self.player.id)
             if player.is_active:
-                player.is_active = False
-                player.save(update_fields=("is_active", "last_seen_at"))
-                room.close_for_player(player.symbol)
-                room.save()
-                match = room.matches.select_for_update().filter(finished_at__isnull=True).first()
-                if match:
-                    winner = match.o_account if player.symbol == "X" else match.x_account
-                    match.finish(room.outcome_reason, winner)
+                player.is_active=False;player.save(update_fields=("is_active","last_seen_at"));room.close_for_player(player.symbol);room.save();match=room.matches.select_for_update().filter(finished_at__isnull=True).first()
+                if match:match.finish(room.outcome_reason,match.o_account if player.symbol=="X" else match.x_account)
             return room.public_state()
+
+
+class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        self.message_times=deque();self.room_code=self.scope["url_route"]["kwargs"]["code"].upper();query=self.scope.get("query_string",b"").decode();self.token=next((item.partition("=")[2] for item in query.split("&") if item.partition("=")[0]=="token"),"");self.seat=await self._authenticate()
+        if not self.seat:await self.close(code=4401);return
+        self.group_name=f"ludo_{self.room_code}";await self.channel_layer.group_add(self.group_name,self.channel_name);await self.accept();await self.send_json({"type":"state","payload":await self._payload()})
+    async def disconnect(self,code):
+        if hasattr(self,"group_name"):await self.channel_layer.group_discard(self.group_name,self.channel_name)
+    async def receive_json(self,content,**kwargs):
+        if not self._within_rate_limit():await self.send_json({"type":"error","error":"rate_limited"});return
+        try:payload=await self._action(content)
+        except ValueError as error:await self.send_json({"type":"error","error":str(error)});return
+        await self.channel_layer.group_send(self.group_name,{"type":"ludo.state","payload":payload})
+    async def ludo_state(self,event):await self.send_json({"type":"state","payload":event["payload"]})
+    def _within_rate_limit(self):
+        now=time.monotonic()
+        while self.message_times and now-self.message_times[0]>10:self.message_times.popleft()
+        if len(self.message_times)>=20:return False
+        self.message_times.append(now);return True
+    @database_sync_to_async
+    def _authenticate(self):
+        return LudoSeat.objects.select_related("room","account").filter(room__code=self.room_code,reconnect_token_hash=token_hash(self.token),active=True,is_bot=False).first()
+    @database_sync_to_async
+    def _payload(self):
+        from .views import ludo_payload
+        return ludo_payload(LudoRoom.objects.get(code=self.room_code))
+    @database_sync_to_async
+    def _action(self,content):
+        from .views import ludo_payload
+        with transaction.atomic():
+            room=LudoRoom.objects.select_for_update().get(code=self.room_code);state=room.game_state
+            if room.state!="active":raise ValueError("room_not_active")
+            if state["current_player"]!=self.seat.color:raise ValueError("not_your_turn")
+            kind=content.get("type")
+            if kind=="roll":ludo_roll(state)
+            elif kind=="move":ludo_move(state,int(content.get("piece",-1)))
+            else:raise ValueError("invalid_action")
+            run_bots(state);room.game_state=state;room.version+=1
+            if state["winner"]>=0:
+                room.state="finished";match=LudoMatch.objects.filter(room=room,finished_at__isnull=True).first();winner_seat=room.seats.filter(color=state["winner"]).first()
+                if match:match.winner=winner_seat.account if winner_seat else None;match.finished_at=timezone.now();match.save()
+            room.save();return ludo_payload(room)

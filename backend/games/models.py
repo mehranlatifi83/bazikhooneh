@@ -186,3 +186,40 @@ class Match(models.Model):
         self.winner = winner
         self.finished_at = timezone.now()
         self.save(update_fields=("outcome", "winner", "finished_at"))
+
+
+class LudoRoom(models.Model):
+    id=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    code=models.CharField(max_length=6,unique=True,db_index=True)
+    host=models.ForeignKey("accounts.Account",on_delete=models.PROTECT,related_name="hosted_ludo_rooms")
+    state=models.CharField(max_length=16,default="waiting")
+    game_state=models.JSONField(default=dict)
+    version=models.PositiveIntegerField(default=0)
+    created_at=models.DateTimeField(auto_now_add=True);updated_at=models.DateTimeField(auto_now=True)
+    @classmethod
+    def create_unique(cls,host):
+        for _ in range(20):
+            code=generate_room_code()
+            if not cls.objects.filter(code=code).exists():return cls.objects.create(code=code,host=host)
+        raise RuntimeError("Could not generate Ludo room code")
+
+
+class LudoSeat(models.Model):
+    room=models.ForeignKey(LudoRoom,on_delete=models.CASCADE,related_name="seats")
+    color=models.PositiveSmallIntegerField()
+    account=models.ForeignKey("accounts.Account",on_delete=models.PROTECT,null=True,blank=True,related_name="ludo_seats")
+    is_bot=models.BooleanField(default=False)
+    reconnect_token_hash=models.CharField(max_length=64,blank=True,db_index=True)
+    active=models.BooleanField(default=True)
+    joined_at=models.DateTimeField(auto_now_add=True);last_seen_at=models.DateTimeField(auto_now=True)
+    class Meta:constraints=[models.UniqueConstraint(fields=("room","color"),name="unique_ludo_color"),models.UniqueConstraint(fields=("room","account"),condition=models.Q(account__isnull=False),name="unique_ludo_account")]
+    @classmethod
+    def create_human(cls,room,color,account):
+        token=secrets.token_urlsafe(32);seat=cls.objects.create(room=room,color=color,account=account,reconnect_token_hash=token_hash(token));return seat,token
+
+
+class LudoMatch(models.Model):
+    room=models.OneToOneField(LudoRoom,on_delete=models.CASCADE,related_name="match")
+    participants=models.ManyToManyField("accounts.Account",related_name="ludo_matches")
+    winner=models.ForeignKey("accounts.Account",on_delete=models.PROTECT,null=True,blank=True,related_name="ludo_matches_won")
+    started_at=models.DateTimeField(auto_now_add=True);finished_at=models.DateTimeField(null=True,blank=True)

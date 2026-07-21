@@ -96,6 +96,7 @@
     <string name="match_win">Win</string>
     <string name="match_loss">Loss</string>
     <string name="match_history_item">%1$s against %2$s, round %3$d</string>
+    <string name="ludo_match_history_item">Ludo: %1$s against %2$s</string>
     <string name="login_title">Your BaziKhooneh account</string>
     <string name="account_title">Account</string>
     <string name="login_description">One account is used for every online game, profile, score, and invitation in BaziKhooneh.</string>
@@ -209,4 +210,23 @@
     <string name="join_friend_invite_timed">Join %1$s in room %2$s; expires in %3$d minutes</string>
     <string name="online_status_with_opponent">%1$s Opponent: %2$s, %3$s.</string>
     <string name="no_friends">No friends yet.</string><string name="no_friend_requests">No pending requests.</string><string name="no_game_invites">No active game invitations.</string>
+    <string name="ludo_title">Ludo</string><string name="ludo_card">Ludo</string><string name="ludo_description">Local, bot, and up-to-four-player online play</string>
+    <string name="ludo_guide_title">Ludo rules and guide</string><string name="ludo_mode_description">Choose pass-and-play on this device, play three bots, or create an online game for up to four players.</string>
+    <string name="ludo_local_mode">Local players on this device</string><string name="ludo_bot_mode">One player and three bots</string><string name="ludo_online_mode">Online game</string>
+    <string name="ludo_player_count">Number of local players</string><string name="two_players">Two</string><string name="three_players">Three</string><string name="four_players">Four</string>
+    <string name="ludo_rules">Each active player has four pieces. Players roll one die in turn. A six is required to move a piece out of home and onto its starting square. Rolling a six grants another roll; rolling three consecutive sixes ends the turn without using the third six. Move one legal piece by exactly the number rolled. Landing on an opponent on a non-safe square sends that piece home and grants another roll. Starting squares and marked star squares are safe and pieces on them cannot be captured. After completing the 52-square outer track, a piece enters its own final lane. The exact number is required to reach the finish. The first player to finish all four pieces wins.</string>
+    <string name="ludo_accessibility">The visual board uses color, piece numbers, and player names together, so color is never the only cue. The status announces the player, die result, move, capture, and next turn in order. Every legal move also appears as a labeled button with the piece number and position, allowing the entire game to be played with a screen reader without exploring the visual board.</string>
+    <string name="ludo_board_description">Visual Ludo board. Use the labeled move buttons below the board with a screen reader.</string><string name="ludo_roll_dice">Roll dice</string>
+    <string name="ludo_roll_announcement">%1$s rolled %2$d.</string><string name="ludo_move_announcement">%1$s moved piece %2$d to %3$s.</string><string name="ludo_capture_announcement">Captured %1$d opposing piece.</string>
+    <string name="ludo_turn_roll">%1$s’s turn. Roll the dice.</string><string name="ludo_choose_piece">%1$s rolled %2$d. Choose a piece.</string><string name="ludo_piece_action">Move piece %1$d, currently %2$s</string>
+    <string name="ludo_red">Red</string><string name="ludo_blue">Blue</string><string name="ludo_green">Green</string><string name="ludo_yellow">Yellow</string><string name="ludo_human_player">%1$s player</string><string name="ludo_bot_player">%1$s bot</string>
+    <string name="ludo_at_home">at home</string><string name="ludo_finished">finished</string><string name="ludo_final_lane">final lane square %1$d</string><string name="ludo_track_position">track square %1$d</string><string name="ludo_winner">%1$s wins!</string>
+    <string name="ludo_online_title">Online Ludo</string><string name="ludo_online_lobby_description">Create or join a four-seat room. The host can start after adding bots to any empty seats.</string>
+    <string name="share_room">Share room code</string>
+    <string name="ludo_share_text">Join my Ludo game in BaziKhooneh. Room code: %1$s</string>
+    <string name="ludo_start_with_bots">Start and fill empty seats with bots</string>
+    <string name="ludo_online_room_info">Room %1$s. Players: %2$s</string>
+    <string name="ludo_waiting_players">Waiting for players. The host can start and fill empty seats with bots.</string>
+    <string name="ludo_online_your_roll">Your turn. Roll the die.</string>
+    <string name="ludo_online_other_turn">Waiting for %1$s.</string>
 </resources>

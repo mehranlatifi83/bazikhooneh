@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="24dp" android:background="@color/screen_background">
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/ludo_online_lobby_description" android:textSize="18sp" />
+ <Button android:id="@+id/ludo_create_online" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/create_room" />
+ <EditText android:id="@+id/ludo_room_code" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/room_code_hint" android:maxLength="6" android:inputType="textCapCharacters" />
+ <Button android:id="@+id/ludo_join_online" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/join_room" />
+ <TextView android:id="@+id/ludo_lobby_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:accessibilityLiveRegion="polite" />
+</LinearLayout>

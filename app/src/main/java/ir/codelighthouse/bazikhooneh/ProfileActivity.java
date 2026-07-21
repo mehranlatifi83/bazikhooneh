@@ -107,12 +107,22 @@ public final class ProfileActivity extends NavigableActivity {
             StringBuilder text = new StringBuilder();
             for (int i = 0; i < results.length(); i++) {
                 JSONObject match = results.getJSONObject(i);
-                JSONObject opponent = match.getJSONObject("opponent");
                 String result = "win".equals(match.getString("result"))
                         ? getString(R.string.match_win) : getString(R.string.match_loss);
                 if (i > 0) text.append("\n");
-                text.append(getString(R.string.match_history_item, result,
-                        opponent.getString("display_name"), match.getInt("round")));
+                if ("ludo".equals(match.optString("game_key"))) {
+                    JSONArray opponents = match.optJSONArray("opponents");
+                    StringBuilder names = new StringBuilder();
+                    for (int j=0; opponents!=null && j<opponents.length(); j++) {
+                        if (j>0) names.append(", ");
+                        names.append(opponents.getJSONObject(j).optString("display_name"));
+                    }
+                    text.append(getString(R.string.ludo_match_history_item, result, names));
+                } else {
+                    JSONObject opponent = match.getJSONObject("opponent");
+                    text.append(getString(R.string.match_history_item, result,
+                            opponent.getString("display_name"), match.getInt("round")));
+                }
             }
             history.setText(text.toString());
         } catch (JSONException ignored) { }
