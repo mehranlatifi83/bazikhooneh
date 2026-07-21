@@ -233,4 +233,6 @@
     <string name="ludo_player_summary">%1$s، بازیکن %2$d: %3$s</string>
     <string name="ludo_waiting_player_summary">%1$s، بازیکن %2$d، %3$s</string>
     <string name="ludo_named_player">%1$s، بازیکن %2$d، %3$s</string>
+    <string name="ludo_capture_opportunity">مهره %1$d می‌تواند %2$d مهره حریف را بزند.</string>
+    <string name="ludo_piece_action_capture">مهره %1$d، اکنون %2$s؛ با این حرکت مهره حریف زده می‌شود</string>
 </resources>

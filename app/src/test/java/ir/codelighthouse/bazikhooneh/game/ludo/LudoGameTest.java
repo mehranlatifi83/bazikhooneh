@@ -6,4 +6,5 @@ public final class LudoGameTest{
  @Test public void threeSixesForfeitTurnWhenOptionIsEnabled(){LudoGame game=new LudoGame(2,false,true);game.roll(6);game.move(0);game.roll(6);game.move(0);assertTrue(game.roll(6).isEmpty());assertEquals(1,game.currentPlayer());}
  @Test public void thirdSixIsAllowedByDefault(){LudoGame game=new LudoGame(2,false);game.roll(6);game.move(0);game.roll(6);game.move(0);assertFalse(game.roll(6).isEmpty());assertEquals(0,game.currentPlayer());}
  @Test public void safeSquaresAreRecognized(){assertTrue(LudoGame.isSafe(0));assertTrue(LudoGame.isSafe(47));assertFalse(LudoGame.isSafe(12));}
+ @Test public void captureOpportunityIsDetectedBeforeMove(){int[][] positions={{13,-1,-1,-1},{1,-1,-1,-1},{-1,-1,-1,-1},{-1,-1,-1,-1}};LudoGame game=LudoGame.snapshot(positions,new boolean[]{true,true,false,false},new boolean[4],0,0,true,-1);game.roll(1);assertEquals(1,game.captureCount(0));}
 }
