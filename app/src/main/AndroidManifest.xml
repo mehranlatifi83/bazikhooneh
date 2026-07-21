@@ -15,10 +15,14 @@
         android:theme="@style/Theme.BaziKhooneh"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity android:name=".RegisterActivity" android:exported="false" android:label="@string/account_register" />
+        <activity android:name=".UsernameChangeActivity" android:exported="false" android:label="@string/change_username_title" />
+        <activity android:name=".EmailVerificationActivity" android:exported="false" android:label="@string/email_security_title" />
+        <activity android:name=".PasswordChangeActivity" android:exported="false" android:label="@string/change_password_title" />
+        <activity android:name=".SessionsActivity" android:exported="false" android:label="@string/sessions_title" />
         <activity android:name=".FriendsActivity" android:exported="false" android:label="@string/friends_title" />
         <activity android:name=".AccountSecurityActivity" android:exported="false" android:label="@string/account_security_title" />
         <activity android:name=".PasswordResetActivity" android:exported="false" android:label="@string/forgot_password" />
-        <activity android:name=".TicTacToeSettingsActivity" android:exported="false" android:label="@string/tic_tac_toe_settings" />
         <activity android:name=".TicTacToeGuideActivity" android:exported="false" android:label="@string/tic_tac_toe_guide_title" />
         <activity android:name=".OnlineLobbyActivity" android:exported="false" android:label="@string/online_lobby_title" />
         <activity android:name=".TicTacToeMenuActivity" android:exported="false" android:label="@string/tic_tac_toe_title" />

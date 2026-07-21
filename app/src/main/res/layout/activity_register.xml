@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@color/screen_background">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="28dp">
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/register_description" android:textColor="@color/text_secondary" android:textSize="17sp" />
+  <EditText android:id="@+id/register_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:hint="@string/account_username" android:maxLength="30" android:singleLine="true" />
+  <EditText android:id="@+id/register_display_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/account_display_name_simple" android:maxLength="40" android:singleLine="true" />
+  <EditText android:id="@+id/register_password" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/new_password" android:inputType="textPassword" android:singleLine="true" />
+  <TextView android:id="@+id/register_error" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/piece_x" android:visibility="gone" />
+  <ProgressBar android:id="@+id/register_progress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:visibility="gone" />
+  <Button android:id="@+id/register_submit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:minHeight="56dp" android:text="@string/account_register" android:textAllCaps="false" />
+ </LinearLayout>
+</ScrollView>

@@ -166,4 +166,17 @@
         <item>Medium</item>
         <item>Hard</item>
     </string-array>
+    <string name="register_description">Create one account for all BaziKhooneh games.</string>
+    <string name="account_display_name_simple">Display name</string>
+    <string name="registration_fields_required">Enter a username, display name, and a password of at least eight characters.</string>
+    <string name="security_hub_description">Choose the part of your account you want to manage.</string>
+    <string name="sessions_title">Active sessions</string>
+    <string name="sessions_description">Review how many devices are signed in and remotely sign out the other devices.</string>
+    <string name="password_change_description">Changing your password keeps this device signed in and signs out your other devices.</string>
+    <string name="password_changed_other_sessions">Password changed. Other devices have been signed out.</string>
+    <string name="other_sessions_revoked">Other devices have been signed out.</string>
+    <string name="email_verification_description">Add and verify an email address for account recovery. We will ask for the code in the next step.</string>
+    <string name="use_different_email">Use a different email</string>
+    <string name="code_sent_to">Enter the code sent to %1$s.</string>
+    <string name="cancel_action">Cancel</string>
 </resources>

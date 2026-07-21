@@ -2,9 +2,16 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/screen_background">
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/friends_description" android:textSize="18sp" />
-  <EditText android:id="@+id/friend_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:hint="@string/account_username" />
-  <Button android:id="@+id/add_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/send_friend_request" android:textAllCaps="false" />
-  <Button android:id="@+id/invite_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/invite_to_tic_tac_toe" android:textAllCaps="false" />
+  <LinearLayout android:id="@+id/friend_action_choices" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="16dp">
+   <Button android:id="@+id/add_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/send_friend_request" android:textAllCaps="false" />
+   <Button android:id="@+id/invite_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/invite_to_tic_tac_toe" android:textAllCaps="false" />
+  </LinearLayout>
+  <LinearLayout android:id="@+id/friend_action_form" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+   <TextView android:id="@+id/friend_action_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp" />
+   <EditText android:id="@+id/friend_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/account_username" />
+   <Button android:id="@+id/friend_action_submit" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAllCaps="false" />
+   <Button android:id="@+id/cancel_friend_action" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/cancel_action" android:textAllCaps="false" style="?android:attr/borderlessButtonStyle" />
+  </LinearLayout>
   <TextView android:id="@+id/friends_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="42dp" android:layout_marginTop="12dp" />
   <LinearLayout android:id="@+id/friends_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
  </LinearLayout>

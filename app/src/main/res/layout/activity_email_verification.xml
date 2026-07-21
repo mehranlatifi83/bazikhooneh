@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/screen_background">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/email_verification_description" android:textSize="18sp" />
+  <LinearLayout android:id="@+id/email_request_step" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+   <EditText android:id="@+id/security_email" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:hint="@string/email_address" android:inputType="textEmailAddress" />
+   <Button android:id="@+id/request_email_code" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/send_verification_code" android:textAllCaps="false" />
+  </LinearLayout>
+  <LinearLayout android:id="@+id/email_confirm_step" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+   <TextView android:id="@+id/email_code_destination" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" />
+   <EditText android:id="@+id/security_code" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/verification_code" android:inputType="number" />
+   <Button android:id="@+id/confirm_email" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/confirm_email" android:textAllCaps="false" />
+   <Button android:id="@+id/change_email" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/use_different_email" android:textAllCaps="false" style="?android:attr/borderlessButtonStyle" />
+  </LinearLayout>
+  <TextView android:id="@+id/email_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:accessibilityLiveRegion="polite" />
+ </LinearLayout>
+</ScrollView>

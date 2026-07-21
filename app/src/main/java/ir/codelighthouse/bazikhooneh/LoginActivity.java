@@ -12,7 +12,6 @@ import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
 
 public final class LoginActivity extends NavigableActivity {
     private EditText username;
-    private EditText displayName;
     private EditText password;
     private TextView error;
     private AccountClient client;
@@ -21,12 +20,12 @@ public final class LoginActivity extends NavigableActivity {
         super.onCreate(state);
         setContentView(R.layout.activity_login);
         username = findViewById(R.id.login_username);
-        displayName = findViewById(R.id.login_display_name);
         password = findViewById(R.id.login_password);
         error = findViewById(R.id.login_error);
         client = new AccountClient(BuildConfig.API_BASE_URL, listener);
         findViewById(R.id.login_button).setOnClickListener(v -> login());
-        findViewById(R.id.register_button).setOnClickListener(v -> register());
+        findViewById(R.id.open_register).setOnClickListener(v ->
+                startActivity(new Intent(this, RegisterActivity.class)));
         findViewById(R.id.forgot_password).setOnClickListener(v ->
                 startActivity(new Intent(this, PasswordResetActivity.class)));
     }
@@ -45,18 +44,10 @@ public final class LoginActivity extends NavigableActivity {
         client.login(username.getText().toString().trim(), password.getText().toString());
     }
 
-    private void register() {
-        if (!validBaseFields()) return;
-        String name = displayName.getText().toString().trim();
-        if (name.isEmpty()) { showError(getString(R.string.display_name_required)); return; }
-        setLoading(true);
-        client.register(username.getText().toString().trim(), name, password.getText().toString());
-    }
-
     private void setLoading(boolean loading) {
         findViewById(R.id.login_progress).setVisibility(loading ? View.VISIBLE : View.GONE);
         findViewById(R.id.login_button).setEnabled(!loading);
-        findViewById(R.id.register_button).setEnabled(!loading);
+        findViewById(R.id.open_register).setEnabled(!loading);
     }
 
     private void showError(String message) {

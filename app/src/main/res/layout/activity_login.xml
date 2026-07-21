@@ -10,9 +10,6 @@
         <EditText android:id="@+id/login_username" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="24dp"
             android:hint="@string/account_username" android:singleLine="true" android:maxLength="30" />
-        <EditText android:id="@+id/login_display_name" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:hint="@string/account_display_name"
-            android:singleLine="true" android:maxLength="40" />
         <EditText android:id="@+id/login_password" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:hint="@string/account_password"
             android:inputType="textPassword" android:singleLine="true" />
@@ -25,7 +22,7 @@
         <Button android:id="@+id/login_button" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="16dp" android:minHeight="56dp"
             android:text="@string/account_login" android:textAllCaps="false" />
-        <Button android:id="@+id/register_button" android:layout_width="match_parent"
+        <Button android:id="@+id/open_register" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="56dp"
             android:text="@string/account_register" android:textAllCaps="false" />
         <Button android:id="@+id/forgot_password" android:layout_width="match_parent"

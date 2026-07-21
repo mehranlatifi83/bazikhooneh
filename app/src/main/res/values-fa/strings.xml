@@ -166,4 +166,17 @@
         <item>متوسط</item>
         <item>سخت</item>
     </string-array>
+    <string name="register_description">یک حساب برای همهٔ بازی‌های بازی‌خونه بسازید.</string>
+    <string name="account_display_name_simple">نام نمایشی</string>
+    <string name="registration_fields_required">نام کاربری، نام نمایشی و گذرواژه‌ای با حداقل هشت نویسه وارد کنید.</string>
+    <string name="security_hub_description">بخشی از حساب را که می‌خواهید مدیریت کنید انتخاب کنید.</string>
+    <string name="sessions_title">نشست‌های فعال</string>
+    <string name="sessions_description">تعداد دستگاه‌های واردشده را ببینید و از دستگاه‌های دیگر از راه دور خارج شوید.</string>
+    <string name="password_change_description">با تغییر گذرواژه، این دستگاه وارد می‌ماند و دستگاه‌های دیگر خارج می‌شوند.</string>
+    <string name="password_changed_other_sessions">گذرواژه تغییر کرد و دستگاه‌های دیگر خارج شدند.</string>
+    <string name="other_sessions_revoked">دستگاه‌های دیگر از حساب خارج شدند.</string>
+    <string name="email_verification_description">برای بازیابی حساب، ایمیل خود را اضافه و تأیید کنید. کد در مرحلهٔ بعد وارد می‌شود.</string>
+    <string name="use_different_email">استفاده از ایمیل دیگر</string>
+    <string name="code_sent_to">کد ارسال‌شده به %1$s را وارد کنید.</string>
+    <string name="cancel_action">انصراف</string>
 </resources>
