@@ -15,14 +15,15 @@
             <Button android:id="@+id/community_invite" android:layout_width="0dp"
                 android:layout_height="wrap_content" android:layout_columnWeight="1"
                 android:text="@string/invite_friend_to_room" android:textAllCaps="false" />
-            <Button android:id="@+id/community_start_call" android:layout_width="0dp"
-                android:layout_columnWeight="1"
-                android:layout_height="wrap_content" android:text="@string/start_voice_call"
-                android:textAllCaps="false" />
-            <Button android:id="@+id/community_join_call" android:layout_width="0dp"
-                android:layout_columnWeight="1"
-                android:layout_height="wrap_content" android:text="@string/join_voice_call"
-                android:textAllCaps="false" />
+            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1">
+                <Button android:id="@+id/community_start_call" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:text="@string/start_voice_call"
+                    android:textAllCaps="false" />
+                <Button android:id="@+id/community_join_call" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:text="@string/join_voice_call"
+                    android:textAllCaps="false" />
+            </FrameLayout>
             <Button android:id="@+id/community_start_tic" android:layout_width="0dp"
                 android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/start_tic_in_room"
