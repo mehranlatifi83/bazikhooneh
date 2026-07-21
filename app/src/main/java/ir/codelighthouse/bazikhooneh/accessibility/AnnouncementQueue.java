@@ -1,0 +1,8 @@
+package ir.codelighthouse.bazikhooneh.accessibility;
+import android.content.Context;import android.os.*;import android.view.View;import android.view.accessibility.*;import java.util.ArrayDeque;
+public final class AnnouncementQueue{
+ private static final class Entry{final String text;final Runnable after;Entry(String text,Runnable after){this.text=text;this.after=after;}}
+ private final Handler handler=new Handler(Looper.getMainLooper());private final ArrayDeque<Entry> entries=new ArrayDeque<>();private final View source;private boolean speaking;
+ public AnnouncementQueue(View source){this.source=source;}public void add(String text){add(text,null);}public void add(String text,Runnable after){if(text==null||text.trim().isEmpty()){if(after!=null)after.run();return;}entries.add(new Entry(text.trim(),after));playNext();}public void clear(){entries.clear();handler.removeCallbacksAndMessages(null);speaking=false;}
+ private void playNext(){if(speaking||entries.isEmpty())return;speaking=true;Entry entry=entries.remove();AccessibilityManager manager=(AccessibilityManager)source.getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);boolean enabled=manager!=null&&manager.isEnabled();if(enabled){AccessibilityEvent event=AccessibilityEvent.obtain(AccessibilityEvent.TYPE_ANNOUNCEMENT);event.getText().add(entry.text);event.setClassName(source.getClass().getName());event.setPackageName(source.getContext().getPackageName());manager.sendAccessibilityEvent(event);}long duration=enabled?Math.max(1800,Math.min(12000,1000+entry.text.length()*110L)):250;handler.postDelayed(()->{speaking=false;if(entry.after!=null)entry.after.run();playNext();},duration);}
+}

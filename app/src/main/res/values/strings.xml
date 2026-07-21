@@ -214,7 +214,7 @@
     <string name="ludo_guide_title">Ludo rules and guide</string><string name="ludo_mode_description">Choose pass-and-play on this device, play three bots, or create an online game for up to four players.</string>
     <string name="ludo_local_mode">Local players on this device</string><string name="ludo_bot_mode">One player and three bots</string><string name="ludo_online_mode">Online game</string>
     <string name="ludo_player_count">Number of local players</string><string name="two_players">Two</string><string name="three_players">Three</string><string name="four_players">Four</string>
-    <string name="ludo_rules">Each active player has four pieces. Players roll one die in turn. A six is required to move a piece out of home and onto its starting square. Rolling a six grants another roll; rolling three consecutive sixes ends the turn without using the third six. Move one legal piece by exactly the number rolled. Landing on an opponent on a non-safe square sends that piece home and grants another roll. Starting squares and marked star squares are safe and pieces on them cannot be captured. After completing the 52-square outer track, a piece enters its own final lane. The exact number is required to reach the finish. The first player to finish all four pieces wins.</string>
+    <string name="ludo_rules">Each active player has four pieces. Players roll one die in turn. A six is required to move a piece out of home and onto its starting square, and grants another roll. The optional three-sixes penalty ends the turn without using the third six; it is off by default. Move one legal piece by exactly the number rolled. Landing on an opponent on a non-safe square sends that piece home and grants another roll. Starting squares and marked star squares are safe and pieces on them cannot be captured. After completing the 52-square outer track, a piece enters its own final lane. The exact number is required to reach the finish. The first player to finish all four pieces wins.</string>
     <string name="ludo_accessibility">The visual board uses color, piece numbers, and player names together, so color is never the only cue. The status announces the player, die result, move, capture, and next turn in order. Every legal move also appears as a labeled button with the piece number and position, allowing the entire game to be played with a screen reader without exploring the visual board.</string>
     <string name="ludo_board_description">Visual Ludo board. Use the labeled move buttons below the board with a screen reader.</string><string name="ludo_roll_dice">Roll dice</string>
     <string name="ludo_roll_announcement">%1$s rolled %2$d.</string><string name="ludo_move_announcement">%1$s moved piece %2$d to %3$s.</string><string name="ludo_capture_announcement">Captured %1$d opposing piece.</string>
@@ -229,4 +229,8 @@
     <string name="ludo_waiting_players">Waiting for players. The host can start and fill empty seats with bots.</string>
     <string name="ludo_online_your_roll">Your turn. Roll the die.</string>
     <string name="ludo_online_other_turn">Waiting for %1$s.</string>
+    <string name="ludo_third_six_penalty">Enable penalty for rolling three consecutive sixes</string>
+    <string name="ludo_player_summary">%1$s, player %2$d: %3$s</string>
+    <string name="ludo_waiting_player_summary">%1$s, player %2$d, %3$s</string>
+    <string name="ludo_named_player">%1$s, player %2$d, %3$s</string>
 </resources>

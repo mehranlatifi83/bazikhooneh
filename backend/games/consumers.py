@@ -232,7 +232,7 @@ class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
             room=LudoRoom.objects.select_for_update().get(code=self.room_code);state=room.game_state
             if room.state!="active":raise ValueError("room_not_active")
             if state["current_player"]!=self.seat.color:raise ValueError("not_your_turn")
-            kind=content.get("type")
+            state["events"]=[];kind=content.get("type")
             if kind=="roll":ludo_roll(state)
             elif kind=="move":ludo_move(state,int(content.get("piece",-1)))
             else:raise ValueError("invalid_action")

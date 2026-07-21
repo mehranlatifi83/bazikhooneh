@@ -2,8 +2,11 @@ import random
 
 HOME=-1;FINISH=57;START=(0,13,26,39);SAFE={0,8,13,21,26,34,39,47}
 
-def initial_state(active=None,bots=None):
-    return {"positions":[[HOME]*4 for _ in range(4)],"active":active or [True]*4,"bots":bots or [False]*4,"current_player":0,"die":0,"awaiting_roll":True,"consecutive_sixes":0,"winner":-1,"last_event":{}}
+def initial_state(active=None,bots=None,third_six_penalty=False):
+    return {"positions":[[HOME]*4 for _ in range(4)],"active":active or [True]*4,"bots":bots or [False]*4,"current_player":0,"die":0,"awaiting_roll":True,"consecutive_sixes":0,"third_six_penalty":third_six_penalty,"winner":-1,"last_event":{},"events":[]}
+
+def record(state,event):
+    state["last_event"]=event;state.setdefault("events",[]).append(event)
 
 def global_position(player,progress): return -1 if progress<0 or progress>=52 else (START[player]+progress)%52
 def legal_pieces(state):
@@ -20,8 +23,8 @@ def roll(state,value=None):
     if not state["awaiting_roll"] or state["winner"]>=0:raise ValueError("cannot_roll")
     value=value or random.SystemRandom().randint(1,6);state["die"]=value;state["awaiting_roll"]=False
     state["consecutive_sixes"]=state["consecutive_sixes"]+1 if value==6 else 0
-    state["last_event"]={"kind":"roll","player":state["current_player"],"die":value}
-    if state["consecutive_sixes"]>=3:state["consecutive_sixes"]=0;next_turn(state);return []
+    record(state,{"kind":"roll","player":state["current_player"],"die":value})
+    if state.get("third_six_penalty",False) and state["consecutive_sixes"]>=3:state["consecutive_sixes"]=0;next_turn(state);return []
     legal=legal_pieces(state)
     if not legal:
         if value==6:state["awaiting_roll"]=True
@@ -38,7 +41,7 @@ def move(state,piece):
     if all(value==FINISH for value in state["positions"][player]):state["winner"]=player;state["awaiting_roll"]=False
     elif state["die"]==6 or captured:state["awaiting_roll"]=True
     else:next_turn(state)
-    state["last_event"]={"kind":"move","player":player,"piece":piece,"from":before,"to":after,"captured":captured}
+    record(state,{"kind":"move","player":player,"piece":piece,"from":before,"to":after,"captured":captured})
 def bot_piece(state,legal):
     player=state["current_player"]
     for piece in legal:

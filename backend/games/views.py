@@ -117,7 +117,7 @@ class CreateLudoRoomView(APIView):
     permission_classes=[IsAuthenticated]
     @transaction.atomic
     def post(self,request):
-        room=LudoRoom.create_unique(request.user);seat,token=LudoSeat.create_human(room,0,request.user);return Response(ludo_payload(room,seat,token),status=201)
+        room=LudoRoom.create_unique(request.user);room.game_state={"third_six_penalty":bool(request.data.get("third_six_penalty",False))};room.save(update_fields=("game_state","updated_at"));seat,token=LudoSeat.create_human(room,0,request.user);return Response(ludo_payload(room,seat,token),status=201)
 
 
 class JoinLudoRoomView(APIView):
@@ -142,7 +142,7 @@ class StartLudoRoomView(APIView):
             if color not in used:LudoSeat.objects.create(room=room,color=color,is_bot=True)
         bots=[False]*4
         for seat in room.seats.all():bots[seat.color]=seat.is_bot
-        room.game_state=initial_state([True]*4,bots);room.state="active";room.version+=1;room.save()
+        penalty=bool(room.game_state.get("third_six_penalty",False));room.game_state=initial_state([True]*4,bots,penalty);room.state="active";room.version+=1;room.save()
         match=LudoMatch.objects.create(room=room);match.participants.set(room.seats.filter(account__isnull=False).values_list("account_id",flat=True))
         transaction.on_commit(lambda:async_to_sync(get_channel_layer().group_send)(f"ludo_{room.code}",{"type":"ludo.state","payload":ludo_payload(room)}))
         return Response(ludo_payload(room))

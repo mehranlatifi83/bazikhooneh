@@ -1,44 +1,16 @@
 package ir.codelighthouse.bazikhooneh;
-
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.List;
-import ir.codelighthouse.bazikhooneh.game.ludo.LudoBot;
-import ir.codelighthouse.bazikhooneh.game.ludo.LudoGame;
-
-public final class LudoActivity extends NavigableActivity {
-    public static final String EXTRA_MODE="ludo_mode", EXTRA_PLAYERS="ludo_players";
-    private final SecureRandom random=new SecureRandom();
-    private final Handler handler=new Handler(Looper.getMainLooper());
-    private final LudoBot bot=new LudoBot();
-    private LudoGame game;
-    private LudoBoardView board;
-    private LinearLayout actions;
-    private TextView status,summary;
-    private List<Integer> legal=Collections.emptyList();
-
-    @Override protected void onCreate(Bundle state){
-        super.onCreate(state);setContentView(R.layout.activity_ludo);
-        boolean bots="bots".equals(getIntent().getStringExtra(EXTRA_MODE));
-        game=state==null?new LudoGame(getIntent().getIntExtra(EXTRA_PLAYERS,2),bots):restore(state);
-        board=findViewById(R.id.ludo_board);actions=findViewById(R.id.ludo_piece_actions);
-        status=findViewById(R.id.ludo_status);summary=findViewById(R.id.ludo_summary);
-        findViewById(R.id.ludo_roll).setOnClickListener(v->roll());
-        legal=game.legalPieces();render();maybeBot();
-    }
-    private void roll(){if(!game.awaitingRoll()||game.winner()>=0)return;int player=game.currentPlayer(),die=random.nextInt(6)+1;legal=game.roll(die);announce(getString(R.string.ludo_roll_announcement,playerName(player),die));render();if(legal.size()==1&&!game.isBot(player))move(legal.get(0));else maybeBot();}
-    private void move(int piece){int player=game.currentPlayer();LudoGame.Move result=game.move(piece);String message=getString(R.string.ludo_move_announcement,playerName(player),piece+1,position(result.to));if(!result.captured.isEmpty())message+=" "+getString(R.string.ludo_capture_announcement,result.captured.size());if(result.winner>=0)message+=" "+getString(R.string.ludo_winner,playerName(result.winner));announce(message);legal=Collections.emptyList();render();maybeBot();}
-    private void maybeBot(){if(game.winner()>=0||!game.isBot(game.currentPlayer()))return;handler.postDelayed(()->{if(game.awaitingRoll())roll();else if(!legal.isEmpty())move(bot.choose(game,legal));},700);}
-    private void render(){actions.removeAllViews();board.bind(game,legal,this::move);findViewById(R.id.ludo_roll).setEnabled(game.awaitingRoll()&&game.winner()<0&&!game.isBot(game.currentPlayer()));status.setText(game.winner()>=0?getString(R.string.ludo_winner,playerName(game.winner())):game.awaitingRoll()?getString(R.string.ludo_turn_roll,playerName(game.currentPlayer())):getString(R.string.ludo_choose_piece,playerName(game.currentPlayer()),game.die()));for(int piece:legal){Button button=new Button(this);button.setText(getString(R.string.ludo_piece_action,piece+1,position(game.progress(game.currentPlayer(),piece))));int selected=piece;button.setOnClickListener(v->move(selected));actions.addView(button);}StringBuilder text=new StringBuilder();for(int p=0;p<4;p++)if(game.isActive(p)){if(text.length()>0)text.append('\n');text.append(playerName(p)).append(": ");for(int piece=0;piece<4;piece++){if(piece>0)text.append(", ");text.append(position(game.progress(p,piece)));}}summary.setText(text.toString());}
-    @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);for(int p=0;p<4;p++){int[] row=new int[4];for(int i=0;i<4;i++)row[i]=game.progress(p,i);out.putIntArray("positions_"+p,row);}boolean[] active=new boolean[4],bots=new boolean[4];for(int p=0;p<4;p++){active[p]=game.isActive(p);bots[p]=game.isBot(p);}out.putBooleanArray("active",active);out.putBooleanArray("bots",bots);out.putInt("current",game.currentPlayer());out.putInt("die",game.die());out.putBoolean("awaiting",game.awaitingRoll());out.putInt("winner",game.winner());out.putInt("sixes",game.consecutiveSixes());}
-    private LudoGame restore(Bundle state){int[][] positions=new int[4][4];for(int p=0;p<4;p++){int[] row=state.getIntArray("positions_"+p);if(row!=null)positions[p]=row;}boolean[] active=state.getBooleanArray("active"),bots=state.getBooleanArray("bots");if(active==null)active=new boolean[]{true,true,false,false};if(bots==null)bots=new boolean[4];return LudoGame.snapshot(positions,active,bots,state.getInt("current"),state.getInt("die"),state.getBoolean("awaiting"),state.getInt("winner",-1),state.getInt("sixes"));}
-    private String playerName(int p){int[] names={R.string.ludo_red,R.string.ludo_blue,R.string.ludo_green,R.string.ludo_yellow};return getString(game.isBot(p)?R.string.ludo_bot_player:R.string.ludo_human_player,getString(names[p]));}
-    private String position(int value){if(value<0)return getString(R.string.ludo_at_home);if(value==LudoGame.FINISH)return getString(R.string.ludo_finished);if(value>=52)return getString(R.string.ludo_final_lane,value-51);return getString(R.string.ludo_track_position,value+1);}
-    private void announce(String value){status.announceForAccessibility(value);}
+import android.os.*;import android.view.ViewGroup;import android.widget.*;import java.security.SecureRandom;import java.util.*;import ir.codelighthouse.bazikhooneh.accessibility.AnnouncementQueue;import ir.codelighthouse.bazikhooneh.game.ludo.*;
+public final class LudoActivity extends NavigableActivity{
+ public static final String EXTRA_MODE="ludo_mode",EXTRA_PLAYERS="ludo_players",EXTRA_THIRD_SIX_PENALTY="ludo_third_six_penalty";private final SecureRandom random=new SecureRandom();private final Handler handler=new Handler(Looper.getMainLooper());private final LudoBot bot=new LudoBot();private LudoGame game;private LudoBoardView board;private LinearLayout actions,summary;private TextView status;private AnnouncementQueue announcements;private List<Integer> legal=Collections.emptyList();
+ @Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_ludo);boolean bots="bots".equals(getIntent().getStringExtra(EXTRA_MODE)),penalty=getIntent().getBooleanExtra(EXTRA_THIRD_SIX_PENALTY,false);game=state==null?new LudoGame(getIntent().getIntExtra(EXTRA_PLAYERS,2),bots,penalty):restore(state);board=findViewById(R.id.ludo_board);actions=findViewById(R.id.ludo_piece_actions);status=findViewById(R.id.ludo_status);summary=findViewById(R.id.ludo_summary);announcements=new AnnouncementQueue(status);findViewById(R.id.ludo_roll).setOnClickListener(v->roll());legal=game.legalPieces();render();maybeBot();}
+ private void roll(){if(!game.awaitingRoll()||game.winner()>=0)return;int player=game.currentPlayer(),die=random.nextInt(6)+1;legal=game.roll(die);render();announcements.add(getString(R.string.ludo_roll_announcement,playerName(player),die),()->{if(legal.size()==1&&!game.isBot(player))move(legal.get(0));else maybeBot();});}
+ private void move(int piece){int player=game.currentPlayer();LudoGame.Move result=game.move(piece);String message=getString(R.string.ludo_move_announcement,playerName(player),piece+1,position(result.to));if(!result.captured.isEmpty())message+=" "+getString(R.string.ludo_capture_announcement,result.captured.size());if(result.winner>=0)message+=" "+getString(R.string.ludo_winner,playerName(result.winner));legal=Collections.emptyList();render();announcements.add(message,this::maybeBot);}
+ private void maybeBot(){if(game.winner()>=0||!game.isBot(game.currentPlayer()))return;handler.postDelayed(()->{if(game.awaitingRoll())roll();else if(!legal.isEmpty())move(bot.choose(game,legal));},450);}
+ private void render(){actions.removeAllViews();boolean humanTurn=!game.isBot(game.currentPlayer());board.bind(game,humanTurn?legal:Collections.emptyList(),this::move);findViewById(R.id.ludo_roll).setEnabled(game.awaitingRoll()&&game.winner()<0&&humanTurn);status.setText(game.winner()>=0?getString(R.string.ludo_winner,playerName(game.winner())):game.awaitingRoll()?getString(R.string.ludo_turn_roll,playerName(game.currentPlayer())):getString(R.string.ludo_choose_piece,playerName(game.currentPlayer()),game.die()));if(humanTurn)for(int piece:legal){Button button=new Button(this);button.setText(getString(R.string.ludo_piece_action,piece+1,position(game.progress(game.currentPlayer(),piece))));int selected=piece;button.setOnClickListener(v->move(selected));actions.addView(button);}renderSummary();}
+ private void renderSummary(){summary.removeAllViews();for(int p=0;p<4;p++)if(game.isActive(p)){StringBuilder pieces=new StringBuilder();for(int i=0;i<4;i++){if(i>0)pieces.append(", ");pieces.append(position(game.progress(p,i)));}addCard(getString(R.string.ludo_player_summary,playerName(p),p+1,pieces));}}
+ private void addCard(String text){TextView card=new TextView(this);card.setText(text);card.setTextSize(17);card.setPadding(24,20,24,20);card.setBackgroundColor(getColor(R.color.surface));LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);params.bottomMargin=12;summary.addView(card,params);}
+ @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);for(int p=0;p<4;p++){int[] row=new int[4];for(int i=0;i<4;i++)row[i]=game.progress(p,i);out.putIntArray("positions_"+p,row);}boolean[] active=new boolean[4],bots=new boolean[4];for(int p=0;p<4;p++){active[p]=game.isActive(p);bots[p]=game.isBot(p);}out.putBooleanArray("active",active);out.putBooleanArray("bots",bots);out.putInt("current",game.currentPlayer());out.putInt("die",game.die());out.putBoolean("awaiting",game.awaitingRoll());out.putInt("winner",game.winner());out.putInt("sixes",game.consecutiveSixes());out.putBoolean("penalty",game.thirdSixPenalty());}
+ private LudoGame restore(Bundle state){int[][] positions=new int[4][4];for(int p=0;p<4;p++){int[] row=state.getIntArray("positions_"+p);if(row!=null)positions[p]=row;}boolean[] active=state.getBooleanArray("active"),bots=state.getBooleanArray("bots");if(active==null)active=new boolean[]{true,true,false,false};if(bots==null)bots=new boolean[4];return LudoGame.snapshot(positions,active,bots,state.getInt("current"),state.getInt("die"),state.getBoolean("awaiting"),state.getInt("winner",-1),state.getInt("sixes"),state.getBoolean("penalty"));}
+ private String playerName(int p){int[] names={R.string.ludo_red,R.string.ludo_blue,R.string.ludo_green,R.string.ludo_yellow};return getString(game.isBot(p)?R.string.ludo_bot_player:R.string.ludo_human_player,getString(names[p]));}private String position(int value){if(value<0)return getString(R.string.ludo_at_home);if(value==LudoGame.FINISH)return getString(R.string.ludo_finished);if(value>=52)return getString(R.string.ludo_final_lane,value-51);return getString(R.string.ludo_track_position,value+1);}
+ @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);if(announcements!=null)announcements.clear();super.onDestroy();}
 }

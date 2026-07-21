@@ -3,6 +3,7 @@
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/ludo_mode_description" android:textSize="18sp" />
   <Button android:id="@+id/ludo_local" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/ludo_local_mode" />
+  <CheckBox android:id="@+id/ludo_third_six_penalty" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/ludo_third_six_penalty" />
   <LinearLayout android:id="@+id/ludo_local_options" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/ludo_player_count" />
    <RadioGroup android:id="@+id/ludo_player_count" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">

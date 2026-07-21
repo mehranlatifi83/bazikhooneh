@@ -11,26 +11,28 @@ public final class LudoGame {
     private final int[][] progress = new int[PLAYERS][PIECES];
     private final boolean[] active = new boolean[PLAYERS];
     private final boolean[] bot = new boolean[PLAYERS];
-    private int currentPlayer, die, consecutiveSixes, winner = -1;
+    private int currentPlayer, die, consecutiveSixes, winner = -1; private final boolean thirdSixPenalty;
     private boolean awaitingRoll = true;
 
-    public LudoGame(int humanPlayers, boolean threeBots) {
+    public LudoGame(int humanPlayers, boolean threeBots) {this(humanPlayers,threeBots,false);}
+    public LudoGame(int humanPlayers, boolean threeBots, boolean thirdSixPenalty) {
+        this.thirdSixPenalty=thirdSixPenalty;
         for (int[] pieces : progress) Arrays.fill(pieces, HOME);
         if (threeBots) { active[0] = true; for (int i=1;i<PLAYERS;i++){active[i]=true;bot[i]=true;} }
         else for (int i=0;i<Math.max(2,Math.min(4,humanPlayers));i++) active[i]=true;
     }
-    public static LudoGame snapshot(int[][] positions,boolean[] active,boolean[] bots,int current,int die,boolean awaiting,int winner){return snapshot(positions,active,bots,current,die,awaiting,winner,0);}
-    public static LudoGame snapshot(int[][] positions,boolean[] active,boolean[] bots,int current,int die,boolean awaiting,int winner,int consecutiveSixes){LudoGame game=new LudoGame(4,false);for(int p=0;p<PLAYERS;p++){System.arraycopy(positions[p],0,game.progress[p],0,PIECES);game.active[p]=active[p];game.bot[p]=bots[p];}game.currentPlayer=current;game.die=die;game.awaitingRoll=awaiting;game.winner=winner;game.consecutiveSixes=consecutiveSixes;return game;}
+    public static LudoGame snapshot(int[][] positions,boolean[] active,boolean[] bots,int current,int die,boolean awaiting,int winner){return snapshot(positions,active,bots,current,die,awaiting,winner,0,false);}
+    public static LudoGame snapshot(int[][] positions,boolean[] active,boolean[] bots,int current,int die,boolean awaiting,int winner,int consecutiveSixes,boolean thirdSixPenalty){LudoGame game=new LudoGame(4,false,thirdSixPenalty);for(int p=0;p<PLAYERS;p++){System.arraycopy(positions[p],0,game.progress[p],0,PIECES);game.active[p]=active[p];game.bot[p]=bots[p];}game.currentPlayer=current;game.die=die;game.awaitingRoll=awaiting;game.winner=winner;game.consecutiveSixes=consecutiveSixes;return game;}
 
     public int currentPlayer(){return currentPlayer;} public int die(){return die;}
-    public boolean awaitingRoll(){return awaitingRoll;} public int winner(){return winner;} public int consecutiveSixes(){return consecutiveSixes;}
+    public boolean awaitingRoll(){return awaitingRoll;} public int winner(){return winner;} public int consecutiveSixes(){return consecutiveSixes;} public boolean thirdSixPenalty(){return thirdSixPenalty;}
     public boolean isBot(int player){return bot[player];} public boolean isActive(int player){return active[player];}
     public int progress(int player,int piece){return progress[player][piece];}
 
     public List<Integer> roll(int value) {
         if (!awaitingRoll || winner >= 0 || value < 1 || value > 6) throw new IllegalStateException("invalid_roll");
         die=value;awaitingRoll=false;
-        if(value==6&&++consecutiveSixes==3){consecutiveSixes=0;endTurn();return new ArrayList<>();}
+        if(value==6&&++consecutiveSixes==3&&thirdSixPenalty){consecutiveSixes=0;endTurn();return new ArrayList<>();}
         if(value!=6)consecutiveSixes=0;
         List<Integer> legal=legalPieces();if(legal.isEmpty()){boolean extra=value==6;if(extra){awaitingRoll=true;}else endTurn();}return legal;
     }

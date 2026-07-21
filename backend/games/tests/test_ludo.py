@@ -6,5 +6,7 @@ class LudoEngineTests(SimpleTestCase):
         state=initial_state();self.assertEqual([0,1,2,3],roll(state,6));move(state,0);self.assertEqual(0,state["positions"][0][0]);self.assertTrue(state["awaiting_roll"]);self.assertEqual(0,state["current_player"])
     def test_non_six_without_piece_advances_turn(self):
         state=initial_state();self.assertEqual([],roll(state,3));self.assertEqual(1,state["current_player"])
-    def test_three_sixes_forfeit_turn(self):
-        state=initial_state();roll(state,6);move(state,0);roll(state,6);move(state,0);roll(state,6);self.assertEqual(1,state["current_player"])
+    def test_three_sixes_forfeit_turn_when_enabled(self):
+        state=initial_state(third_six_penalty=True);roll(state,6);move(state,0);roll(state,6);move(state,0);roll(state,6);self.assertEqual(1,state["current_player"])
+    def test_third_six_is_allowed_by_default(self):
+        state=initial_state();roll(state,6);move(state,0);roll(state,6);move(state,0);self.assertTrue(roll(state,6));self.assertEqual(0,state["current_player"])
