@@ -4,5 +4,5 @@ Description=Back up BaziKhooneh PostgreSQL database
 [Service]
 Type=oneshot
 User=postgres
-ExecStart=/usr/bin/pg_dump --format=custom --file=/var/backups/bazikhooneh/bazikhooneh-%%Y%%m%%d-%%H%%M.dump bazikhooneh
+ExecStart=/bin/sh -c 'exec /usr/bin/pg_dump --format=custom --file="/var/backups/bazikhooneh/bazikhooneh-$(date +%%Y%%m%%d-%%H%%M).dump" bazikhooneh'
 ExecStartPost=/usr/bin/find /var/backups/bazikhooneh -type f -name *.dump -mtime +14 -delete
