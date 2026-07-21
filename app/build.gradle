@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
 }
 
-def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'http://127.0.0.1:8000'
+def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'https://91.107.131.14'
 
 android {
     namespace 'ir.codelighthouse.bazikhooneh'
@@ -17,12 +17,16 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
+        manifestPlaceholders = [usesCleartextTraffic: "false"]
     }
     buildFeatures {
         buildConfig true
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders.usesCleartextTraffic = "true"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

@@ -12,6 +12,7 @@ public final class AccountErrorMessages {
    case "invalid_password": return c.getString(R.string.error_invalid_password);
    case "invalid_email": return c.getString(R.string.error_invalid_email);
    case "email_taken": return c.getString(R.string.error_email_taken);
+   case "email_not_configured": return c.getString(R.string.error_email_not_configured);
    case "invalid_or_expired_code": return c.getString(R.string.error_invalid_code);
    case "user_not_found": return c.getString(R.string.error_user_not_found);
    case "not_friends": return c.getString(R.string.error_not_friends);

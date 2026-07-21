@@ -156,6 +156,7 @@
     <string name="error_invalid_password">The current password is incorrect or the new password is too short.</string>
     <string name="error_invalid_email">Enter a valid email address.</string>
     <string name="error_email_taken">This email is already verified for another account.</string>
+    <string name="error_email_not_configured">Email delivery is not available yet. You can continue using the other account features.</string>
     <string name="error_invalid_code">The code is incorrect, expired, or already used.</string>
     <string name="error_user_not_found">No user was found with that username.</string>
     <string name="error_not_friends">You can only invite accepted friends.</string>

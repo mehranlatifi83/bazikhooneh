@@ -156,6 +156,7 @@
     <string name="error_invalid_password">گذرواژهٔ فعلی نادرست است یا گذرواژهٔ جدید بیش از حد کوتاه است.</string>
     <string name="error_invalid_email">یک نشانی ایمیل معتبر وارد کنید.</string>
     <string name="error_email_taken">این ایمیل قبلاً برای حساب دیگری تأیید شده است.</string>
+    <string name="error_email_not_configured">ارسال ایمیل هنوز فعال نشده است. می‌توانید از سایر امکانات حساب استفاده کنید.</string>
     <string name="error_invalid_code">کد نادرست، منقضی یا قبلاً استفاده شده است.</string>
     <string name="error_user_not_found">کاربری با این نام کاربری پیدا نشد.</string>
     <string name="error_not_friends">فقط می‌توانید دوستان پذیرفته‌شده را دعوت کنید.</string>

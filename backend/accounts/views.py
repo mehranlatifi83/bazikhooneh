@@ -202,6 +202,8 @@ class PasswordChangeView(APIView):
 class EmailVerificationRequestView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
+        if not settings.EMAIL_DELIVERY_ENABLED:
+            return Response({"error": "email_not_configured"}, status=503)
         email = str(request.data.get("email", "")).strip().lower()
         from django.core.validators import validate_email
         try: validate_email(email)
@@ -232,6 +234,8 @@ class PasswordResetRequestView(APIView):
     throttle_scope = "sensitive"
     authentication_classes=[]; permission_classes=[AllowAny]
     def post(self, request):
+        if not settings.EMAIL_DELIVERY_ENABLED:
+            return Response({"error": "email_not_configured"}, status=503)
         account=Account.objects.filter(email__iexact=str(request.data.get("email", "")).strip(), email_verified=True).first()
         data={"detail":"reset_sent_if_account_exists"}
         if account:

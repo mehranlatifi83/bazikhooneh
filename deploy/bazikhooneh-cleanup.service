@@ -1,0 +1,14 @@
+[Unit]
+Description=Clean expired BaziKhooneh rooms and sessions
+After=bazikhooneh.service
+
+[Service]
+Type=oneshot
+User=bazikhooneh
+Group=bazikhooneh
+WorkingDirectory=/root/bazikhooneh/backend
+EnvironmentFile=/root/bazikhooneh/.env
+ExecStart=/root/bazikhooneh/venv/bin/python manage.py cleanup_rooms
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true

@@ -1,0 +1,23 @@
+[Unit]
+Description=BaziKhooneh Django ASGI server
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+Requires=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=bazikhooneh
+Group=bazikhooneh
+WorkingDirectory=/root/bazikhooneh/backend
+EnvironmentFile=/root/bazikhooneh/.env
+ExecStart=/root/bazikhooneh/venv/bin/daphne -b 127.0.0.1 -p 8100 config.asgi:application
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+KillSignal=SIGTERM
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
