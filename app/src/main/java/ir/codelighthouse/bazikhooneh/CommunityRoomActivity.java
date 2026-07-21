@@ -27,11 +27,13 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private String ownUsername;
     private final Map<Long, TextView> messageViews = new HashMap<>();
     private final Map<Long, View> messageActionViews = new HashMap<>();
+    private final Map<Long, View> messageContainers = new HashMap<>();
     private final Handler reconnectHandler = new Handler(Looper.getMainLooper());
     private boolean destroyed;
     private boolean socketVerified;
     private boolean reconnectScheduled;
     private int reconnectAttempts;
+    private boolean everConnected;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state); setContentView(R.layout.activity_community_room);
@@ -44,6 +46,8 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         messages = findViewById(R.id.community_messages_list);
         status = findViewById(R.id.community_room_status);
         findViewById(R.id.community_send).setOnClickListener(v -> send());
+        findViewById(R.id.community_share).setOnClickListener(v -> shareRoom());
+        findViewById(R.id.community_invite).setOnClickListener(v -> inviteFriend());
         findViewById(R.id.community_start_call).setOnClickListener(v -> startCall());
         findViewById(R.id.community_join_call).setOnClickListener(v -> openCall());
         findViewById(R.id.community_start_tic).setOnClickListener(v -> startGame("three_piece_tic_tac_toe"));
@@ -115,7 +119,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
             client.moderateRoom(code,username,action,(d,e)->runOnUiThread(()->{if(e!=null)show(e);else client.details(code,(r,x)->runOnUiThread(()->{if(r!=null)renderRoom(r);}));}));return true;});menu.show();}
 
     private void renderMessages(JSONArray values) {
-        messages.removeAllViews(); messageViews.clear();messageActionViews.clear(); if(values==null)return;
+        messages.removeAllViews(); messageViews.clear();messageActionViews.clear();messageContainers.clear(); if(values==null)return;
         for(int i=0;i<values.length();i++)addMessage(values.optJSONObject(i),false);
         scrollBottom();
     }
@@ -130,6 +134,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         messages.addView(container);
         messageViews.put(id,row);
         messageActionViews.put(id,actions);
+        messageContainers.put(id,container);
         String senderUsername=sender==null?"":sender.optString("username");
         row.setOnLongClickListener(v->{showMessageMenu(row,item);return true;});
         if(announce)row.announceForAccessibility(row.getText()); scrollBottom();
@@ -148,7 +153,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
             .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.delete_message,(d,w)->client.deleteMessage(code,id,(data,error)->runOnUiThread(()->{if(error!=null)show(error);}))).show();}
     private void updateMessage(JSONObject item){long id=item.optLong("id");TextView row=messageViews.get(id);if(row==null){addMessage(item,false);return;}
         JSONObject sender=item.optJSONObject("sender");row.setText(getString(R.string.community_message_item,sender==null?"":sender.optString("display_name"),item.optString("text")));}
-    private void removeMessage(long id){TextView row=messageViews.get(id);View actions=messageActionViews.get(id);if(actions!=null)actions.setVisibility(View.GONE);if(row!=null){row.setText(R.string.deleted_message);row.setOnLongClickListener(null);row.announceForAccessibility(getString(R.string.deleted_message));}}
+    private void removeMessage(long id){View container=messageContainers.remove(id);messageViews.remove(id);messageActionViews.remove(id);if(container!=null){messages.removeView(container);show(getString(R.string.message_removed));}}
     private void scrollBottom(){findViewById(R.id.community_chat_scroll).post(()->
             ((ScrollView)findViewById(R.id.community_chat_scroll)).fullScroll(View.FOCUS_DOWN));}
     private void refreshMessages(){client.messages(code,(data,error)->runOnUiThread(()->{if(error!=null){show(error);return;}renderMessages(data.optJSONArray("results"));}));}
@@ -156,6 +161,14 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         if(text.isEmpty())return;Button button=findViewById(R.id.community_send);button.setEnabled(false);long reply=replyToMessage;
         client.sendMessage(code,text,reply,(message,error)->runOnUiThread(()->{button.setEnabled(true);if(error!=null){show(getString(R.string.message_send_failed,error));return;}
             addMessage(message,false);if(text.equals(input.getText().toString().trim()))input.setText("");replyToMessage=0;input.setHint(R.string.community_message_hint);}));}
+    private void shareRoom(){String base=BuildConfig.API_BASE_URL.replaceAll("/+$","");String link=base+"/rooms/"+code;
+        Intent share=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_SUBJECT,currentRoom==null?getString(R.string.app_name):currentRoom.optString("title"))
+                .putExtra(Intent.EXTRA_TEXT,getString(R.string.share_room_text,currentRoom==null?getString(R.string.app_name):currentRoom.optString("title"),code,link));
+        startActivity(Intent.createChooser(share,getString(R.string.share_room)));}
+    private void inviteFriend(){EditText username=new EditText(this);username.setHint(R.string.account_username);
+        new android.app.AlertDialog.Builder(this).setTitle(R.string.invite_friend_to_room).setMessage(R.string.invite_friend_help).setView(username)
+                .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.send_invitation,(d,w)->{String value=username.getText().toString().trim();if(value.isEmpty())return;
+                    client.invite(code,value,(data,error)->runOnUiThread(()->show(error==null?getString(R.string.room_invitation_sent,value):error)));}).show();}
     private void startCall(){client.startCall(code,false,(data,error)->runOnUiThread(()->{
         if(error!=null)show(error);else openCall();}));}
     private void openCall(){startActivity(new Intent(this,VoiceCallActivity.class).putExtra("room_code",code));}
@@ -176,11 +189,10 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.room_game_started,name))
                 .setNegativeButton(R.string.not_now,null).setPositiveButton(R.string.join_active_game,(d,w)->joinActiveGame()).show();}
     private void show(String text){status.setText(text);status.announceForAccessibility(text);}
-    @Override public void onOpen(){runOnUiThread(()->{socketVerified=false;show(getString(R.string.room_verifying_connection));
-        if(!client.ping()){scheduleReconnect();return;}reconnectHandler.postDelayed(()->{if(!socketVerified&&!destroyed){client.disconnect();scheduleReconnect();}},5000);});}
+    @Override public void onOpen(){runOnUiThread(()->{socketVerified=false;if(!client.ping())scheduleReconnect();});}
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
         if("room_state".equals(type))renderRoom(event.optJSONObject("room"));
-        else if("pong".equals(type)){socketVerified=true;reconnectScheduled=false;reconnectAttempts=0;reconnectHandler.removeCallbacksAndMessages(null);show(getString(R.string.room_connected));}
+        else if("pong".equals(type)){socketVerified=true;reconnectScheduled=false;reconnectAttempts=0;reconnectHandler.removeCallbacksAndMessages(null);if(!everConnected){everConnected=true;show(getString(R.string.room_connected));}}
         else if("chat_message".equals(type))addMessage(event.optJSONObject("message"),true);
         else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
         else if("chat_deleted".equals(type))removeMessage(event.optLong("message_id"));
@@ -192,9 +204,9 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         else if("member_joined".equals(type)||"member_left".equals(type)||"moderation".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("error".equals(type))show(event.optString("error",getString(R.string.error_generic)));
     });}
-    @Override public void onClosed(){runOnUiThread(()->{show(getString(R.string.room_disconnected));scheduleReconnect();});}
-    @Override public void onError(String error){runOnUiThread(()->{show(error);scheduleReconnect();});}
-    private void scheduleReconnect(){if(destroyed||reconnectScheduled)return;reconnectScheduled=true;reconnectHandler.removeCallbacksAndMessages(null);
+    @Override public void onClosed(){runOnUiThread(this::scheduleReconnect);}
+    @Override public void onError(String error){runOnUiThread(this::scheduleReconnect);}
+    private void scheduleReconnect(){if(destroyed||reconnectScheduled)return;reconnectScheduled=true;show(getString(R.string.room_reconnecting));reconnectHandler.removeCallbacksAndMessages(null);
         long delay=Math.min(30000,2000L<<Math.min(reconnectAttempts++,4));reconnectHandler.postDelayed(()->{reconnectScheduled=false;if(!destroyed)client.connect(code,this);},delay);}
     @Override protected void onResume(){super.onResume();if(client!=null)refreshMessages();}
     @Override protected void onDestroy(){destroyed=true;reconnectHandler.removeCallbacksAndMessages(null);if(client!=null)client.disconnect();super.onDestroy();}

@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import (CreateRoomView,JoinRoomView,MatchHistoryView,CreateLudoRoomView,
                     JoinLudoRoomView,StartLudoRoomView)
-from .community import (CommunityCallModerationView, CommunityCallView, CommunityGameView, CommunityGameJoinView,
+from .community import (CommunityCallModerationView, CommunityCallView, CommunityGameView, CommunityGameJoinView, CommunityInviteView,
     CommunityJoinRequestView, CommunityJoinView, CommunityLeaveView, CommunityMessageView,
     CommunityEventsView, CommunityMessagesView, CommunityModerationView,
     CommunityRoomsView, CommunityRoomView, IceServersView, LeaderboardView,
@@ -21,6 +21,7 @@ urlpatterns = [
     path("community/rooms/<str:code>/", CommunityRoomView.as_view(), name="community-room"),
     path("community/rooms/<str:code>/leave/", CommunityLeaveView.as_view(), name="community-leave"),
     path("community/rooms/<str:code>/messages/", CommunityMessagesView.as_view(), name="community-messages"),
+    path("community/rooms/<str:code>/invite/", CommunityInviteView.as_view(), name="community-invite"),
     path("community/rooms/<str:code>/events/", CommunityEventsView.as_view(), name="community-events"),
     path("community/rooms/<str:code>/messages/<int:message_id>/", CommunityMessageView.as_view(), name="community-message"),
     path("community/rooms/<str:code>/join-requests/<int:request_id>/", CommunityJoinRequestView.as_view(), name="community-join-request"),

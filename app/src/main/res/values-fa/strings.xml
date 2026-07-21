@@ -320,4 +320,11 @@
     <string name="message_send_failed">پیام ارسال نشد و متن آن نگه داشته شد. خطا: %1$s</string>
     <string name="room_verifying_connection">اتصال اتاق برقرار شد؛ در حال بررسی انتقال دوطرفهٔ داده…</string>
     <string name="message_actions_for">عملیات پیامِ %1$s</string>
+    <string name="message_removed">پیام حذف شد</string>
+    <string name="room_reconnecting">ارتباط اتاق موقتاً قطع شد؛ در حال اتصال دوباره…</string>
+    <string name="share_room_text">در بازی‌خونه به اتاق «%1$s» بپیوندید. کد اتاق: %2$s\n%3$s</string>
+    <string name="invite_friend_to_room">دعوت دوست</string>
+    <string name="invite_friend_help">نام کاربری یکی از دوستانتان را وارد کنید تا دعوت اتاق برای او ارسال شود.</string>
+    <string name="send_invitation">ارسال دعوت</string>
+    <string name="room_invitation_sent">دعوت برای ‎@%1$s ارسال شد.</string>
 </resources>

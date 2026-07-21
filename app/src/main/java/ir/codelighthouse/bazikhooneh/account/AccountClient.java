@@ -20,7 +20,9 @@ public final class AccountClient {
     }
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    private final OkHttpClient http = new OkHttpClient();
+    private final OkHttpClient http = new OkHttpClient.Builder().connectTimeout(20,java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(45,java.util.concurrent.TimeUnit.SECONDS).writeTimeout(30,java.util.concurrent.TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true).build();
     private final String baseUrl;
     private final Listener listener;
 

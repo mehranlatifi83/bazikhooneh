@@ -6,33 +6,44 @@
     <TextView android:id="@+id/community_room_header" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:textSize="22sp" android:textStyle="bold"
         android:accessibilityHeading="true" />
-    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
-        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Button android:id="@+id/community_start_call" android:layout_width="wrap_content"
+    <GridLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" android:columnCount="3" android:padding="4dp"
+        android:background="@color/surface">
+            <Button android:id="@+id/community_share" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_columnWeight="1"
+                android:text="@string/share_room" android:textAllCaps="false" />
+            <Button android:id="@+id/community_invite" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_columnWeight="1"
+                android:text="@string/invite_friend_to_room" android:textAllCaps="false" />
+            <Button android:id="@+id/community_start_call" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/start_voice_call"
                 android:textAllCaps="false" />
-            <Button android:id="@+id/community_join_call" android:layout_width="wrap_content"
+            <Button android:id="@+id/community_join_call" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/join_voice_call"
                 android:textAllCaps="false" />
-            <Button android:id="@+id/community_start_tic" android:layout_width="wrap_content"
+            <Button android:id="@+id/community_start_tic" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/start_tic_in_room"
                 android:textAllCaps="false" />
-            <Button android:id="@+id/community_start_ludo" android:layout_width="wrap_content"
+            <Button android:id="@+id/community_start_ludo" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/start_ludo_in_room"
                 android:textAllCaps="false" />
-            <Button android:id="@+id/community_history" android:layout_width="wrap_content"
+            <Button android:id="@+id/community_history" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/room_history"
                 android:textAllCaps="false" />
-            <Button android:id="@+id/community_settings" android:layout_width="wrap_content"
+            <Button android:id="@+id/community_settings" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/room_settings"
                 android:textAllCaps="false" />
-            <Button android:id="@+id/community_leave" android:layout_width="wrap_content"
+            <Button android:id="@+id/community_leave" android:layout_width="0dp"
+                android:layout_columnWeight="1"
                 android:layout_height="wrap_content" android:text="@string/leave_room"
                 android:textAllCaps="false" />
-        </LinearLayout>
-    </HorizontalScrollView>
+    </GridLayout>
     <LinearLayout android:id="@+id/community_active_game_panel" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone"
         android:paddingTop="8dp" android:paddingBottom="8dp">

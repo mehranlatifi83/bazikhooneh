@@ -16,7 +16,9 @@ public final class CommunityClient {
     private final String baseUrl;
     private final String token;
     private final OkHttpClient http = new OkHttpClient.Builder()
-            .pingInterval(20, TimeUnit.SECONDS).retryOnConnectionFailure(true).build();
+            .connectTimeout(20, TimeUnit.SECONDS).readTimeout(45, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS).pingInterval(20, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true).build();
     private volatile WebSocket socket;
 
     public CommunityClient(String baseUrl, String token) {
@@ -57,6 +59,10 @@ public final class CommunityClient {
         try { body.put("text", text); if (replyTo > 0) body.put("reply_to", replyTo); }
         catch (Exception ignored) { }
         request("POST", "/api/v1/community/rooms/" + code + "/messages/", body, callback);
+    }
+    public void invite(String code, String username, Callback callback) {
+        JSONObject body = new JSONObject(); try { body.put("username", username); } catch (Exception ignored) { }
+        request("POST", "/api/v1/community/rooms/" + code + "/invite/", body, callback);
     }
     public void events(String code, Callback callback) {
         request("GET", "/api/v1/community/rooms/" + code + "/events/", null, callback);

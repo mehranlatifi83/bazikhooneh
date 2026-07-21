@@ -19,7 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.models import AccountNotification, AccountToken, hash_token
+from accounts.models import AccountNotification, AccountToken, Friendship, hash_token
 from .ludo_engine import initial_state
 from .models import (
     CommunityCall, CommunityCallParticipant, CommunityEvent, CommunityGameSession,
@@ -293,7 +293,8 @@ class CommunityMessagesView(APIView):
         if not room or not active_membership(room, request.user):
             return Response({"error": "not_a_member"}, status=403)
         before = request.query_params.get("before")
-        messages = room.messages.select_related("sender").order_by("-id")
+        messages = room.messages.select_related("sender").filter(
+            deleted_at__isnull=True).order_by("-id")
         if before and before.isdigit():
             messages = messages.filter(id__lt=int(before))
         items = list(messages[:50])
@@ -320,6 +321,33 @@ class CommunityMessagesView(APIView):
         payload = message_payload(message)
         transaction.on_commit(lambda: broadcast(room, "chat_message", {"message": payload}))
         return Response(payload, status=201)
+
+
+class CommunityInviteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, code):
+        room = CommunityRoom.objects.filter(code=code.upper()).first()
+        if not room or not active_membership(room, request.user):
+            return Response({"error": "not_a_member"}, status=403)
+        username = str(request.data.get("username", "")).strip().lower()
+        target = request.user.__class__.objects.filter(username=username, is_active=True).first()
+        if not target:
+            return Response({"error": "user_not_found"}, status=404)
+        if target == request.user:
+            return Response({"error": "cannot_invite_self"}, status=400)
+        friends = Friendship.objects.filter(status=Friendship.STATUS_ACCEPTED).filter(
+            Q(requester=request.user, recipient=target) |
+            Q(requester=target, recipient=request.user)).exists()
+        if not friends:
+            return Response({"error": "not_friends"}, status=403)
+        if active_membership(room, target):
+            return Response({"error": "already_a_member"}, status=409)
+        AccountNotification.objects.create(
+            account=target, kind="room_invite", title="Room invitation",
+            body=f"{request.user.display_name} invited you to {room.title}",
+            data={"room_code": room.code, "invited_by": request.user.username})
+        return Response({"detail": "invited", "account": account_payload(target)}, status=201)
 
 
 class CommunityEventsView(APIView):
