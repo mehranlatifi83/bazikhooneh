@@ -92,6 +92,6 @@ systemctl enable --now bazikhooneh.service bazikhooneh-cleanup.timer bazikhooneh
 # Create or update the requested administrator without exposing its password in logs.
 BAZIKHOONEH_ADMIN_PASSWORD="${BAZIKHOONEH_ADMIN_PASSWORD:-}" \
   "${APP_DIR}/venv/bin/python" "${APP_DIR}/backend/manage.py" shell -c \
-  "import os; from django.contrib.auth import get_user_model; U=get_user_model(); u,_=U.objects.get_or_create(username='mehranlatifi83', defaults={'email':'mehran.latifi8383@gmail.com','display_name':'Mehran'}); u.email='mehran.latifi8383@gmail.com'; u.is_staff=True; u.is_superuser=True; p=os.environ.get('BAZIKHOONEH_ADMIN_PASSWORD'); p and u.set_password(p); u.save()"
+  "import os; from django.contrib.auth import get_user_model; U=get_user_model(); u,_=U.objects.get_or_create(username='mehranlatifi83', defaults={'email':'mehran.latifi8383@gmail.com'}); u.email='mehran.latifi8383@gmail.com'; u.is_staff=True; u.is_superuser=True; p=os.environ.get('BAZIKHOONEH_ADMIN_PASSWORD'); p and u.set_password(p); u.save()"
 
 systemctl --no-pager --full status bazikhooneh.service
