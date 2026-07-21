@@ -201,4 +201,12 @@
     <string name="report_user">ارسال گزارش</string><string name="blocked_users">کاربران مسدودشده</string><string name="unblock_user">رفع مسدودی %1$s</string>
     <string name="online_starting_countdown">شروع بازی تا %1$d…</string><string name="online_game_started">بازی شروع شد.</string>
     <string name="username_remaining_days">%1$d روز باقی مانده</string><string name="username_remaining_hours">%1$d ساعت باقی مانده</string>
+    <string name="theme_title">ظاهر برنامه</string><string-array name="theme_choices"><item>پیروی از تنظیم دستگاه</item><item>روشن</item><item>تاریک</item></string-array>
+    <string name="setting_friend_notifications">اعلان درخواست‌های دوستی</string><string name="setting_game_notifications">اعلان دعوت‌ها و رویدادهای بازی</string>
+    <string name="retry">تلاش دوباره</string><string name="confirm_action">تأیید</string>
+    <string name="revoke_sessions_confirmation">از همهٔ دستگاه‌های دیگر خارج می‌شوید؟ این دستگاه وارد باقی می‌ماند.</string>
+    <string name="current_session_item">این دستگاه\nزمان ورود: %1$s\nآخرین فعالیت: %2$s</string><string name="other_session_item">دستگاه دیگر\nزمان ورود: %1$s\nآخرین فعالیت: %2$s</string>
+    <string name="join_friend_invite_timed">پیوستن به %1$s در اتاق %2$s؛ %3$d دقیقه تا انقضا</string>
+    <string name="online_status_with_opponent">%1$s حریف: %2$s، %3$s.</string>
+    <string name="no_friends">هنوز دوستی ندارید.</string><string name="no_friend_requests">درخواست در انتظاری ندارید.</string><string name="no_game_invites">دعوت فعال بازی ندارید.</string>
 </resources>

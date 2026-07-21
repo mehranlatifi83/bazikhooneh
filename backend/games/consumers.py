@@ -1,9 +1,12 @@
 import time
+import asyncio
 from collections import deque
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.db import transaction
+from django.conf import settings
+from django.utils import timezone
 
 from .engine import GameError
 from .models import Match, Player, Room, token_hash
@@ -23,6 +26,7 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         self.group_name = f"room_{self.room_code}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        await self._mark_seen()
         await self.send_json({"type": "state", "game": await self._room_state()})
         await self.channel_layer.group_send(self.group_name, {
             "type": "player.presence", "symbol": self.player.symbol, "connected": True,
@@ -30,10 +34,18 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, close_code):
         if hasattr(self, "group_name"):
+            disconnected_at = await self._mark_seen()
             await self.channel_layer.group_send(self.group_name, {
                 "type": "player.presence", "symbol": self.player.symbol, "connected": False,
             })
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            asyncio.create_task(self._close_after_grace(disconnected_at))
+
+    async def _close_after_grace(self, disconnected_at):
+        await asyncio.sleep(settings.ONLINE_RECONNECT_GRACE_SECONDS)
+        state = await self._forfeit_if_still_away(disconnected_at)
+        if state:
+            await self.channel_layer.group_send(self.group_name, {"type": "game.state", "game": state})
 
     async def receive_json(self, content, **kwargs):
         if not self._within_rate_limit():
@@ -128,6 +140,31 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def _room_state(self):
         return Room.objects.get(code=self.room_code).public_state()
+
+    @database_sync_to_async
+    def _mark_seen(self):
+        now = timezone.now()
+        Player.objects.filter(id=self.player.id).update(last_seen_at=now)
+        return now
+
+    @database_sync_to_async
+    def _forfeit_if_still_away(self, disconnected_at):
+        with transaction.atomic():
+            player = Player.objects.select_for_update().select_related("room").get(id=self.player.id)
+            room = Room.objects.select_for_update().get(id=player.room_id)
+            if not player.is_active or player.last_seen_at > disconnected_at or room.state in (Room.State.CLOSED, Room.State.FINISHED):
+                return None
+            player.is_active = False
+            player.save(update_fields=("is_active", "last_seen_at"))
+            room.close_for_player(player.symbol)
+            room.save()
+            match = room.matches.select_for_update().filter(finished_at__isnull=True).first()
+            if match:
+                winner = match.o_account if player.symbol == "X" else match.x_account
+                match.finish("disconnect_timeout", winner)
+                from accounts.models import AccountNotification
+                AccountNotification.objects.create(account=winner,kind="game_event",title="Match completed",body="Your opponent did not reconnect in time.",data={"room_code":room.code,"game_key":room.game_key})
+            return room.public_state()
 
     @database_sync_to_async
     def _apply_action(self, action):

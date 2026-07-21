@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
 from django.test import TransactionTestCase
+from django.test import override_settings
 
 from config.asgi import application
 from games.models import Player, Room
@@ -24,6 +25,10 @@ class RoomWebSocketTests(TransactionTestCase):
 
     def test_leaving_closes_room_and_revokes_player_token(self):
         async_to_sync(self._run_leave_flow)()
+
+    @override_settings(ONLINE_RECONNECT_GRACE_SECONDS=0)
+    def test_disconnect_closes_room_after_reconnect_grace(self):
+        async_to_sync(self._run_disconnect_timeout)()
 
     async def _run_game_flow(self):
         x_socket = self._socket(self.x_token)
@@ -116,6 +121,18 @@ class RoomWebSocketTests(TransactionTestCase):
         replacement = self._socket(self.x_token)
         self.assertFalse((await replacement.connect())[0])
         await x_socket.disconnect()
+        await o_socket.disconnect()
+
+    async def _run_disconnect_timeout(self):
+        x_socket=self._socket(self.x_token);o_socket=self._socket(self.o_token)
+        await x_socket.connect();await o_socket.connect()
+        await x_socket.receive_json_from();await x_socket.receive_json_from();await x_socket.receive_json_from()
+        await o_socket.receive_json_from();await o_socket.receive_json_from()
+        await x_socket.disconnect()
+        presence=await o_socket.receive_json_from();state=await o_socket.receive_json_from()
+        self.assertEqual("presence",presence["type"])
+        self.assertEqual("closed",state["game"]["room_state"])
+        self.assertEqual("x_left",state["game"]["outcome_reason"])
         await o_socket.disconnect()
 
     def _socket(self, token):

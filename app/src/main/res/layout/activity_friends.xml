@@ -11,13 +11,21 @@
    <EditText android:id="@+id/friend_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/account_username" />
    <Button android:id="@+id/friend_action_submit" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAllCaps="false" />
    <Button android:id="@+id/cancel_friend_action" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/cancel_action" android:textAllCaps="false" style="?android:attr/borderlessButtonStyle" />
+   <LinearLayout android:id="@+id/search_results" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
   </LinearLayout>
   <TextView android:id="@+id/friends_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="42dp" android:layout_marginTop="12dp" />
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/friends_list_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+   <Button android:id="@+id/tab_friends" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/friends_list_heading" />
+   <Button android:id="@+id/tab_requests" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/requests_heading" />
+   <Button android:id="@+id/tab_invites" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/invites_heading" />
+  </LinearLayout>
+  <TextView android:id="@+id/friends_heading" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/friends_list_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
   <LinearLayout android:id="@+id/friends_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/requests_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <TextView android:id="@+id/requests_heading_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/requests_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
   <LinearLayout android:id="@+id/requests_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/invites_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <TextView android:id="@+id/invites_heading_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="@string/invites_heading" android:textSize="22sp" android:textStyle="bold" android:accessibilityHeading="true" />
   <LinearLayout android:id="@+id/invites_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+  <ProgressBar android:id="@+id/friends_loading" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" />
+  <Button android:id="@+id/friends_retry" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/retry" android:visibility="gone" />
  </LinearLayout>
 </ScrollView>

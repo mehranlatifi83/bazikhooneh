@@ -8,6 +8,7 @@ import android.widget.TextView;
 import android.widget.CheckBox;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
+import android.text.TextWatcher;import android.text.Editable;
 import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
@@ -34,6 +35,7 @@ public final class LoginActivity extends NavigableActivity {
         ((CheckBox)findViewById(R.id.login_show_password)).setOnCheckedChangeListener((button,shown)->{
             int position=password.getSelectionStart();password.setTransformationMethod(shown?HideReturnsTransformationMethod.getInstance():PasswordTransformationMethod.getInstance());password.setSelection(Math.max(0,position));
         });
+        TextWatcher watcher=new TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int b,int c){}public void onTextChanged(CharSequence s,int a,int b,int c){findViewById(R.id.login_button).setEnabled(username.getText().toString().trim().length()>=3&&password.length()>=8);error.setVisibility(View.GONE);}public void afterTextChanged(Editable e){}};username.addTextChangedListener(watcher);password.addTextChangedListener(watcher);findViewById(R.id.login_button).setEnabled(false);
     }
 
     private boolean validBaseFields() {

@@ -44,6 +44,7 @@ public final class ProfileActivity extends NavigableActivity {
         sessionStore = new SessionStore(this);
         String token = sessionStore.token();
         if (token.isEmpty()) {
+            findViewById(R.id.profile_loading).setVisibility(View.GONE);
             findViewById(R.id.profile_content).setVisibility(View.GONE);
             findViewById(R.id.profile_signed_out).setVisibility(View.VISIBLE);
             return;
@@ -55,6 +56,7 @@ public final class ProfileActivity extends NavigableActivity {
                 startActivity(new Intent(this, AccountSecurityActivity.class)));
         findViewById(R.id.profile_safety).setOnClickListener(v ->
                 startActivity(new Intent(this, SafetyActivity.class)));
+        findViewById(R.id.profile_retry).setOnClickListener(v -> {findViewById(R.id.profile_loading).setVisibility(View.VISIBLE);findViewById(R.id.profile_retry).setVisibility(View.GONE);findViewById(R.id.profile_error).setVisibility(View.GONE);client.load();});
         client.load();
     }
 
@@ -72,13 +74,13 @@ public final class ProfileActivity extends NavigableActivity {
             runOnUiThread(() -> renderHistory(value));
         }
         @Override public void onError() {
-            runOnUiThread(() -> findViewById(R.id.profile_root).announceForAccessibility(
-                    getString(R.string.profile_load_error)));
+            runOnUiThread(() -> {findViewById(R.id.profile_loading).setVisibility(View.GONE);TextView error=findViewById(R.id.profile_error);error.setText(R.string.profile_load_error);error.setVisibility(View.VISIBLE);findViewById(R.id.profile_retry).setVisibility(View.VISIBLE);error.announceForAccessibility(getString(R.string.profile_load_error));});
         }
     };
 
     private void renderProfile(JSONObject profile) {
         try {
+            findViewById(R.id.profile_loading).setVisibility(View.GONE);findViewById(R.id.profile_content).setVisibility(View.VISIBLE);
             String name = profile.getString("display_name");
             String user = profile.getString("username");
             String color = profile.getString("avatar_color");

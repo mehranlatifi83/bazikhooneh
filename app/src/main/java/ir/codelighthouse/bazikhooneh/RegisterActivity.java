@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.widget.CheckBox;
+import android.text.TextWatcher;import android.text.Editable;
 import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
@@ -16,7 +17,8 @@ public final class RegisterActivity extends NavigableActivity {
     private AccountClient client;
     @Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_register);
         client=new AccountClient(BuildConfig.API_BASE_URL,listener);findViewById(R.id.register_submit).setOnClickListener(v->register());
-        ((CheckBox)findViewById(R.id.register_show_password)).setOnCheckedChangeListener((b,shown)->{toggle(R.id.register_password,shown);toggle(R.id.register_password_confirm,shown);});}
+        ((CheckBox)findViewById(R.id.register_show_password)).setOnCheckedChangeListener((b,shown)->{toggle(R.id.register_password,shown);toggle(R.id.register_password_confirm,shown);});TextWatcher watcher=new TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int b,int c){}public void onTextChanged(CharSequence s,int a,int b,int c){validateLive();}public void afterTextChanged(Editable e){}};((EditText)findViewById(R.id.register_username)).addTextChangedListener(watcher);((EditText)findViewById(R.id.register_display_name)).addTextChangedListener(watcher);((EditText)findViewById(R.id.register_password)).addTextChangedListener(watcher);((EditText)findViewById(R.id.register_password_confirm)).addTextChangedListener(watcher);findViewById(R.id.register_submit).setEnabled(false);}
+    private void validateLive(){String username=text(R.id.register_username),name=text(R.id.register_display_name),password=text(R.id.register_password),confirm=text(R.id.register_password_confirm);boolean format=username.matches("[A-Za-z0-9_]{3,30}");boolean valid=format&&!name.isEmpty()&&password.length()>=8&&password.equals(confirm);findViewById(R.id.register_submit).setEnabled(valid);TextView message=findViewById(R.id.register_error);if(!confirm.isEmpty()&&!password.equals(confirm)){message.setText(R.string.passwords_do_not_match);message.setVisibility(View.VISIBLE);}else message.setVisibility(View.GONE);}
     private void toggle(int id,boolean shown){EditText field=findViewById(id);int position=field.getSelectionStart();field.setTransformationMethod(shown?HideReturnsTransformationMethod.getInstance():PasswordTransformationMethod.getInstance());field.setSelection(Math.max(0,position));}
     private String text(int id){return ((EditText)findViewById(id)).getText().toString().trim();}
     private void register(){String username=text(R.id.register_username),name=text(R.id.register_display_name),password=text(R.id.register_password);

@@ -2,6 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:orientation="vertical" android:padding="24dp" android:background="@color/screen_background">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/theme_title" android:textSize="18sp" />
+    <Spinner android:id="@+id/setting_theme" android:layout_width="match_parent" android:layout_height="56dp" android:contentDescription="@string/theme_title" />
     <CheckBox android:id="@+id/setting_haptic" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="56dp"
         android:text="@string/setting_haptic" />
@@ -15,6 +17,10 @@
         android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_reduce_motion" />
     <CheckBox android:id="@+id/setting_notifications" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_notifications" />
+    <CheckBox android:id="@+id/setting_friend_notifications" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_friend_notifications" />
+    <CheckBox android:id="@+id/setting_game_notifications" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_game_notifications" />
     <CheckBox android:id="@+id/setting_detailed_announcements" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/setting_detailed_announcements" />
 </LinearLayout>

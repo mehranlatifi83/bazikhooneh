@@ -37,6 +37,9 @@ public final class AccountFlowUiTest {
             scenario.onActivity(activity -> {
                 assertNotNull(activity.findViewById(R.id.setting_large_text));
                 assertNotNull(activity.findViewById(R.id.setting_high_contrast));
+                assertNotNull(activity.findViewById(R.id.setting_theme));
+                assertNotNull(activity.findViewById(R.id.setting_friend_notifications));
+                assertNotNull(activity.findViewById(R.id.setting_game_notifications));
             });
         }
     }

@@ -201,4 +201,12 @@
     <string name="report_user">Submit report</string><string name="blocked_users">Blocked users</string><string name="unblock_user">Unblock @%1$s</string>
     <string name="online_starting_countdown">Game starts in %1$d…</string><string name="online_game_started">Game started.</string>
     <string name="username_remaining_days">%1$d days remaining</string><string name="username_remaining_hours">%1$d hours remaining</string>
+    <string name="theme_title">Appearance</string><string-array name="theme_choices"><item>Use device setting</item><item>Light</item><item>Dark</item></string-array>
+    <string name="setting_friend_notifications">Friend-request notifications</string><string name="setting_game_notifications">Game invitation and event notifications</string>
+    <string name="retry">Try again</string><string name="confirm_action">Confirm</string>
+    <string name="revoke_sessions_confirmation">Log out every other device? This device will remain signed in.</string>
+    <string name="current_session_item">This device\nSigned in: %1$s\nLast active: %2$s</string><string name="other_session_item">Other device\nSigned in: %1$s\nLast active: %2$s</string>
+    <string name="join_friend_invite_timed">Join %1$s in room %2$s; expires in %3$d minutes</string>
+    <string name="online_status_with_opponent">%1$s Opponent: %2$s, %3$s.</string>
+    <string name="no_friends">No friends yet.</string><string name="no_friend_requests">No pending requests.</string><string name="no_game_invites">No active game invitations.</string>
 </resources>

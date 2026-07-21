@@ -73,6 +73,7 @@ public final class MainActivity extends NavigableActivity {
     private boolean onlineActionPending;
     private boolean leavingRoom;
     private long onlineStartAt;
+    private boolean opponentConnected = true;
     private String accountToken = "";
     private ToneGenerator toneGenerator;
     private final Runnable reconnectRunnable = this::restoreOnlineSession;
@@ -529,10 +530,12 @@ public final class MainActivity extends NavigableActivity {
         if(android.os.SystemClock.elapsedRealtime()<onlineStartAt)return getString(R.string.online_starting_countdown,Math.max(1,(onlineStartAt-android.os.SystemClock.elapsedRealtime()+999)/1000));
         if ("x_won".equals(onlineState.status)) return getString(R.string.player_won, markName(Mark.X));
         if ("o_won".equals(onlineState.status)) return getString(R.string.player_won, markName(Mark.O));
-        if (onlineState.currentPlayer.equals(onlineSymbol)) {
-            return getString(R.string.online_your_turn, markName("X".equals(onlineSymbol) ? Mark.X : Mark.O));
-        }
-        return getString(R.string.online_opponent_turn, markName("X".equals(onlineSymbol) ? Mark.X : Mark.O));
+        String turn = onlineState.currentPlayer.equals(onlineSymbol)
+                ? getString(R.string.online_your_turn, markName("X".equals(onlineSymbol) ? Mark.X : Mark.O))
+                : getString(R.string.online_opponent_turn, markName("X".equals(onlineSymbol) ? Mark.X : Mark.O));
+        String opponent = "X".equals(onlineSymbol) ? onlineState.oDisplayName : onlineState.xDisplayName;
+        return opponent.isEmpty() ? turn : getString(R.string.online_status_with_opponent, turn,
+                opponent, opponentConnected ? getString(R.string.online_label) : getString(R.string.offline_label));
     }
 
     private final OnlineGameClient.Listener onlineListener = new OnlineGameClient.Listener() {
@@ -602,9 +605,11 @@ public final class MainActivity extends NavigableActivity {
         @Override public void onPresence(String symbol, boolean connected) {
             if (symbol.equals(onlineSymbol)) return;
             runOnUiThread(() -> {
+                opponentConnected = connected;
                 String message = getString(connected ? R.string.opponent_connected
                         : R.string.opponent_disconnected);
                 roomInformation.setText(message);
+                if (onlineState != null) statusText.setText(onlineStatusMessage());
                 announce(message);
             });
         }

@@ -7,8 +7,11 @@
         <TextView android:id="@+id/profile_signed_out" android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/profile_signed_out" android:textSize="18sp" android:visibility="gone" />
+        <ProgressBar android:id="@+id/profile_loading" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" />
+        <TextView android:id="@+id/profile_error" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" android:accessibilityLiveRegion="polite" />
+        <Button android:id="@+id/profile_retry" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/retry" android:visibility="gone" />
         <LinearLayout android:id="@+id/profile_content" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:orientation="vertical">
+            android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
             <View android:id="@+id/profile_avatar_preview" android:layout_width="72dp"
                 android:layout_height="72dp" android:layout_gravity="center_horizontal"
                 android:layout_marginTop="20dp" android:contentDescription="@string/avatar_preview" />

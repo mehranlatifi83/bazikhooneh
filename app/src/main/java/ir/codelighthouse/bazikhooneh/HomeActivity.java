@@ -64,6 +64,7 @@ public final class HomeActivity extends Activity {
         ((Button) findViewById(R.id.open_profile)).setText(
                 new SessionStore(this).isSignedIn() ? R.string.profile_title : R.string.account_login);
         NotificationSync.refresh(this);
+        NotificationJobService.schedule(this);
     }
 
     private void renderGames() {
