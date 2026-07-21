@@ -144,6 +144,22 @@ def notify_room_members(room, actor, kind, title, body, data):
     ])
 
 
+def create_message_notifications(room, sender, text, reply, message):
+    usernames = set(re.findall(r"(?<![\w@])@([a-zA-Z0-9_]{3,30})", text.lower()))
+    recipients = set(room.memberships.filter(
+        status="active", account__username__in=usernames).exclude(
+        account=sender).values_list("account_id", flat=True))
+    if reply and reply.sender_id != sender.id:
+        recipients.add(reply.sender_id)
+    AccountNotification.objects.bulk_create([
+        AccountNotification(account_id=account_id, kind="room_message",
+            title="New room message",
+            body=f"{sender.display_name} mentioned or replied to you in {room.title}",
+            data={"room_code": room.code, "message_id": message.id})
+        for account_id in recipients
+    ])
+
+
 class CommunityRoomsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -283,6 +299,27 @@ class CommunityMessagesView(APIView):
         items = list(messages[:50])
         items.reverse()
         return Response({"results": [message_payload(item) for item in items]})
+
+    @transaction.atomic
+    def post(self, request, code):
+        room = CommunityRoom.objects.filter(code=code.upper()).first()
+        member = active_membership(room, request.user) if room else None
+        if not member:
+            return Response({"error": "not_a_member"}, status=403)
+        if member.chat_muted_until and member.chat_muted_until > timezone.now():
+            return Response({"error": "chat_muted"}, status=403)
+        text = str(request.data.get("text", "")).strip()
+        if not text or len(text) > 2000:
+            return Response({"error": "invalid_message"}, status=400)
+        reply_id = request.data.get("reply_to")
+        reply = CommunityMessage.objects.select_related("sender").filter(
+            id=reply_id, room=room).first() if reply_id else None
+        message = CommunityMessage.objects.create(
+            room=room, sender=request.user, text=text, reply_to=reply)
+        create_message_notifications(room, request.user, text, reply, message)
+        payload = message_payload(message)
+        transaction.on_commit(lambda: broadcast(room, "chat_message", {"message": payload}))
+        return Response(payload, status=201)
 
 
 class CommunityEventsView(APIView):
@@ -856,19 +893,7 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
             id=reply_to, room=member.room).first() if reply_to else None
         message = CommunityMessage.objects.create(
             room=member.room, sender=member.account, text=text, reply_to=reply)
-        usernames = set(re.findall(r"(?<![\w@])@([a-zA-Z0-9_]{3,30})", text.lower()))
-        recipients = set(member.room.memberships.filter(
-            status="active", account__username__in=usernames).exclude(
-            account=member.account).values_list("account_id", flat=True))
-        if reply and reply.sender_id != member.account_id:
-            recipients.add(reply.sender_id)
-        AccountNotification.objects.bulk_create([
-            AccountNotification(account_id=account_id, kind="room_message",
-                title="New room message",
-                body=f"{member.account.display_name} mentioned or replied to you in {member.room.title}",
-                data={"room_code": member.room.code, "message_id": message.id})
-            for account_id in recipients
-        ])
+        create_message_notifications(member.room, member.account, text, reply, message)
         return message_payload(message)
 
     @database_sync_to_async

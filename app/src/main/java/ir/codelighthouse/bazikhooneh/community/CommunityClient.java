@@ -52,6 +52,12 @@ public final class CommunityClient {
     public void messages(String code, Callback callback) {
         request("GET", "/api/v1/community/rooms/" + code + "/messages/", null, callback);
     }
+    public void sendMessage(String code, String text, long replyTo, Callback callback) {
+        JSONObject body = new JSONObject();
+        try { body.put("text", text); if (replyTo > 0) body.put("reply_to", replyTo); }
+        catch (Exception ignored) { }
+        request("POST", "/api/v1/community/rooms/" + code + "/messages/", body, callback);
+    }
     public void events(String code, Callback callback) {
         request("GET", "/api/v1/community/rooms/" + code + "/events/", null, callback);
     }
@@ -116,13 +122,10 @@ public final class CommunityClient {
     }
 
     public boolean send(JSONObject message) { return socket != null && socket.send(message.toString()); }
-    public void sendChat(String text) {
-        sendChat(text, 0);
-    }
-    public void sendChat(String text, long replyTo) {
+    public boolean ping() {
         JSONObject value = new JSONObject();
-        try { value.put("type", "chat.send"); value.put("text", text); if(replyTo>0)value.put("reply_to",replyTo); send(value); }
-        catch (Exception ignored) { }
+        try { value.put("type", "ping"); return send(value); }
+        catch (Exception ignored) { return false; }
     }
     public void joinCall() { sendType("call.join"); }
     public void leaveCall() { sendType("call.leave"); }

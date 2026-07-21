@@ -28,6 +28,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private final Map<Long, TextView> messageViews = new HashMap<>();
     private final Handler reconnectHandler = new Handler(Looper.getMainLooper());
     private boolean destroyed;
+    private boolean socketVerified;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state); setContentView(R.layout.activity_community_room);
@@ -52,9 +53,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         client.details(code, (data, error) -> runOnUiThread(() -> {
             if (error != null) { show(error); return; } renderRoom(data);
         }));
-        client.messages(code, (data, error) -> runOnUiThread(() -> {
-            if (data != null) renderMessages(data.optJSONArray("results"));
-        }));
+        refreshMessages();
         client.connect(code, this);
     }
 
@@ -118,11 +117,11 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         scrollBottom();
     }
     private void addMessage(JSONObject item, boolean announce) {
-        if(item==null)return; JSONObject sender=item.optJSONObject("sender");
+        if(item==null)return;long id=item.optLong("id");if(id>0&&messageViews.containsKey(id))return; JSONObject sender=item.optJSONObject("sender");
         String name=sender==null?"":sender.optString("display_name");
         TextView row=new TextView(this);row.setText(getString(R.string.community_message_item,name,item.optString("text")));
         row.setTextSize(17);row.setPadding(12,12,12,12);row.setFocusable(true);messages.addView(row);
-        long id=item.optLong("id");messageViews.put(id,row);
+        messageViews.put(id,row);
         String senderUsername=sender==null?"":sender.optString("username");
         row.setOnLongClickListener(v->{showMessageMenu(row,item);return true;});
         if(announce)row.announceForAccessibility(row.getText()); scrollBottom();
@@ -144,8 +143,11 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private void removeMessage(long id){TextView row=messageViews.remove(id);if(row!=null){row.setText(R.string.deleted_message);row.setOnLongClickListener(null);row.announceForAccessibility(getString(R.string.deleted_message));}}
     private void scrollBottom(){findViewById(R.id.community_chat_scroll).post(()->
             ((ScrollView)findViewById(R.id.community_chat_scroll)).fullScroll(View.FOCUS_DOWN));}
+    private void refreshMessages(){client.messages(code,(data,error)->runOnUiThread(()->{if(error!=null){show(error);return;}renderMessages(data.optJSONArray("results"));}));}
     private void send(){EditText input=findViewById(R.id.community_message_input);String text=input.getText().toString().trim();
-        if(!text.isEmpty()){client.sendChat(text,replyToMessage);replyToMessage=0;input.setText("");input.setHint(R.string.community_message_hint);}}
+        if(text.isEmpty())return;Button button=findViewById(R.id.community_send);button.setEnabled(false);long reply=replyToMessage;
+        client.sendMessage(code,text,reply,(message,error)->runOnUiThread(()->{button.setEnabled(true);if(error!=null){show(getString(R.string.message_send_failed,error));return;}
+            addMessage(message,false);if(text.equals(input.getText().toString().trim()))input.setText("");replyToMessage=0;input.setHint(R.string.community_message_hint);}));}
     private void startCall(){client.startCall(code,false,(data,error)->runOnUiThread(()->{
         if(error!=null)show(error);else openCall();}));}
     private void openCall(){startActivity(new Intent(this,VoiceCallActivity.class).putExtra("room_code",code));}
@@ -166,9 +168,11 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.room_game_started,name))
                 .setNegativeButton(R.string.not_now,null).setPositiveButton(R.string.join_active_game,(d,w)->joinActiveGame()).show();}
     private void show(String text){status.setText(text);status.announceForAccessibility(text);}
-    @Override public void onOpen(){runOnUiThread(()->show(getString(R.string.room_connected)));}
+    @Override public void onOpen(){runOnUiThread(()->{socketVerified=false;show(getString(R.string.room_verifying_connection));
+        if(!client.ping()){scheduleReconnect();return;}reconnectHandler.postDelayed(()->{if(!socketVerified&&!destroyed){client.disconnect();scheduleReconnect();}},5000);});}
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
         if("room_state".equals(type))renderRoom(event.optJSONObject("room"));
+        else if("pong".equals(type)){socketVerified=true;reconnectHandler.removeCallbacksAndMessages(null);show(getString(R.string.room_connected));}
         else if("chat_message".equals(type))addMessage(event.optJSONObject("message"),true);
         else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
         else if("chat_deleted".equals(type))removeMessage(event.optLong("message_id"));
@@ -178,9 +182,11 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         else if("room_updated".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("call_started".equals(type)||"call_ended".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
         else if("member_joined".equals(type)||"member_left".equals(type)||"moderation".equals(type))client.details(code,(d,e)->runOnUiThread(()->{if(d!=null)renderRoom(d);}));
+        else if("error".equals(type))show(event.optString("error",getString(R.string.error_generic)));
     });}
     @Override public void onClosed(){runOnUiThread(()->{show(getString(R.string.room_disconnected));scheduleReconnect();});}
     @Override public void onError(String error){runOnUiThread(()->{show(error);scheduleReconnect();});}
     private void scheduleReconnect(){reconnectHandler.removeCallbacksAndMessages(null);if(!destroyed)reconnectHandler.postDelayed(()->client.connect(code,this),2000);}
+    @Override protected void onResume(){super.onResume();if(client!=null)refreshMessages();}
     @Override protected void onDestroy(){destroyed=true;reconnectHandler.removeCallbacksAndMessages(null);if(client!=null)client.disconnect();super.onDestroy();}
 }

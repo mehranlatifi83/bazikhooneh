@@ -66,6 +66,18 @@ class CommunityRoomApiTests(APITestCase):
         self.assertEqual(200, muted.status_code)
         self.assertIsNotNone(muted.data["chat_muted_until"])
 
+    def test_chat_message_has_reliable_rest_delivery_and_history(self):
+        token = self.register("chat_owner")
+        self.authenticate(token)
+        code = self.client.post("/api/v1/community/rooms/", {
+            "title": "Reliable chat"}, format="json").data["code"]
+        sent = self.client.post(f"/api/v1/community/rooms/{code}/messages/", {
+            "text": "persist this message"}, format="json")
+        self.assertEqual(201, sent.status_code)
+        self.assertGreater(sent.data["id"], 0)
+        history = self.client.get(f"/api/v1/community/rooms/{code}/messages/")
+        self.assertEqual("persist this message", history.data["results"][-1]["text"])
+
     def test_banned_member_cannot_rejoin(self):
         owner_token = self.register("ban_owner")
         self.authenticate(owner_token)

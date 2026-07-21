@@ -317,4 +317,6 @@
     <string name="room_game_started">A %1$s game started in this room. Join it?</string>
     <string name="not_now">Not now</string>
     <string name="rooms_for_game">Shared rooms for %1$s. The room remains available when you switch games.</string>
+    <string name="message_send_failed">Message was not sent. Your text was kept. Error: %1$s</string>
+    <string name="room_verifying_connection">Connected to the room. Verifying two-way data transfer…</string>
 </resources>
