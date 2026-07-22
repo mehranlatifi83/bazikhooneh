@@ -66,7 +66,9 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", ""),
         "PORT": os.getenv("DB_PORT", ""),
-        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
+        # Persistent database connections are unsafe under ASGI and can
+        # exhaust PostgreSQL while long-lived WebSocket scopes remain open.
+        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "0")),
         "CONN_HEALTH_CHECKS": True,
     }
 }

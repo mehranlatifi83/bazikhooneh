@@ -46,7 +46,9 @@ DB_USER=${APP_USER}
 DB_PASSWORD=${db_password}
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_CONN_MAX_AGE=60
+# ASGI/WebSocket scopes are long-lived; persistent DB connections would leak
+# idle PostgreSQL slots until unrelated services can no longer connect.
+DB_CONN_MAX_AGE=0
 REDIS_URL=redis://127.0.0.1:6379/1
 STATIC_ROOT=/var/www/bazikhooneh-static
 EMAIL_DELIVERY_ENABLED=false
