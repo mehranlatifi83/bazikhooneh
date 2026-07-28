@@ -3,6 +3,11 @@ plugins {
     id 'com.google.gms.google-services'
 }
 
+configurations.configureEach {
+    exclude group: 'androidx.datastore', module: 'datastore-jvm'
+    exclude group: 'androidx.datastore', module: 'datastore-preferences-jvm'
+}
+
 def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'https://bazikhooneh.codelighthouse.ir'
 
 android {
@@ -52,7 +57,16 @@ android {
 
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:34.16.0')
-    implementation 'com.google.firebase:firebase-messaging'
+    implementation('com.google.firebase:firebase-messaging') {
+        exclude group: 'androidx.datastore', module: 'datastore-preferences'
+        exclude group: 'androidx.datastore', module: 'datastore-preferences-jvm'
+        exclude group: 'androidx.datastore', module: 'datastore'
+        exclude group: 'androidx.datastore', module: 'datastore-jvm'
+    }
+    // AGP 8.2 selects the JVM variant of this KMP dependency transitively. The Android
+    // artifact contains PreferenceDataStoreDelegateKt required by Firebase Installations.
+    implementation 'androidx.datastore:datastore-preferences-android:1.1.7'
+    implementation 'androidx.datastore:datastore-android:1.1.7'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'io.github.webrtc-sdk:android:144.7559.05'
     testImplementation 'junit:junit:4.13.2'
