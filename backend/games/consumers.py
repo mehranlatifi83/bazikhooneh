@@ -1,6 +1,4 @@
-import time
 import asyncio
-from collections import deque
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -12,14 +10,19 @@ from .engine import GameError
 from .models import Match, Player, Room, token_hash
 from .models import LudoRoom,LudoSeat,LudoMatch
 from .ludo_engine import roll as ludo_roll,move as ludo_move,run_bots
+from .websocket_security import (
+    bearer_token, claim_action, connection_allowed, message_allowed,
+    release_action, has_active_presence, update_presence,
+)
 
 
 class RoomConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.room_code = self.scope["url_route"]["kwargs"]["code"].upper()
         self.token = self._auth_token()
-        self.message_times = deque()
-        self.action_ids = deque(maxlen=100)
+        if not self.token or not await connection_allowed(self.scope, self.token):
+            await self.close(code=4429 if self.token else 4401)
+            return
         self.player = await self._authenticate()
         if self.player is None:
             await self.close(code=4401)
@@ -29,37 +32,53 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         await self._mark_seen()
+        connection_count = await update_presence(
+            "tic", self.player.id, self.channel_name)
         await self.send_json({"type": "state", "game": await self._room_state()})
-        await self.channel_layer.group_send(self.group_name, {
-            "type": "player.presence", "symbol": self.player.symbol, "connected": True,
-        })
+        if connection_count == 1:
+            await self.channel_layer.group_send(self.group_name, {
+                "type": "player.presence", "symbol": self.player.symbol, "connected": True,
+            })
 
     async def disconnect(self, close_code):
         if hasattr(self, "group_name"):
             disconnected_at = await self._mark_seen()
-            await self.channel_layer.group_send(self.group_name, {
-                "type": "player.presence", "symbol": self.player.symbol, "connected": False,
-            })
+            remaining = await update_presence(
+                "tic", self.player.id, self.channel_name, connected=False)
+            if remaining == 0:
+                await self.channel_layer.group_send(self.group_name, {
+                    "type": "player.presence", "symbol": self.player.symbol,
+                    "connected": False,
+                })
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
-            asyncio.create_task(self._close_after_grace(disconnected_at))
+            if remaining == 0:
+                asyncio.create_task(self._close_after_grace(disconnected_at))
 
     async def _close_after_grace(self, disconnected_at):
         await asyncio.sleep(settings.ONLINE_RECONNECT_GRACE_SECONDS)
+        if await has_active_presence("tic", self.player.id):
+            return
         state = await self._forfeit_if_still_away(disconnected_at)
         if state:
             await self.channel_layer.group_send(self.group_name, {"type": "game.state", "game": state})
 
     async def receive_json(self, content, **kwargs):
-        if not self._within_rate_limit():
+        if not await message_allowed(self.token, 20):
             await self.send_json({"type": "error", "error": "rate_limited"})
             return
+        if content.get("type") == "ping":
+            await update_presence("tic", self.player.id, self.channel_name)
+            await self._mark_seen()
+            await self.send_json({"type": "pong", "server_time": timezone.now().isoformat()})
+            return
         action_id = content.get("action_id")
-        if action_id and action_id in self.action_ids:
+        if action_id and not await claim_action(self.token, str(action_id)[:80]):
             return
         if content.get("type") == "rematch":
             try:
                 state = await self._request_rematch()
             except GameError as error:
+                await release_action(self.token, action_id)
                 await self.send_json({"type": "error", "error": str(error)})
                 return
             await self.channel_layer.group_send(
@@ -73,11 +92,13 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
             )
             return
         if content.get("type") != "action" or not isinstance(content.get("action"), dict):
+            await release_action(self.token, action_id)
             await self.send_json({"type": "error", "error": "invalid_message"})
             return
         try:
             state = await self._apply_action(content["action"])
         except GameError as error:
+            await release_action(self.token, action_id)
             await self.send_json({"type": "error", "error": str(error)})
             return
         await self.channel_layer.group_send(
@@ -88,8 +109,6 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
                 "action_id": content.get("action_id"),
             },
         )
-        if action_id:
-            self.action_ids.append(action_id)
         community = await self._record_community_event(content["action"], state)
         if community:
             await self.channel_layer.group_send(community["group"], {
@@ -111,26 +130,7 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         })
 
     def _auth_token(self):
-        for key, value in self.scope.get("headers", []):
-            if key.lower() == b"authorization":
-                authorization = value.decode("utf-8")
-                if authorization.startswith("Bearer "):
-                    return authorization[7:]
-        query = self.scope.get("query_string", b"").decode("utf-8")
-        for item in query.split("&"):
-            key, _, value = item.partition("=")
-            if key == "token":
-                return value
-        return ""
-
-    def _within_rate_limit(self):
-        now = time.monotonic()
-        while self.message_times and now - self.message_times[0] > 10:
-            self.message_times.popleft()
-        if len(self.message_times) >= 20:
-            return False
-        self.message_times.append(now)
-        return True
+        return bearer_token(self.scope)
 
     @database_sync_to_async
     def _authenticate(self):
@@ -220,29 +220,25 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
 
 class LudoRoomConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
-        self.message_times=deque();self.room_code=self.scope["url_route"]["kwargs"]["code"].upper();self.token=self._auth_token();self.seat=await self._authenticate()
+        self.room_code=self.scope["url_route"]["kwargs"]["code"].upper();self.token=self._auth_token()
+        if not self.token or not await connection_allowed(self.scope,self.token):await self.close(code=4429 if self.token else 4401);return
+        self.seat=await self._authenticate()
         if not self.seat:await self.close(code=4401);return
-        self.group_name=f"ludo_{self.room_code}";await self.channel_layer.group_add(self.group_name,self.channel_name);await self.accept();await self.send_json({"type":"state","payload":await self._payload()})
+        self.group_name=f"ludo_{self.room_code}";await self.channel_layer.group_add(self.group_name,self.channel_name);await self.accept();await update_presence("ludo",self.seat.id,self.channel_name);await self.send_json({"type":"state","payload":await self._payload()})
     async def disconnect(self,code):
-        if hasattr(self,"group_name"):await self.channel_layer.group_discard(self.group_name,self.channel_name)
+        if hasattr(self,"group_name"):await update_presence("ludo",self.seat.id,self.channel_name,connected=False);await self.channel_layer.group_discard(self.group_name,self.channel_name)
     async def receive_json(self,content,**kwargs):
-        if not self._within_rate_limit():await self.send_json({"type":"error","error":"rate_limited"});return
+        if not await message_allowed(self.token,20):await self.send_json({"type":"error","error":"rate_limited"});return
+        if content.get("type")=="ping":await update_presence("ludo",self.seat.id,self.channel_name);await self.send_json({"type":"pong","server_time":timezone.now().isoformat()});return
+        action_id=str(content.get("action_id",""))[:80]
+        if action_id and not await claim_action(self.token,action_id):return
         try:payload=await self._action(content)
-        except ValueError as error:await self.send_json({"type":"error","error":str(error)});return
+        except ValueError as error:
+            await release_action(self.token,action_id);await self.send_json({"type":"error","error":str(error)});return
         await self.channel_layer.group_send(self.group_name,{"type":"ludo.state","payload":payload})
     async def ludo_state(self,event):await self.send_json({"type":"state","payload":event["payload"]})
     def _auth_token(self):
-        for key,value in self.scope.get("headers",[]):
-            if key.lower()==b"authorization":
-                authorization=value.decode("utf-8")
-                if authorization.startswith("Bearer "):return authorization[7:]
-        query=self.scope.get("query_string",b"").decode()
-        return next((item.partition("=")[2] for item in query.split("&") if item.partition("=")[0]=="token"),"")
-    def _within_rate_limit(self):
-        now=time.monotonic()
-        while self.message_times and now-self.message_times[0]>10:self.message_times.popleft()
-        if len(self.message_times)>=20:return False
-        self.message_times.append(now);return True
+        return bearer_token(self.scope)
     @database_sync_to_async
     def _authenticate(self):
         return LudoSeat.objects.select_related("room","account").filter(room__code=self.room_code,reconnect_token_hash=token_hash(self.token),active=True,is_bot=False).first()

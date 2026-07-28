@@ -4,7 +4,6 @@ import hmac
 import re
 import secrets
 import time
-from collections import deque
 from datetime import timedelta
 
 from asgiref.sync import async_to_sync
@@ -28,6 +27,9 @@ from .models import (
     Player, Room, token_hash,
 )
 from .views import ludo_payload, player_payload
+from .websocket_security import (
+    bearer_token, connection_allowed, message_allowed, update_presence,
+)
 
 
 def account_payload(account):
@@ -782,8 +784,11 @@ class LeaderboardView(APIView):
 class CommunityConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.code = self.scope["url_route"]["kwargs"]["code"].upper()
-        self.message_times = deque()
+        self.token = bearer_token(self.scope)
         self.joined_call = False
+        if not self.token or not await connection_allowed(self.scope, self.token):
+            await self.close(code=4429 if self.token else 4401)
+            return
         self.membership = await self._authenticate()
         if not self.membership:
             await self.close(code=4401)
@@ -792,25 +797,32 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
         self.group_name = f"community_{self.code}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        connection_count = await update_presence(
+            f"community:{self.code}", self.membership.account_id, self.channel_name)
         await self.send_json({"event": "room_state", "room": await self._state()})
-        await self.channel_layer.group_send(self.group_name, {"type": "community.event",
-            "message": {"event": "presence", "account_id": self.account_id, "connected": True}})
+        if connection_count == 1:
+            await self.channel_layer.group_send(self.group_name, {"type": "community.event",
+                "message": {"event": "presence", "account_id": self.account_id, "connected": True}})
 
     async def disconnect(self, code):
         if hasattr(self, "group_name"):
-            call_id = await self._leave_call_silently() if self.joined_call else None
+            remaining = await update_presence(
+                f"community:{self.code}", self.membership.account_id, self.channel_name,
+                connected=False)
+            call_id = await self._leave_call_silently() if self.joined_call and remaining == 0 else None
             if call_id:
                 await self.channel_layer.group_send(self.group_name, {"type": "community.event",
                     "message": {"event": "call_participant_left", "call_id": call_id,
                                 "account_id": self.account_id}})
             await self._mark_seen()
-            await self.channel_layer.group_send(self.group_name, {"type": "community.event",
-                "message": {"event": "presence", "account_id": self.account_id,
-                            "connected": False}})
+            if remaining == 0:
+                await self.channel_layer.group_send(self.group_name, {"type": "community.event",
+                    "message": {"event": "presence", "account_id": self.account_id,
+                                "connected": False}})
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
-        if not self._rate_ok():
+        if not await message_allowed(self.token, 40):
             await self.send_json({"event": "error", "error": "rate_limited"})
             return
         kind = content.get("type")
@@ -856,6 +868,8 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
                 await self.channel_layer.group_send(self.group_name, {"type": "community.event",
                     "message": {"event": "call_speak_request", **speak_request}})
             elif kind == "ping":
+                await update_presence(
+                    f"community:{self.code}", self.membership.account_id, self.channel_name)
                 await self._mark_seen()
                 await self.send_json({"event": "pong", "server_time": timezone.now().isoformat()})
             else:
@@ -871,23 +885,7 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(message)
 
     def _token(self):
-        for key, value in self.scope.get("headers", []):
-            if key.lower() == b"authorization":
-                authorization = value.decode("utf-8")
-                if authorization.startswith("Bearer "):
-                    return authorization[7:]
-        query = self.scope.get("query_string", b"").decode()
-        return next((part.partition("=")[2] for part in query.split("&")
-                     if part.partition("=")[0] == "token"), "")
-
-    def _rate_ok(self):
-        now = time.monotonic()
-        while self.message_times and now - self.message_times[0] > 10:
-            self.message_times.popleft()
-        if len(self.message_times) >= 40:
-            return False
-        self.message_times.append(now)
-        return True
+        return self.token
 
     @database_sync_to_async
     def _authenticate(self):

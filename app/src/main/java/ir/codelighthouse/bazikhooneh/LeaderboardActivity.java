@@ -11,7 +11,7 @@ import ir.codelighthouse.bazikhooneh.community.CommunityClient;
 
 public final class LeaderboardActivity extends NavigableActivity {
     @Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_leaderboard);
-        SessionStore store=new SessionStore(this);if(!store.isSignedIn()){finish();return;}CommunityClient client=new CommunityClient(BuildConfig.API_BASE_URL,store.token());
+        SessionStore store=new SessionStore(this);if(!store.isSignedIn()){finish();return;}CommunityClient client=new CommunityClient(this,BuildConfig.API_BASE_URL,store.token());
         TextView own=findViewById(R.id.player_stats),status=findViewById(R.id.leaderboard_status);LinearLayout list=findViewById(R.id.leaderboard_list);
         client.stats((data,error)->runOnUiThread(()->{if(data!=null){JSONObject tic=data.optJSONObject("tic_tac_toe"),ludo=data.optJSONObject("ludo");
             own.setText(getString(R.string.player_stats_value,data.optInt("score"),tic==null?0:tic.optInt("played"),tic==null?0:tic.optInt("wins"),ludo==null?0:ludo.optInt("played"),ludo==null?0:ludo.optInt("wins")));}

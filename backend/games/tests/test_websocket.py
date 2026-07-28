@@ -1,5 +1,8 @@
+import asyncio
+
 from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
+from channels.db import database_sync_to_async
 from django.test import TransactionTestCase
 from django.test import override_settings
 
@@ -29,6 +32,52 @@ class RoomWebSocketTests(TransactionTestCase):
     @override_settings(ONLINE_RECONNECT_GRACE_SECONDS=0)
     def test_disconnect_closes_room_after_reconnect_grace(self):
         async_to_sync(self._run_disconnect_timeout)()
+
+    def test_query_string_credentials_are_rejected(self):
+        async_to_sync(self._query_string_credentials_are_rejected)()
+
+    def test_application_heartbeat_receives_pong(self):
+        async_to_sync(self._heartbeat_receives_pong)()
+
+    @override_settings(ONLINE_RECONNECT_GRACE_SECONDS=0)
+    def test_closing_one_of_multiple_connections_does_not_forfeit(self):
+        async_to_sync(self._multiple_connection_disconnect)()
+
+    async def _query_string_credentials_are_rejected(self):
+        socket = WebsocketCommunicator(
+            application,
+            f"/ws/v1/rooms/{self.room.code}/?token={self.x_token}",
+            headers=[(b"host", b"localhost")],
+        )
+        self.assertFalse((await socket.connect())[0])
+
+    async def _heartbeat_receives_pong(self):
+        socket = self._socket(self.x_token)
+        self.assertTrue((await socket.connect())[0])
+        await socket.receive_json_from()
+        await socket.receive_json_from()
+        await socket.send_json_to({"type": "ping"})
+        pong = await socket.receive_json_from()
+        self.assertEqual("pong", pong["type"])
+        self.assertIn("server_time", pong)
+        await socket.disconnect()
+
+    async def _multiple_connection_disconnect(self):
+        first = self._socket(self.x_token)
+        second = self._socket(self.x_token)
+        self.assertTrue((await first.connect())[0])
+        await first.receive_json_from()
+        await first.receive_json_from()
+        self.assertTrue((await second.connect())[0])
+        await second.receive_json_from()
+        await first.disconnect()
+        await second.send_json_to({"type": "ping"})
+        self.assertEqual("pong", (await second.receive_json_from())["type"])
+        await asyncio.sleep(0.05)
+        state = await database_sync_to_async(
+            lambda: Room.objects.get(pk=self.room.pk).state)()
+        self.assertEqual(Room.State.ACTIVE, state)
+        await second.disconnect()
 
     async def _run_game_flow(self):
         x_socket = self._socket(self.x_token)
@@ -138,6 +187,7 @@ class RoomWebSocketTests(TransactionTestCase):
     def _socket(self, token):
         return WebsocketCommunicator(
             application,
-            f"/ws/v1/rooms/{self.room.code}/?token={token}",
-            headers=[(b"host", b"localhost"), (b"origin", b"http://localhost")],
+            f"/ws/v1/rooms/{self.room.code}/",
+            headers=[(b"host", b"localhost"), (b"origin", b"http://localhost"),
+                     (b"authorization", f"Bearer {token}".encode())],
         )

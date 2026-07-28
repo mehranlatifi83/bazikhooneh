@@ -1,13 +1,162 @@
 package ir.codelighthouse.bazikhooneh.online;
-import ir.codelighthouse.bazikhooneh.BuildConfig;import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
-import java.io.IOException;import okhttp3.*;import org.json.*;
-public final class LudoOnlineClient{
- public interface Listener{void onSession(JSONObject session);void onState(JSONObject state);void onError(String error);void onDisconnected();}
- private static final MediaType JSON=MediaType.get("application/json; charset=utf-8");private final OkHttpClient http=new OkHttpClient.Builder().connectTimeout(20,java.util.concurrent.TimeUnit.SECONDS).readTimeout(45,java.util.concurrent.TimeUnit.SECONDS).writeTimeout(30,java.util.concurrent.TimeUnit.SECONDS).retryOnConnectionFailure(true).authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();private final String base;private final String accountToken;private final Listener listener;private WebSocket socket;private boolean closing;
- public LudoOnlineClient(String base,String accountToken,Listener listener){this.base=base.endsWith("/")?base.substring(0,base.length()-1):base;this.accountToken=accountToken;this.listener=listener;}
- public void create(boolean thirdSixPenalty){try{post("/api/v1/ludo/rooms/",new JSONObject().put("third_six_penalty",thirdSixPenalty));}catch(JSONException ignored){}}public void join(String code){try{post("/api/v1/ludo/rooms/join/",new JSONObject().put("code",code));}catch(JSONException ignored){}}
- public void start(String code){post("/api/v1/ludo/rooms/"+code+"/start/",new JSONObject());}
- private void post(String path,JSONObject body){Request request=new Request.Builder().url(base+path).header("Authorization","Bearer "+accountToken).post(RequestBody.create(body.toString(),JSON)).build();http.newCall(request).enqueue(new Callback(){public void onFailure(Call c,IOException e){listener.onError("connection_failed");}public void onResponse(Call c,Response response){try(Response close=response){String text=response.body()==null?"":response.body().string();JSONObject json=text.isEmpty()?new JSONObject():new JSONObject(text);if(!response.isSuccessful()){listener.onError(json.optString("error","request_failed"));return;}if(json.has("reconnect_token")){listener.onSession(json);connect(json.optString("room_code"),json.optString("reconnect_token"));}else listener.onState(json);}catch(Exception e){listener.onError("invalid_server_response");}}});}
- public void reconnect(String code,String token){closing=false;connect(code,token);}private void connect(String code,String token){closeSocket();Request request=new Request.Builder().url(base.replaceFirst("^http","ws")+"/ws/v1/ludo/"+code+"/").header("Authorization","Bearer "+token).build();socket=http.newWebSocket(request,new WebSocketListener(){public void onMessage(WebSocket ws,String text){try{JSONObject message=new JSONObject(text);if("state".equals(message.optString("type")))listener.onState(message.getJSONObject("payload"));else listener.onError(message.optString("error"));}catch(Exception e){listener.onError("invalid_server_response");}}public void onFailure(WebSocket ws,Throwable t,Response r){if(!closing)listener.onDisconnected();}public void onClosed(WebSocket ws,int c,String r){if(!closing)listener.onDisconnected();}});}
- public void roll(){if(socket!=null)socket.send("{\"type\":\"roll\"}");}public void move(int piece){if(socket!=null)socket.send("{\"type\":\"move\",\"piece\":"+piece+"}");}private void closeSocket(){if(socket!=null){socket.close(1000,"reconnecting");socket=null;}}public void disconnect(){closing=true;closeSocket();}
+
+import android.content.Context;
+
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
+import ir.codelighthouse.bazikhooneh.network.ReliableWebSocket;
+
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public final class LudoOnlineClient {
+    public interface Listener {
+        void onSession(JSONObject session);
+        void onState(JSONObject state);
+        void onError(String error);
+        void onDisconnected();
+    }
+
+    private static final MediaType JSON =
+            MediaType.get("application/json; charset=utf-8");
+    private final OkHttpClient http = new OkHttpClient.Builder()
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(45, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .pingInterval(20, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL))
+            .build();
+    private final String base;
+    private final String accountToken;
+    private final Listener listener;
+    private final ReliableWebSocket socket;
+
+    public LudoOnlineClient(
+            Context context, String base, String accountToken, Listener listener) {
+        this.base = base.endsWith("/")
+                ? base.substring(0, base.length() - 1) : base;
+        this.accountToken = accountToken;
+        this.listener = listener;
+        socket = new ReliableWebSocket(context, http, new ReliableWebSocket.Listener() {
+            @Override public void onOpen() { }
+            @Override public void onMessage(JSONObject message) {
+                if ("state".equals(message.optString("type"))) {
+                    JSONObject payload = message.optJSONObject("payload");
+                    if (payload == null) listener.onError("invalid_server_response");
+                    else listener.onState(payload);
+                } else if ("error".equals(message.optString("type"))) {
+                    listener.onError(message.optString("error", "server_error"));
+                } else if (!"pong".equals(message.optString("type"))) {
+                    listener.onError("invalid_server_message");
+                }
+            }
+            @Override public void onReconnecting(long delayMillis) { }
+            @Override public void onClosed() { listener.onDisconnected(); }
+            @Override public void onError(String error) { listener.onError(error); }
+        });
+    }
+
+    public void create(boolean thirdSixPenalty) {
+        try {
+            post("/api/v1/ludo/rooms/",
+                    new JSONObject().put("third_six_penalty", thirdSixPenalty));
+        } catch (JSONException error) {
+            listener.onError("invalid_request");
+        }
+    }
+
+    public void join(String code) {
+        try {
+            post("/api/v1/ludo/rooms/join/", new JSONObject().put("code", code));
+        } catch (JSONException error) {
+            listener.onError("invalid_request");
+        }
+    }
+
+    public void start(String code) {
+        post("/api/v1/ludo/rooms/" + code + "/start/", new JSONObject());
+    }
+
+    private void post(String path, JSONObject body) {
+        Request request = new Request.Builder().url(base + path)
+                .header("Authorization", "Bearer " + accountToken)
+                .post(RequestBody.create(body.toString(), JSON)).build();
+        http.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException error) {
+                listener.onError("connection_failed");
+            }
+
+            @Override public void onResponse(Call call, Response response) {
+                try (Response ignored = response) {
+                    String text = response.body() == null
+                            ? "" : response.body().string();
+                    JSONObject json = text.isEmpty()
+                            ? new JSONObject() : new JSONObject(text);
+                    if (!response.isSuccessful()) {
+                        listener.onError(json.optString("error", "request_failed"));
+                        return;
+                    }
+                    if (json.has("reconnect_token")) {
+                        listener.onSession(json);
+                        connect(json.optString("room_code"),
+                                json.optString("reconnect_token"));
+                    } else {
+                        listener.onState(json);
+                    }
+                } catch (Exception error) {
+                    listener.onError("invalid_server_response");
+                }
+            }
+        });
+    }
+
+    public void reconnect(String code, String token) {
+        connect(code, token);
+    }
+
+    private void connect(String code, String token) {
+        Request request = new Request.Builder()
+                .url(base.replaceFirst("^http", "ws")
+                        + "/ws/v1/ludo/" + code + "/")
+                .header("Authorization", "Bearer " + token)
+                .build();
+        socket.start(request);
+    }
+
+    public void roll() {
+        send("roll", -1);
+    }
+
+    public void move(int piece) {
+        send("move", piece);
+    }
+
+    private void send(String type, int piece) {
+        try {
+            JSONObject message = new JSONObject()
+                    .put("type", type)
+                    .put("action_id", UUID.randomUUID().toString());
+            if (piece >= 0) message.put("piece", piece);
+            if (!socket.send(message)) listener.onError("not_connected");
+        } catch (JSONException error) {
+            listener.onError("invalid_request");
+        }
+    }
+
+    public void disconnect() {
+        socket.shutdown();
+    }
 }

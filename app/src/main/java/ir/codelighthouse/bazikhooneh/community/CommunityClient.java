@@ -1,7 +1,9 @@
 package ir.codelighthouse.bazikhooneh.community;
 
+import android.content.Context;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
 import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
+import ir.codelighthouse.bazikhooneh.network.ReliableWebSocket;
 import java.util.concurrent.TimeUnit;
 import okhttp3.*;
 import org.json.JSONObject;
@@ -17,14 +19,16 @@ public final class CommunityClient {
 
     private final String baseUrl;
     private final String token;
+    private final Context context;
     private final OkHttpClient http = new OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS).readTimeout(45, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS).pingInterval(20, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();
-    private volatile WebSocket socket;
+    private ReliableWebSocket socket;
 
-    public CommunityClient(String baseUrl, String token) {
+    public CommunityClient(Context context, String baseUrl, String token) {
+        this.context = context.getApplicationContext();
         this.baseUrl = baseUrl.replaceAll("/$", "");
         this.token = token;
     }
@@ -113,32 +117,23 @@ public final class CommunityClient {
     public void cancelMatchmaking(Callback callback) { request("DELETE", "/api/v1/matchmaking/", null, callback); }
 
     public void connect(String code, Events events) {
-        disconnect();
         String wsBase = baseUrl.replaceFirst("^https", "wss").replaceFirst("^http", "ws");
         Request request = new Request.Builder().url(wsBase + "/ws/v1/community/" + code + "/")
                 .header("Authorization", "Bearer " + token).build();
-        socket = http.newWebSocket(request, new WebSocketListener() {
-            @Override public void onOpen(WebSocket webSocket, Response response) {
-                if (webSocket == socket) events.onOpen();
-            }
-            @Override public void onMessage(WebSocket webSocket, String text) {
-                if (webSocket != socket) return;
-                try { events.onEvent(new JSONObject(text)); }
-                catch (Exception error) { events.onError("invalid_server_message"); }
-            }
-            @Override public void onClosed(WebSocket webSocket, int code, String reason) {
-                if (webSocket == socket) { socket = null; events.onClosed(); }
-            }
-            @Override public void onFailure(WebSocket webSocket, Throwable error, Response response) {
-                if (webSocket == socket) {
-                    socket = null;
-                    events.onError(error.getMessage() == null ? "connection_failed" : error.getMessage());
-                }
-            }
-        });
+        if (socket == null) socket = new ReliableWebSocket(context, http,
+                new ReliableWebSocket.Listener() {
+                    @Override public void onOpen() { events.onOpen(); }
+                    @Override public void onMessage(JSONObject message) {
+                        events.onEvent(message);
+                    }
+                    @Override public void onReconnecting(long delayMillis) { }
+                    @Override public void onClosed() { events.onClosed(); }
+                    @Override public void onError(String error) { events.onError(error); }
+                });
+        socket.start(request);
     }
 
-    public boolean send(JSONObject message) { return socket != null && socket.send(message.toString()); }
+    public boolean send(JSONObject message) { return socket != null && socket.send(message); }
     public boolean ping() {
         JSONObject value = new JSONObject();
         try { value.put("type", "ping"); return send(value); }
@@ -163,8 +158,7 @@ public final class CommunityClient {
         catch (Exception ignored) { }
     }
     public void disconnect() {
-        WebSocket current = socket; socket = null;
-        if (current != null) current.close(1000, "leaving");
+        if (socket != null) socket.shutdown();
     }
 
     private void request(String method, String path, JSONObject body, Callback callback) {

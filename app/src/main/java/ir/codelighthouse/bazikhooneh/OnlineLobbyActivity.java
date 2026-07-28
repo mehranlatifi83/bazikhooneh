@@ -24,7 +24,7 @@ public final class OnlineLobbyActivity extends NavigableActivity {
         status = findViewById(R.id.lobby_status);
         SessionStore store = new SessionStore(this);
         if (!store.isSignedIn()) { startActivity(new Intent(this, LoginActivity.class)); finish(); return; }
-        client = new OnlineGameClient(BuildConfig.API_BASE_URL, listener);
+        client = new OnlineGameClient(this, BuildConfig.API_BASE_URL, listener);
         client.setAccountToken(store.token());
         String invitedCode = getIntent().getStringExtra("room_code");
         if (invitedCode != null) codeInput.setText(invitedCode);

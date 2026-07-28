@@ -26,7 +26,7 @@ public final class CommunityRoomsActivity extends NavigableActivity {
         setContentView(R.layout.activity_community_rooms);
         SessionStore store = new SessionStore(this);
         if (!store.isSignedIn()) { startActivity(new Intent(this, LoginActivity.class)); finish(); return; }
-        client = new CommunityClient(BuildConfig.API_BASE_URL, store.token());
+        client = new CommunityClient(this, BuildConfig.API_BASE_URL, store.token());
         preferredGame=getIntent().getStringExtra(EXTRA_GAME_KEY);if(preferredGame==null)preferredGame="";
         list = findViewById(R.id.community_rooms_list);
         status = findViewById(R.id.community_status);

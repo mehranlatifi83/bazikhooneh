@@ -33,7 +33,6 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     private boolean destroyed;
     private boolean socketVerified;
     private boolean reconnectScheduled;
-    private int reconnectAttempts;
     private boolean everConnected;
 
     @Override protected void onCreate(Bundle state) {
@@ -42,7 +41,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         SessionStore store = new SessionStore(this);
         ownUsername = store.username();
         if (!store.isSignedIn() || code == null) { finish(); return; }
-        client = new CommunityClient(BuildConfig.API_BASE_URL, store.token());
+        client = new CommunityClient(this, BuildConfig.API_BASE_URL, store.token());
         members = findViewById(R.id.community_members_list);
         messages = findViewById(R.id.community_messages_list);
         status = findViewById(R.id.community_room_status);
@@ -197,7 +196,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     @Override public void onOpen(){runOnUiThread(()->{socketVerified=false;if(!client.ping())scheduleReconnect();});}
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
         if("room_state".equals(type))renderRoom(event.optJSONObject("room"));
-        else if("pong".equals(type)){socketVerified=true;reconnectScheduled=false;reconnectAttempts=0;reconnectHandler.removeCallbacksAndMessages(null);
+        else if("pong".equals(type)){socketVerified=true;reconnectScheduled=false;reconnectHandler.removeCallbacksAndMessages(null);
             if(!everConnected){everConnected=true;show(getString(R.string.room_connected));}else status.setText(R.string.room_connected);}
         else if("chat_message".equals(type))addMessage(event.optJSONObject("message"),true);
         else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
@@ -213,8 +212,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     @Override public void onClosed(){runOnUiThread(this::scheduleReconnect);}
     @Override public void onError(String error){runOnUiThread(this::scheduleReconnect);}
     private void scheduleReconnect(){if(destroyed||reconnectScheduled)return;reconnectScheduled=true;status.setText(R.string.room_reconnecting);reconnectHandler.removeCallbacksAndMessages(null);
-        reconnectHandler.postDelayed(()->{if(reconnectScheduled&&!destroyed)status.announceForAccessibility(getString(R.string.room_reconnecting));},8000);
-        long delay=Math.min(30000,2000L<<Math.min(reconnectAttempts++,4));reconnectHandler.postDelayed(()->{reconnectScheduled=false;if(!destroyed)client.connect(code,this);},delay);}
+        reconnectHandler.postDelayed(()->{if(reconnectScheduled&&!destroyed)status.announceForAccessibility(getString(R.string.room_reconnecting));},8000);}
     @Override protected void onResume(){super.onResume();if(client!=null)refreshMessages();}
     @Override protected void onDestroy(){destroyed=true;reconnectHandler.removeCallbacksAndMessages(null);if(client!=null)client.disconnect();super.onDestroy();}
     private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}

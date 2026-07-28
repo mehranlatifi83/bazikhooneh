@@ -44,7 +44,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
         if (code == null || !store.isSignedIn()) { finish(); return; }
         status=findViewById(R.id.call_status);timer=findViewById(R.id.call_timer);
         participants=findViewById(R.id.call_participants);
-        client=new CommunityClient(BuildConfig.API_BASE_URL,store.token());
+        client=new CommunityClient(this,BuildConfig.API_BASE_URL,store.token());
         findViewById(R.id.call_toggle_mic).setOnClickListener(v->toggleMic());
         findViewById(R.id.call_toggle_speaker).setOnClickListener(v->toggleSpeaker());
         findViewById(R.id.call_raise_hand).setOnClickListener(v->client.raiseHand());
@@ -176,7 +176,7 @@ public final class VoiceCallActivity extends NavigableActivity implements Commun
     private final Runnable timerTask=new Runnable(){public void run(){if(startedAt>0){long s=(System.currentTimeMillis()-startedAt)/1000;timer.setText(String.format(Locale.getDefault(),"%02d:%02d",s/60,s%60));}handler.postDelayed(this,1000);}};
     private void scheduleReconnect(){if(leaving||reconnectScheduled)return;reconnectScheduled=true;runOnUiThread(()->{
         announce(getString(R.string.call_reconnecting));for(String id:new ArrayList<>(peers.keySet()))removePeer(id,false);
-        handler.postDelayed(this::connect,1500);});}
+    });}
     @Override public void onClosed(){scheduleReconnect();}
     @Override public void onError(String error){scheduleReconnect();}
     private void leave(){if(leaving)return;leaving=true;client.leaveCall();handler.postDelayed(this::finish,150);}

@@ -1,7 +1,9 @@
 package ir.codelighthouse.bazikhooneh.online;
 
+import android.content.Context;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
 import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
+import ir.codelighthouse.bazikhooneh.network.ReliableWebSocket;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -35,12 +37,34 @@ public final class OnlineGameClient {
             .authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();
     private final String baseUrl;
     private final Listener listener;
-    private WebSocket socket;
+    private final ReliableWebSocket socket;
     private String accountToken = "";
 
-    public OnlineGameClient(String baseUrl, Listener listener) {
+    public OnlineGameClient(Context context, String baseUrl, Listener listener) {
         this.baseUrl = trimSlash(baseUrl);
         this.listener = listener;
+        socket = new ReliableWebSocket(context, http, new ReliableWebSocket.Listener() {
+            @Override public void onOpen() { listener.onConnected(); }
+            @Override public void onMessage(JSONObject message) {
+                try {
+                    if ("state".equals(message.optString("type"))) {
+                        listener.onState(OnlineGameState.from(message.getJSONObject("game")));
+                    } else if ("error".equals(message.optString("type"))) {
+                        listener.onError(message.optString("error", "server_error"));
+                    } else if ("presence".equals(message.optString("type"))) {
+                        listener.onPresence(message.optString("symbol"),
+                                message.optBoolean("connected"));
+                    } else if (!"pong".equals(message.optString("type"))) {
+                        listener.onError("invalid_server_message");
+                    }
+                } catch (JSONException error) {
+                    listener.onError("invalid_server_response");
+                }
+            }
+            @Override public void onReconnecting(long delayMillis) { }
+            @Override public void onClosed() { listener.onDisconnected(); }
+            @Override public void onError(String error) { listener.onError(error); }
+        });
     }
 
     public void createRoom() {
@@ -87,7 +111,6 @@ public final class OnlineGameClient {
     }
 
     private void connect(OnlineSession session) {
-        disconnect();
         String wsBase = baseUrl.replaceFirst("^http", "ws");
         Request request = new Request.Builder().url(wsBase + session.websocketPath)
                 .header("Authorization", "Bearer " + session.token).build();
@@ -95,7 +118,6 @@ public final class OnlineGameClient {
     }
 
     public void reconnect(String roomCode, String token) {
-        disconnect();
         String wsBase = baseUrl.replaceFirst("^http", "ws");
         Request request = new Request.Builder().url(wsBase + "/ws/v1/rooms/" + roomCode + "/")
                 .header("Authorization", "Bearer " + token).build();
@@ -103,35 +125,7 @@ public final class OnlineGameClient {
     }
 
     private void openSocket(Request request) {
-        socket = http.newWebSocket(request, new WebSocketListener() {
-            @Override public void onOpen(WebSocket webSocket, Response response) {
-                listener.onConnected();
-            }
-
-            @Override public void onMessage(WebSocket webSocket, String text) {
-                try {
-                    JSONObject message = new JSONObject(text);
-                    if ("state".equals(message.optString("type"))) {
-                        listener.onState(OnlineGameState.from(message.getJSONObject("game")));
-                    } else if ("error".equals(message.optString("type"))) {
-                        listener.onError(message.optString("error", "server_error"));
-                    } else if ("presence".equals(message.optString("type"))) {
-                        listener.onPresence(message.optString("symbol"),
-                                message.optBoolean("connected"));
-                    }
-                } catch (JSONException error) {
-                    listener.onError("invalid_server_response");
-                }
-            }
-
-            @Override public void onFailure(WebSocket webSocket, Throwable error, Response response) {
-                listener.onDisconnected();
-            }
-
-            @Override public void onClosed(WebSocket webSocket, int code, String reason) {
-                listener.onDisconnected();
-            }
-        });
+        socket.start(request);
     }
 
     public void place(int destination) {
@@ -143,34 +137,35 @@ public final class OnlineGameClient {
     }
 
     public void requestRematch() {
-        if (socket != null) socket.send("{\"type\":\"rematch\"}");
+        send(new JSONObject(), "rematch");
     }
 
     public void leaveRoom() {
-        if (socket != null) socket.send("{\"type\":\"leave\"}");
-        else listener.onError("not_connected");
+        send(new JSONObject(), "leave");
     }
 
     private void sendAction(String kind, int source, int destination) {
-        if (socket == null) {
-            listener.onError("not_connected");
-            return;
-        }
         try {
             JSONObject action = new JSONObject().put("kind", kind).put("destination", destination);
             if (source >= 0) action.put("source", source);
             JSONObject message = new JSONObject().put("type", "action")
                     .put("action_id", UUID.randomUUID().toString()).put("action", action);
-            socket.send(message.toString());
+            if (!socket.send(message)) listener.onError("not_connected");
         } catch (JSONException error) {
             listener.onError("invalid_request");
         }
     }
 
     public void disconnect() {
-        if (socket != null) {
-            socket.close(1000, "leaving");
-            socket = null;
+        socket.shutdown();
+    }
+
+    private void send(JSONObject message, String type) {
+        try {
+            message.put("type", type);
+            if (!socket.send(message)) listener.onError("not_connected");
+        } catch (JSONException error) {
+            listener.onError("invalid_request");
         }
     }
 

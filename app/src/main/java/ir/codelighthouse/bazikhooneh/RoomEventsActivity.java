@@ -15,7 +15,7 @@ public final class RoomEventsActivity extends NavigableActivity {
         String code=getIntent().getStringExtra("room_code");SessionStore store=new SessionStore(this);
         if(code==null||!store.isSignedIn()){finish();return;}
         TextView status=findViewById(R.id.room_events_status);LinearLayout list=findViewById(R.id.room_events_list);
-        new CommunityClient(BuildConfig.API_BASE_URL,store.token()).events(code,(data,error)->runOnUiThread(()->{
+        new CommunityClient(this,BuildConfig.API_BASE_URL,store.token()).events(code,(data,error)->runOnUiThread(()->{
             findViewById(R.id.room_events_progress).setVisibility(View.GONE);
             if(error!=null){status.setText(error);status.announceForAccessibility(error);return;}
             JSONArray values=data.optJSONArray("results");if(values==null||values.length()==0){status.setText(R.string.no_room_history);return;}

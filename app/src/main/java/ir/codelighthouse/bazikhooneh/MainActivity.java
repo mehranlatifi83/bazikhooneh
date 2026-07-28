@@ -91,7 +91,7 @@ public final class MainActivity extends NavigableActivity {
         roomCodeInput = findViewById(R.id.room_code_input);
         roomInformation = findViewById(R.id.room_information);
         rematchButton = findViewById(R.id.rematch_button);
-        onlineClient = new OnlineGameClient(BuildConfig.API_BASE_URL, onlineListener);
+        onlineClient = new OnlineGameClient(this, BuildConfig.API_BASE_URL, onlineListener);
         sessionStore = new SessionStore(this);
         restoreAccountSession();
         configureGameOptions(savedInstanceState);
@@ -593,12 +593,6 @@ public final class MainActivity extends NavigableActivity {
                 statusText.setText(R.string.online_disconnected);
                 onlineActionPending = false;
                 announce(getString(R.string.online_disconnected));
-                if (onlineMode && reconnectAllowed && !isFinishing()) {
-                    reconnectAttempts++;
-                    long delay = Math.min(30000L, 1000L << Math.min(reconnectAttempts, 4));
-                    handler.removeCallbacks(reconnectRunnable);
-                    handler.postDelayed(reconnectRunnable, delay);
-                }
             });
         }
 
