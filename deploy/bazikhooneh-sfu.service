@@ -1,0 +1,20 @@
+[Unit]
+Description=BaziKhooneh mediasoup SFU
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bazikhooneh
+Group=bazikhooneh
+WorkingDirectory=/root/bazikhooneh/sfu
+EnvironmentFile=/root/bazikhooneh/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
