@@ -123,6 +123,11 @@ EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
 ONLINE_RECONNECT_GRACE_SECONDS = int(os.getenv("ONLINE_RECONNECT_GRACE_SECONDS", "60"))
 
+# Firebase Admin is initialized lazily by notification services. Keeping the
+# credential path in the environment avoids embedding private keys in code.
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
+FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "bazikhooneh-cfcba")
+
 TURN_HOST = os.environ.get("TURN_HOST", "bazikhooneh.codelighthouse.ir")
 TURN_USERNAME = os.environ.get("TURN_USERNAME", "")
 TURN_PASSWORD = os.environ.get("TURN_PASSWORD", "")

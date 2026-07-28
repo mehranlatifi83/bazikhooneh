@@ -106,7 +106,7 @@ class AccountApiTests(APITestCase):
     def test_email_verification_and_password_reset(self):
         _, account = self.authenticated()
         requested = self.client.post("/api/v1/accounts/email/request/", {"email": "verified@example.com"}, format="json")
-        verification_code = mail.outbox[-1].body.split(": ", 1)[1]
+        verification_code = mail.outbox[-1].body.split(": ", 1)[1].splitlines()[0]
         confirmed = self.client.post("/api/v1/accounts/email/confirm/", {
             "code": verification_code
         }, format="json")
@@ -114,7 +114,7 @@ class AccountApiTests(APITestCase):
         self.assertTrue(confirmed.data["email_verified"])
         self.client.credentials()
         reset = self.client.post("/api/v1/accounts/password-reset/request/", {"email": "verified@example.com"}, format="json")
-        reset_code = mail.outbox[-1].body.split(": ", 1)[1]
+        reset_code = mail.outbox[-1].body.split(": ", 1)[1].splitlines()[0]
         result = self.client.post("/api/v1/accounts/password-reset/confirm/", {
             "code": reset_code, "new_password": "reset-password"
         }, format="json")

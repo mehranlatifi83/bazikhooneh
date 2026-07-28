@@ -1,6 +1,7 @@
 package ir.codelighthouse.bazikhooneh;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.widget.CheckBox;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
@@ -22,6 +23,7 @@ public final class SettingsActivity extends NavigableActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_settings);
+        Spinner language=findViewById(R.id.setting_language);language.setAdapter(ArrayAdapter.createFromResource(this,R.array.language_choices,android.R.layout.simple_spinner_dropdown_item));language.setSelection(LanguageManager.selectedPosition(this));language.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){boolean first=true;public void onNothingSelected(AdapterView<?> p){}public void onItemSelected(AdapterView<?> p,android.view.View v,int position,long id){if(first){first=false;return;}String selected=position==0?LanguageManager.PERSIAN:LanguageManager.ENGLISH;if(selected.equals(LanguageManager.selectedLanguage(SettingsActivity.this)))return;LanguageManager.select(SettingsActivity.this,selected);startActivity(new Intent(SettingsActivity.this,HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK));}});
         bind(R.id.setting_haptic, HAPTIC, true);
         bind(R.id.setting_sound, SOUND, true);
         bind(R.id.setting_large_text, LARGE_TEXT, false);

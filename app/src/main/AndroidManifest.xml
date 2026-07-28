@@ -58,14 +58,15 @@
             android:name="ir.codelighthouse.bazikhooneh.MainActivity"
             android:exported="false"
             android:label="@string/tic_tac_toe_title" />
+        <activity android:name=".LanguageActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="ir.codelighthouse.bazikhooneh.HomeActivity"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

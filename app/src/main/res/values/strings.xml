@@ -1,4 +1,8 @@
 <resources>
+    <string name="choose_language_title">Choose your language</string>
+    <string name="choose_language_description">You can change the app language later in Settings.</string>
+    <string name="language_title">App language</string>
+    <string-array name="language_choices"><item>فارسی</item><item>English</item></string-array>
     <string name="app_name">BaziKhooneh</string>
     <string name="tic_tac_toe_title">Tic-Tac-Toe</string>
     <string name="restart_game">Restart game</string>
@@ -126,7 +130,7 @@
     <string name="send_verification_code">Send verification code</string>
     <string name="verification_code">Verification code</string>
     <string name="confirm_email">Verify email</string>
-    <string name="verification_sent">Verification code sent.</string>
+    <string name="verification_sent">Verification code sent. If it is not in your inbox, check Spam or Junk.</string>
     <string name="change_password_title">Change password</string>
     <string name="new_password">New password (at least 8 characters)</string>
     <string name="change_password">Change password</string>
@@ -138,7 +142,7 @@
     <string name="password_reset_description">Enter your verified email to receive a one-time reset code.</string>
     <string name="send_reset_code">Send reset code</string>
     <string name="reset_password">Reset password</string>
-    <string name="reset_code_sent">If a verified account exists, a reset code has been sent.</string>
+    <string name="reset_code_sent">If a verified account exists, a reset code has been sent. Check Spam or Junk if it is not in your inbox.</string>
     <string name="password_reset_done">Password changed. You can now log in.</string>
     <string name="friends_title">Friends and invitations</string>
     <string name="friends_description">Find people by username, accept requests, see their status, and invite friends to a private game.</string>
@@ -179,7 +183,7 @@
     <string name="other_sessions_revoked">Other devices have been signed out.</string>
     <string name="email_verification_description">Add and verify an email address for account recovery. We will ask for the code in the next step.</string>
     <string name="use_different_email">Use a different email</string>
-    <string name="code_sent_to">Enter the code sent to %1$s.</string>
+    <string name="code_sent_to">Enter the code sent to %1$s. If it has not arrived, check Spam or Junk.</string>
     <string name="cancel_action">Cancel</string>
     <string name="username_format_help">3–30 characters: English letters, numbers, and underscore.</string>
     <string name="confirm_password">Confirm password</string><string name="show_password">Show password</string>

@@ -1,4 +1,8 @@
 <resources>
+    <string name="choose_language_title">زبان برنامه را انتخاب کنید</string>
+    <string name="choose_language_description">بعداً هم می‌توانید زبان برنامه را از تنظیمات تغییر دهید.</string>
+    <string name="language_title">زبان برنامه</string>
+    <string-array name="language_choices"><item>فارسی</item><item>English</item></string-array>
     <string name="app_name">بازی‌خونه</string>
     <string name="tic_tac_toe_title">دوز</string>
     <string name="restart_game">شروع دوباره</string>
@@ -126,7 +130,7 @@
     <string name="send_verification_code">ارسال کد تأیید</string>
     <string name="verification_code">کد تأیید</string>
     <string name="confirm_email">تأیید ایمیل</string>
-    <string name="verification_sent">کد تأیید ارسال شد.</string>
+    <string name="verification_sent">کد تأیید ارسال شد. اگر در صندوق ورودی نبود، پوشهٔ هرزنامه یا Spam را هم بررسی کنید.</string>
     <string name="change_password_title">تغییر گذرواژه</string>
     <string name="new_password">گذرواژهٔ جدید، حداقل ۸ نویسه</string>
     <string name="change_password">تغییر گذرواژه</string>
@@ -138,7 +142,7 @@
     <string name="password_reset_description">ایمیل تأییدشدهٔ خود را وارد کنید تا کد یک‌بارمصرف بازیابی برایتان ارسال شود.</string>
     <string name="send_reset_code">ارسال کد بازیابی</string>
     <string name="reset_password">بازنشانی گذرواژه</string>
-    <string name="reset_code_sent">اگر حساب تأییدشده‌ای وجود داشته باشد، کد بازیابی ارسال شده است.</string>
+    <string name="reset_code_sent">اگر حساب تأییدشده‌ای وجود داشته باشد، کد بازیابی ارسال شده است. اگر در صندوق ورودی نبود، پوشهٔ هرزنامه یا Spam را هم بررسی کنید.</string>
     <string name="password_reset_done">گذرواژه تغییر کرد. اکنون می‌توانید وارد شوید.</string>
     <string name="friends_title">دوستان و دعوت‌ها</string>
     <string name="friends_description">افراد را با نام کاربری پیدا کنید، درخواست‌ها را بپذیرید، وضعیتشان را ببینید و به بازی خصوصی دعوتشان کنید.</string>
@@ -179,7 +183,7 @@
     <string name="other_sessions_revoked">دستگاه‌های دیگر از حساب خارج شدند.</string>
     <string name="email_verification_description">برای بازیابی حساب، ایمیل خود را اضافه و تأیید کنید. کد در مرحلهٔ بعد وارد می‌شود.</string>
     <string name="use_different_email">استفاده از ایمیل دیگر</string>
-    <string name="code_sent_to">کد ارسال‌شده به %1$s را وارد کنید.</string>
+    <string name="code_sent_to">کد ارسال‌شده به %1$s را وارد کنید. اگر کد نرسید، پوشهٔ هرزنامه یا Spam را هم بررسی کنید.</string>
     <string name="cancel_action">انصراف</string>
     <string name="username_format_help">۳ تا ۳۰ نویسه؛ حروف انگلیسی، عدد و زیرخط.</string>
     <string name="confirm_password">تکرار گذرواژه</string><string name="show_password">نمایش گذرواژه</string>

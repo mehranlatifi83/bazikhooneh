@@ -20,6 +20,12 @@ local.properties
 *.jks
 *.keystore
 
+# Firebase credentials and local configuration
+/app/google-services.json
+/secrets/
+*firebase-adminsdk*.json
+*service-account*.json
+
 # Python / Django
 __pycache__/
 *.py[cod]

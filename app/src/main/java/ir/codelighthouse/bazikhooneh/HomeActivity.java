@@ -19,6 +19,11 @@ public final class HomeActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (!LanguageManager.hasSelection(this)) {
+            startActivity(new Intent(this, LanguageActivity.class).setData(getIntent().getData()));
+            finish();
+            return;
+        }
         if (AppDisplay.reduceMotion(this)) getWindow().setWindowAnimations(0);
         if (getActionBar() != null) getActionBar().hide();
         setContentView(R.layout.activity_home);

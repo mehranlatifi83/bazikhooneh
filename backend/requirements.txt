@@ -4,3 +4,4 @@ channels-redis==4.3.0
 djangorestframework==3.16.0
 daphne==4.2.1
 psycopg[binary]>=3.2,<4
+firebase-admin>=6.9,<7

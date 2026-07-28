@@ -2,6 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:orientation="vertical" android:padding="24dp" android:background="@color/screen_background">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/language_title" android:textSize="18sp" android:accessibilityHeading="true" />
+    <Spinner android:id="@+id/setting_language" android:layout_width="match_parent"
+        android:layout_height="56dp" android:contentDescription="@string/language_title" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/theme_title" android:textSize="18sp" />
     <Spinner android:id="@+id/setting_theme" android:layout_width="match_parent" android:layout_height="56dp" android:contentDescription="@string/theme_title" />
     <CheckBox android:id="@+id/setting_haptic" android:layout_width="match_parent"

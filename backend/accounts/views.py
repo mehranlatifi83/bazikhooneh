@@ -211,7 +211,8 @@ class EmailVerificationRequestView(APIView):
         if Account.objects.filter(email__iexact=email, email_verified=True).exclude(id=request.user.id).exists():
             return Response({"error": "email_taken"}, status=409)
         raw = OneTimeToken.issue(request.user, OneTimeToken.PURPOSE_EMAIL, email)
-        send_mail("BaziKhooneh email verification", f"Verification code: {raw}",
+        send_mail("BaziKhooneh email verification",
+                  f"Verification code: {raw}\n\nIf this message is not in your inbox, check Spam or Junk.",
                   settings.DEFAULT_FROM_EMAIL, [email])
         data = {"detail": "verification_sent"}
         if settings.DEBUG: data["development_code"] = raw
@@ -240,7 +241,9 @@ class PasswordResetRequestView(APIView):
         data={"detail":"reset_sent_if_account_exists"}
         if account:
             raw=OneTimeToken.issue(account, OneTimeToken.PURPOSE_PASSWORD)
-            send_mail("BaziKhooneh password reset", f"Reset code: {raw}", settings.DEFAULT_FROM_EMAIL,[account.email])
+            send_mail("BaziKhooneh password reset",
+                      f"Reset code: {raw}\n\nIf this message is not in your inbox, check Spam or Junk.",
+                      settings.DEFAULT_FROM_EMAIL, [account.email])
             if settings.DEBUG: data["development_code"]=raw
         return Response(data)
 
