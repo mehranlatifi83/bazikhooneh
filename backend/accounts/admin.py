@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .models import (Account, AccountNotification, AccountToken, Friendship, GameInvite,
-                     OneTimeToken, SecurityEvent, UserBlock, UserReport, UsernameReservation)
+                     OneTimeToken, PushDelivery, PushDevice, SecurityEvent, UserBlock,
+                     UserReport, UsernameReservation)
 
 
 @admin.register(Account)
@@ -43,6 +44,8 @@ admin.site.register(OneTimeToken)
 admin.site.register(Friendship)
 admin.site.register(GameInvite)
 admin.site.register(AccountNotification)
+admin.site.register(PushDevice)
+admin.site.register(PushDelivery)
 admin.site.register(UserBlock)
 admin.site.register(UserReport)
 admin.site.register(SecurityEvent)

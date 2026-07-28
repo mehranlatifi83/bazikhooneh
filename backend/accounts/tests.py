@@ -221,3 +221,25 @@ class AccountApiTests(APITestCase):
         self.assertEqual(204,self.client.delete(f"/api/v1/accounts/friends/requests/{request_id}/").status_code)
         self.assertEqual(201,self.client.post("/api/v1/accounts/blocks/",{"username":"first_user"},format="json").status_code)
         self.assertEqual(201,self.client.post("/api/v1/accounts/reports/",{"username":"first_user","reason":"abuse"},format="json").status_code)
+
+    def test_push_device_registration_rotation_and_logout(self):
+        from .models import PushDevice
+        session, _ = self.authenticated()
+        token = session.data["access_token"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        response = self.client.post("/api/v1/accounts/push-devices/", {
+            "token": "firebase-device-token", "app_version": "1.0", "locale": "fa-IR"
+        }, format="json")
+        self.assertEqual(201, response.status_code)
+        device = PushDevice.objects.get(token="firebase-device-token")
+        self.assertEqual("fa-IR", device.locale)
+        self.assertTrue(device.active)
+        self.assertEqual(200, self.client.post("/api/v1/accounts/push-devices/", {
+            "token": "firebase-device-token", "app_version": "1.1", "locale": "en"
+        }, format="json").status_code)
+        device.refresh_from_db()
+        self.assertEqual("1.1", device.app_version)
+        self.assertEqual(204, self.client.delete("/api/v1/accounts/push-devices/",
+            {"token": "firebase-device-token"}, format="json").status_code)
+        device.refresh_from_db()
+        self.assertFalse(device.active)

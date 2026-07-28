@@ -1,0 +1,22 @@
+[Unit]
+Description=BaziKhooneh Firebase push delivery worker
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+Requires=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=bazikhooneh
+Group=bazikhooneh
+WorkingDirectory=/root/bazikhooneh/backend
+EnvironmentFile=/root/bazikhooneh/.env
+ExecStart=/root/bazikhooneh/venv/bin/python manage.py run_push_worker
+Restart=always
+RestartSec=3
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

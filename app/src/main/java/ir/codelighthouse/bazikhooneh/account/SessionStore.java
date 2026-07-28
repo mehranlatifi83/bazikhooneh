@@ -32,6 +32,7 @@ public final class SessionStore {
         preferences.putString("access_expires_at", String.valueOf(session.accessExpiresAt));
         preferences.putString("username", session.username);
         preferences.putString("display_name", session.displayName);
+        PushDeviceRegistrar.register(context);
     }
 
     public void updateDisplayName(String displayName) {
@@ -40,6 +41,7 @@ public final class SessionStore {
     public void updateUsername(String username) { preferences.putString("username", username); }
 
     public void clear() {
+        PushDeviceRegistrar.unregister(context);
         preferences.clear();
         SecurePreferences.open(context, "online_session").clear();
         SecurePreferences.open(context, "ludo_online").clear();

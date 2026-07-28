@@ -3,7 +3,7 @@ from django.urls import path
 from .views import (EmailVerificationConfirmView, EmailVerificationRequestView, FriendRequestView,
     FriendsView, InvitesView, LoginView, LogoutView, PasswordChangeView, PasswordResetConfirmView,
     PasswordResetRequestView, ProfileView, RegisterView, SessionsView, UsernameChangeView,
-    UserSearchView, NotificationsView, BlocksView, ReportsView, RefreshSessionView,
+    UserSearchView, NotificationsView, PushDevicesView, BlocksView, ReportsView, RefreshSessionView,
     SessionDetailView, UpgradeSessionView)
 
 
@@ -28,6 +28,7 @@ urlpatterns = [
     path("users/search/", UserSearchView.as_view(), name="user-search"),
     path("invites/", InvitesView.as_view(), name="invites"),
     path("notifications/", NotificationsView.as_view(), name="notifications"),
+    path("push-devices/", PushDevicesView.as_view(), name="push-devices"),
     path("blocks/", BlocksView.as_view(), name="blocks"),
     path("reports/", ReportsView.as_view(), name="reports"),
 ]

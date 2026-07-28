@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import AccountNotification, AccountToken, Friendship, hash_token
+from accounts.push import enqueue_notifications
 from .ludo_engine import initial_state
 from .models import (
     CommunityCall, CommunityCallParticipant, CommunityEvent, CommunityGameSession,
@@ -140,10 +141,11 @@ def ice_server_payload(account):
 def notify_room_members(room, actor, kind, title, body, data):
     recipients = room.memberships.filter(status="active").exclude(
         account=actor).values_list("account_id", flat=True)
-    AccountNotification.objects.bulk_create([
+    notifications = AccountNotification.objects.bulk_create([
         AccountNotification(account_id=account_id, kind=kind, title=title,
                             body=body, data=data) for account_id in recipients
     ])
+    transaction.on_commit(lambda: enqueue_notifications(notifications))
 
 
 def create_message_notifications(room, sender, text, reply, message):
@@ -153,13 +155,14 @@ def create_message_notifications(room, sender, text, reply, message):
         account=sender).values_list("account_id", flat=True))
     if reply and reply.sender_id != sender.id:
         recipients.add(reply.sender_id)
-    AccountNotification.objects.bulk_create([
+    notifications = AccountNotification.objects.bulk_create([
         AccountNotification(account_id=account_id, kind="room_message",
             title="New room message",
             body=f"{sender.display_name} mentioned or replied to you in {room.title}",
             data={"room_code": room.code, "message_id": message.id})
         for account_id in recipients
     ])
+    transaction.on_commit(lambda: enqueue_notifications(notifications))
 
 
 class CommunityRoomsView(APIView):

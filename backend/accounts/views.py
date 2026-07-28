@@ -9,7 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import (Account, AccountNotification, AccountSession, AccountToken, Friendship, GameInvite,
-                     OneTimeToken, SecurityEvent, UserBlock, UserReport, UsernameReservation, hash_token)
+                     OneTimeToken, PushDevice, SecurityEvent, UserBlock, UserReport,
+                     UsernameReservation, hash_token)
 from .serializers import (LoginSerializer, PasswordChangeSerializer, ProfileUpdateSerializer,
                           RegisterSerializer, UsernameChangeSerializer)
 
@@ -457,6 +458,33 @@ class NotificationsView(APIView):
         return Response({"unread":request.user.notifications.filter(read_at__isnull=True).count(),"results":[{"id":n.id,"kind":n.kind,"title":n.title,"body":n.body,"data":n.data,"read":n.read_at is not None,"created_at":n.created_at.isoformat()} for n in values]})
     def post(self,request):
         request.user.notifications.filter(read_at__isnull=True).update(read_at=timezone.now());return Response(status=204)
+
+
+class PushDevicesView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "social"
+
+    def post(self, request):
+        token = str(request.data.get("token", "")).strip()
+        if not token or len(token) > 512:
+            return Response({"error": "invalid_push_token"}, status=400)
+        defaults = {
+            "account": request.user,
+            "platform": "android",
+            "app_version": str(request.data.get("app_version", ""))[:32],
+            "locale": str(request.data.get("locale", ""))[:16],
+            "active": True,
+        }
+        device, created = PushDevice.objects.update_or_create(token=token, defaults=defaults)
+        return Response({"id": device.id}, status=201 if created else 200)
+
+    def delete(self, request):
+        token = str(request.data.get("token", "")).strip()
+        if token:
+            PushDevice.objects.filter(account=request.user, token=token).update(active=False)
+        else:
+            PushDevice.objects.filter(account=request.user).update(active=False)
+        return Response(status=204)
 
 
 class BlocksView(APIView):

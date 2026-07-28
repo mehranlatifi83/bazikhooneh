@@ -211,6 +211,38 @@ class AccountNotification(models.Model):
         ordering = ("-created_at",)
 
 
+class PushDevice(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="push_devices")
+    token = models.CharField(max_length=512, unique=True)
+    platform = models.CharField(max_length=16, default="android")
+    app_version = models.CharField(max_length=32, blank=True)
+    locale = models.CharField(max_length=16, blank=True)
+    active = models.BooleanField(default=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=("account", "active"))]
+
+
+class PushDelivery(models.Model):
+    notification = models.ForeignKey(AccountNotification, on_delete=models.CASCADE,
+                                     related_name="push_deliveries")
+    device = models.ForeignKey(PushDevice, on_delete=models.CASCADE,
+                               related_name="deliveries")
+    status = models.CharField(max_length=16, default="pending")
+    attempts = models.PositiveSmallIntegerField(default=0)
+    available_at = models.DateTimeField(default=timezone.now)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=300, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=("notification", "device"), name="unique_push_delivery")]
+        indexes = [models.Index(fields=("status", "available_at"))]
+
+
 class SecurityEvent(models.Model):
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="security_events")
     event = models.CharField(max_length=40)
