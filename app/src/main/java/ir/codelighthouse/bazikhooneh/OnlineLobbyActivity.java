@@ -9,6 +9,7 @@ import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
+import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
 public final class OnlineLobbyActivity extends NavigableActivity {
     private EditText codeInput;
@@ -53,9 +54,10 @@ public final class OnlineLobbyActivity extends NavigableActivity {
     private final OnlineGameClient.Listener listener = new OnlineGameClient.Listener() {
         @Override public void onSession(OnlineSession session) {
             runOnUiThread(() -> {
-                getSharedPreferences("online_session", MODE_PRIVATE).edit()
-                        .putString("room", session.game.roomCode).putString("symbol", session.symbol)
-                        .putString("token", session.token).apply();
+                SecurePreferences secure = SecurePreferences.open(OnlineLobbyActivity.this, "online_session");
+                secure.putString("room", session.game.roomCode);
+                secure.putString("symbol", session.symbol);
+                secure.putString("token", session.token);
                 openingGame = true;
                 startActivity(new Intent(OnlineLobbyActivity.this, MainActivity.class)
                         .putExtra(MainActivity.EXTRA_MODE, "online"));

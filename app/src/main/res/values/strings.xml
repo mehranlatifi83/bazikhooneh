@@ -1,4 +1,11 @@
 <resources>
+    <string name="unknown_device">Unknown device</string>
+    <string name="revoke_session">Sign out device</string>
+    <string name="revoke_session_confirmation">Sign out %1$s?</string>
+    <string name="revoke_device_session">Sign out %1$s</string>
+    <string name="session_revoked">The selected device has been signed out.</string>
+    <string name="current_session_device_item">Current device: %1$s\nApp version: %2$s\nSigned in: %3$s\nLast active: %4$s</string>
+    <string name="other_session_device_item">Device: %1$s\nApp version: %2$s\nSigned in: %3$s\nLast active: %4$s</string>
     <string name="choose_language_title">Choose your language</string>
     <string name="choose_language_description">You can change the app language later in Settings.</string>
     <string name="language_title">App language</string>

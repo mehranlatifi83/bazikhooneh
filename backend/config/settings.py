@@ -122,6 +122,10 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
 ONLINE_RECONNECT_GRACE_SECONDS = int(os.getenv("ONLINE_RECONNECT_GRACE_SECONDS", "60"))
+TRUSTED_PROXY_IPS = tuple(
+    value.strip() for value in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1").split(",")
+    if value.strip()
+)
 
 # Firebase Admin is initialized lazily by notification services. Keeping the
 # credential path in the environment avoids embedding private keys in code.

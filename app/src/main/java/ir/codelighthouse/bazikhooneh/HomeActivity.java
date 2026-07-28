@@ -8,12 +8,13 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.content.Context;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.account.AccountClient;
+import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.NotificationSync;
 import ir.codelighthouse.bazikhooneh.catalog.GameCatalog;
 import ir.codelighthouse.bazikhooneh.catalog.GameDefinition;
 
 public final class HomeActivity extends Activity {
-    private static final String ACCOUNT_PREFS = "account_session";
     private static final String APP_PREFS = "app_state";
     @Override protected void attachBaseContext(Context base) { super.attachBaseContext(AppDisplay.wrap(base)); }
 
@@ -70,15 +71,48 @@ public final class HomeActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
-        String displayName = getSharedPreferences(ACCOUNT_PREFS, MODE_PRIVATE)
-                .getString("display_name", "");
+        String displayName = new SessionStore(this).displayName();
         TextView welcome = findViewById(R.id.home_welcome);
         welcome.setText(displayName.isEmpty() ? getString(R.string.home_guest)
                 : getString(R.string.home_welcome, displayName));
         ((Button) findViewById(R.id.open_profile)).setText(
                 new SessionStore(this).isSignedIn() ? R.string.profile_title : R.string.account_login);
-        NotificationSync.refresh(this);
-        NotificationJobService.schedule(this);
+        refreshSessionIfNeeded();
+    }
+
+    private void refreshSessionIfNeeded() {
+        SessionStore store = new SessionStore(this);
+        if (store.isSignedIn() && store.refreshToken().isEmpty()) {
+            refreshOrUpgrade(store, true);
+            return;
+        }
+        if (!store.needsRefresh()) {
+            NotificationSync.refresh(this);
+            NotificationJobService.schedule(this);
+            return;
+        }
+        refreshOrUpgrade(store, false);
+    }
+
+    private void refreshOrUpgrade(SessionStore store, boolean upgrade) {
+        AccountClient client = new AccountClient(BuildConfig.API_BASE_URL, new AccountClient.Listener() {
+            @Override public void onSession(AccountSession session) {
+                store.save(session);
+                runOnUiThread(() -> {
+                    NotificationSync.refresh(HomeActivity.this);
+                    NotificationJobService.schedule(HomeActivity.this);
+                });
+            }
+            @Override public void onLoggedOut() {}
+            @Override public void onError(String error) {
+                if ("invalid_refresh_token".equals(error)
+                        || "refresh_token_reused".equals(error)
+                        || "expired_refresh_token".equals(error)) {
+                    store.clear();
+                }
+            }
+        });
+        if (upgrade) client.upgrade(store.token()); else client.refresh(store.refreshToken());
     }
 
     private void renderGames() {

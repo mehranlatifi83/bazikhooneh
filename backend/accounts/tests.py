@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 from rest_framework.test import APITestCase
 from django.core import mail
 from django.contrib.auth.models import User
+from django.utils import timezone
 
-from .models import Account, AccountToken
+from .models import Account, AccountToken, SecurityEvent
 from games.models import Match, Player, Room
 
 
@@ -42,6 +45,59 @@ class AccountApiTests(APITestCase):
             "username": "MEHRAN_83", "password": "a-secure-password"
         }, format="json")
         self.assertEqual(200, correct.status_code)
+
+    def test_authentication_throttles_last_used_database_writes(self):
+        self.authenticated()
+        token = AccountToken.objects.get()
+        recent = timezone.now() - timedelta(minutes=1)
+        AccountToken.objects.filter(pk=token.pk).update(last_used_at=recent)
+        self.client.get("/api/v1/accounts/me/")
+        token.refresh_from_db()
+        self.assertEqual(recent, token.last_used_at)
+
+        stale = timezone.now() - timedelta(minutes=16)
+        AccountToken.objects.filter(pk=token.pk).update(last_used_at=stale)
+        self.client.get("/api/v1/accounts/me/")
+        token.refresh_from_db()
+        self.assertGreater(token.last_used_at, stale)
+
+    def test_untrusted_forwarded_ip_is_not_logged(self):
+        self.client.post(
+            "/api/v1/accounts/login/",
+            {"username": "missing_user", "password": "wrong-password"},
+            format="json",
+            REMOTE_ADDR="203.0.113.10",
+            HTTP_X_FORWARDED_FOR="198.51.100.20",
+        )
+        self.assertEqual("203.0.113.10", str(SecurityEvent.objects.latest("created_at").ip_address))
+
+    def test_refresh_token_rotates_and_reuse_revokes_family(self):
+        registered = self.client.post(
+            "/api/v1/accounts/register/",
+            {**self.registration, "device_name": "Test phone", "app_version": "1.0"},
+            format="json",
+        )
+        first_refresh = registered.data["refresh_token"]
+        rotated = self.client.post(
+            "/api/v1/accounts/refresh/",
+            {"refresh_token": first_refresh, "app_version": "1.1"},
+            format="json",
+        )
+        self.assertEqual(200, rotated.status_code)
+        self.assertNotEqual(first_refresh, rotated.data["refresh_token"])
+
+        reuse = self.client.post(
+            "/api/v1/accounts/refresh/",
+            {"refresh_token": first_refresh},
+            format="json",
+        )
+        self.assertEqual(401, reuse.status_code)
+        rejected_family = self.client.post(
+            "/api/v1/accounts/refresh/",
+            {"refresh_token": rotated.data["refresh_token"]},
+            format="json",
+        )
+        self.assertEqual(401, rejected_family.status_code)
 
     def test_duplicate_username_is_rejected_case_insensitively(self):
         self.client.post("/api/v1/accounts/register/", self.registration, format="json")

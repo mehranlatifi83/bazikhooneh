@@ -1,8 +1,9 @@
 package ir.codelighthouse.bazikhooneh.online;
+import ir.codelighthouse.bazikhooneh.BuildConfig;import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
 import java.io.IOException;import okhttp3.*;import org.json.*;
 public final class LudoOnlineClient{
  public interface Listener{void onSession(JSONObject session);void onState(JSONObject state);void onError(String error);void onDisconnected();}
- private static final MediaType JSON=MediaType.get("application/json; charset=utf-8");private final OkHttpClient http=new OkHttpClient.Builder().connectTimeout(20,java.util.concurrent.TimeUnit.SECONDS).readTimeout(45,java.util.concurrent.TimeUnit.SECONDS).writeTimeout(30,java.util.concurrent.TimeUnit.SECONDS).retryOnConnectionFailure(true).build();private final String base;private final String accountToken;private final Listener listener;private WebSocket socket;private boolean closing;
+ private static final MediaType JSON=MediaType.get("application/json; charset=utf-8");private final OkHttpClient http=new OkHttpClient.Builder().connectTimeout(20,java.util.concurrent.TimeUnit.SECONDS).readTimeout(45,java.util.concurrent.TimeUnit.SECONDS).writeTimeout(30,java.util.concurrent.TimeUnit.SECONDS).retryOnConnectionFailure(true).authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();private final String base;private final String accountToken;private final Listener listener;private WebSocket socket;private boolean closing;
  public LudoOnlineClient(String base,String accountToken,Listener listener){this.base=base.endsWith("/")?base.substring(0,base.length()-1):base;this.accountToken=accountToken;this.listener=listener;}
  public void create(boolean thirdSixPenalty){try{post("/api/v1/ludo/rooms/",new JSONObject().put("third_six_penalty",thirdSixPenalty));}catch(JSONException ignored){}}public void join(String code){try{post("/api/v1/ludo/rooms/join/",new JSONObject().put("code",code));}catch(JSONException ignored){}}
  public void start(String code){post("/api/v1/ludo/rooms/"+code+"/start/",new JSONObject());}

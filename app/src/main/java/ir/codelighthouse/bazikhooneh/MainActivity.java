@@ -33,6 +33,7 @@ import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
+import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
 public final class MainActivity extends NavigableActivity {
     public static final String EXTRA_MODE = "game_mode";
@@ -544,11 +545,10 @@ public final class MainActivity extends NavigableActivity {
                 onlineSymbol = session.symbol;
                 reconnectAllowed = true;
                 onlineState = session.game;
-                getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit()
-                        .putString(PREF_ROOM, session.game.roomCode)
-                        .putString(PREF_SYMBOL, session.symbol)
-                        .putString(PREF_TOKEN, session.token)
-                        .apply();
+                SecurePreferences secure = SecurePreferences.open(MainActivity.this, ONLINE_PREFS);
+                secure.putString(PREF_ROOM, session.game.roomCode);
+                secure.putString(PREF_SYMBOL, session.symbol);
+                secure.putString(PREF_TOKEN, session.token);
                 roomCodeInput.setText(session.game.roomCode);
                 String message = "waiting".equals(session.game.roomState)
                         ? getString(R.string.room_created, session.game.roomCode)
@@ -632,9 +632,10 @@ public final class MainActivity extends NavigableActivity {
     private void startOnlineCountdown(){onlineStartAt=android.os.SystemClock.elapsedRealtime()+3000;renderOnline(false);Runnable tick=new Runnable(){public void run(){if(android.os.SystemClock.elapsedRealtime()<onlineStartAt){statusText.setText(onlineStatusMessage());handler.postDelayed(this,1000);}else{renderOnline(false);announce(getString(R.string.online_game_started));}}};handler.post(tick);}
 
     private void restoreOnlineSession() {
-        String room = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_ROOM, "");
-        String symbol = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_SYMBOL, "");
-        String token = getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).getString(PREF_TOKEN, "");
+        SecurePreferences secure = SecurePreferences.open(this, ONLINE_PREFS);
+        String room = secure.getString(PREF_ROOM, "");
+        String symbol = secure.getString(PREF_SYMBOL, "");
+        String token = secure.getString(PREF_TOKEN, "");
         if (room.isEmpty() || symbol.isEmpty() || token.isEmpty()) return;
         reconnectAllowed = true;
         onlineSymbol = symbol;
@@ -676,7 +677,7 @@ public final class MainActivity extends NavigableActivity {
     private void finishLocalLeave() {
         leavingRoom = false;
         onlineClient.disconnect();
-        getSharedPreferences(ONLINE_PREFS, MODE_PRIVATE).edit().clear().apply();
+        SecurePreferences.open(this, ONLINE_PREFS).clear();
         onlineState = null;
         onlineSymbol = null;
         selectedSource = -1;

@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import (Account, AccountNotification, AccountToken, Friendship, GameInvite,
+from .models import (Account, AccountNotification, AccountSession, AccountToken, Friendship, GameInvite,
                      OneTimeToken, SecurityEvent, UserBlock, UserReport, UsernameReservation, hash_token)
 from .serializers import (LoginSerializer, PasswordChangeSerializer, ProfileUpdateSerializer,
                           RegisterSerializer, UsernameChangeSerializer)
@@ -49,13 +49,44 @@ def profile_payload(account):
     }
 
 
-def session_payload(account, token):
-    return {"access_token": token, "token_type": "Bearer", "account": profile_payload(account)}
+def client_ip(request):
+    remote = request.META.get("REMOTE_ADDR", "")
+    trusted = set(getattr(settings, "TRUSTED_PROXY_IPS", ()))
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+    return forwarded if remote in trusted and forwarded else remote or None
+
+
+def issue_session(request, account):
+    # Compatibility window for already-installed clients that predate refresh
+    # tokens. New clients always send app_version and receive the secure pair.
+    if not str(request.data.get("app_version", "")).strip():
+        return {
+            "access_token": AccountToken.issue(
+                account, lifetime=timedelta(days=30)),
+            "token_type": "Bearer",
+            "account": profile_payload(account),
+            "legacy_session": True,
+        }
+    session, access, refresh = AccountSession.issue(
+        account,
+        device_name=request.data.get("device_name", ""),
+        app_version=request.data.get("app_version", ""),
+        ip_address=client_ip(request),
+    )
+    return {
+        "access_token": access,
+        "refresh_token": refresh,
+        "token_type": "Bearer",
+        "access_expires_in": 3600,
+        "refresh_expires_in": 2592000,
+        "session_id": str(session.id),
+        "account": profile_payload(account),
+    }
 
 
 def log_security(request, event, account=None, **metadata):
-    forwarded=request.META.get("HTTP_X_FORWARDED_FOR","").split(",")[0].strip()
-    SecurityEvent.objects.create(account=account,event=event,ip_address=forwarded or request.META.get("REMOTE_ADDR") or None,metadata=metadata)
+    SecurityEvent.objects.create(
+        account=account, event=event, ip_address=client_ip(request), metadata=metadata)
 
 
 class RegisterView(APIView):
@@ -77,7 +108,7 @@ class RegisterView(APIView):
             account.save()
         except IntegrityError:
             return Response({"error": "username_taken"}, status=status.HTTP_409_CONFLICT)
-        return Response(session_payload(account, AccountToken.issue(account)), status=status.HTTP_201_CREATED)
+        return Response(issue_session(request, account), status=status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
@@ -116,7 +147,63 @@ class LoginView(APIView):
             account.password_hash = django_user.password
             account.save(update_fields=("password_hash", "updated_at"))
         log_security(request,"login_succeeded",account=account)
-        return Response(session_payload(account, AccountToken.issue(account)))
+        return Response(issue_session(request, account))
+
+
+class RefreshSessionView(APIView):
+    throttle_scope = "login"
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def post(self, request):
+        raw = str(request.data.get("refresh_token", ""))
+        session = AccountSession.objects.select_for_update().select_related("account").filter(
+            refresh_token_hash=hash_token(raw)
+        ).first()
+        if not session:
+            return Response({"error": "invalid_refresh_token"}, status=401)
+        now = timezone.now()
+        if session.revoked_at or session.replaced_by_id:
+            session.revoke_family()
+            log_security(request, "refresh_token_reuse", account=session.account,
+                         session_id=str(session.id))
+            return Response({"error": "refresh_token_reused"}, status=401)
+        if session.expires_at <= now or not session.account.is_active:
+            session.revoke_family()
+            return Response({"error": "expired_refresh_token"}, status=401)
+        new_session, access, refresh = AccountSession.issue(
+            session.account,
+            device_name=session.device_name,
+            app_version=request.data.get("app_version", session.app_version),
+            ip_address=client_ip(request),
+            family_id=session.family_id,
+        )
+        session.revoked_at = now
+        session.replaced_by = new_session
+        session.last_used_at = now
+        session.save(update_fields=("revoked_at", "replaced_by", "last_used_at"))
+        AccountToken.objects.filter(session=session).delete()
+        return Response({
+            "access_token": access,
+            "refresh_token": refresh,
+            "token_type": "Bearer",
+            "access_expires_in": 3600,
+            "refresh_expires_in": 2592000,
+            "session_id": str(new_session.id),
+            "account": profile_payload(session.account),
+        })
+
+
+class UpgradeSessionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        payload = issue_session(request, request.user)
+        old_token_id = request.auth.id
+        AccountToken.objects.filter(id=old_token_id).delete()
+        return Response(payload)
 
 
 class ProfileView(APIView):
@@ -146,6 +233,7 @@ class ProfileView(APIView):
         request.user.email_verified = False
         request.user.save()
         AccountToken.objects.filter(account=request.user).delete()
+        AccountSession.objects.filter(account=request.user).delete()
         log_security(request,"account_deleted",account=request.user)
         return Response(status=204)
 
@@ -154,7 +242,13 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        request.auth.delete()
+        if request.auth.session_id:
+            session = request.auth.session
+            session.revoked_at = timezone.now()
+            session.save(update_fields=("revoked_at",))
+            AccountToken.objects.filter(session=session).delete()
+        else:
+            request.auth.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -194,7 +288,13 @@ class PasswordChangeView(APIView):
         if not request.user.check_password(serializer.validated_data["current_password"]):
             return Response({"error": "invalid_password"}, status=400)
         request.user.set_password(serializer.validated_data["new_password"]); request.user.save()
-        AccountToken.objects.filter(account=request.user).exclude(id=request.auth.id).delete()
+        if request.auth.session_id:
+            AccountSession.objects.filter(account=request.user).exclude(
+                id=request.auth.session_id).update(revoked_at=timezone.now())
+            AccountToken.objects.filter(account=request.user).exclude(
+                session_id=request.auth.session_id).delete()
+        else:
+            AccountToken.objects.filter(account=request.user).exclude(id=request.auth.id).delete()
         log_security(request,"password_changed",account=request.user)
         return Response(status=204)
 
@@ -256,7 +356,7 @@ class PasswordResetConfirmView(APIView):
         token=OneTimeToken.objects.filter(token_hash=hash_token(str(request.data.get("code", ""))),
             purpose=OneTimeToken.PURPOSE_PASSWORD,used_at__isnull=True,expires_at__gt=timezone.now()).first()
         if not token: return Response({"error":"invalid_or_expired_code"},status=400)
-        token.account.set_password(password); token.account.save(); AccountToken.objects.filter(account=token.account).delete()
+        token.account.set_password(password); token.account.save(); AccountToken.objects.filter(account=token.account).delete(); AccountSession.objects.filter(account=token.account).update(revoked_at=timezone.now())
         token.used_at=timezone.now(); token.save(update_fields=("used_at",)); return Response(status=204)
 
 
@@ -268,10 +368,33 @@ def account_summary(account):
 class SessionsView(APIView):
     permission_classes=[IsAuthenticated]
     def get(self,request):
-        return Response({"results":[{"id":str(t.id),"current":t.id==request.auth.id,
-            "created_at":t.created_at.isoformat(),"last_used_at":t.last_used_at.isoformat()} for t in AccountToken.objects.filter(account=request.user)]})
+        current_session_id = request.auth.session_id
+        sessions = AccountSession.objects.filter(
+            account=request.user, revoked_at__isnull=True, expires_at__gt=timezone.now())
+        return Response({"results":[{"id":str(item.id),"current":item.id==current_session_id,
+            "device_name":item.device_name,"app_version":item.app_version,
+            "created_at":item.created_at.isoformat(),"last_used_at":item.last_used_at.isoformat()}
+            for item in sessions]})
     def delete(self,request):
-        AccountToken.objects.filter(account=request.user).exclude(id=request.auth.id).delete(); return Response(status=204)
+        current_session_id = request.auth.session_id
+        AccountSession.objects.filter(account=request.user).exclude(
+            id=current_session_id).update(revoked_at=timezone.now())
+        AccountToken.objects.filter(account=request.user).exclude(
+            session_id=current_session_id).delete()
+        return Response(status=204)
+
+
+class SessionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, session_id):
+        session = AccountSession.objects.filter(
+            id=session_id, account=request.user, revoked_at__isnull=True).first()
+        if not session:
+            return Response({"error": "session_not_found"}, status=404)
+        session.revoked_at = timezone.now()
+        session.save(update_fields=("revoked_at",))
+        AccountToken.objects.filter(session=session).delete()
+        return Response(status=204)
 
 
 class FriendsView(APIView):

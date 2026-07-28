@@ -1,5 +1,7 @@
 package ir.codelighthouse.bazikhooneh.community;
 
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
 import java.util.concurrent.TimeUnit;
 import okhttp3.*;
 import org.json.JSONObject;
@@ -18,7 +20,8 @@ public final class CommunityClient {
     private final OkHttpClient http = new OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS).readTimeout(45, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS).pingInterval(20, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true).build();
+            .retryOnConnectionFailure(true)
+            .authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();
     private volatile WebSocket socket;
 
     public CommunityClient(String baseUrl, String token) {

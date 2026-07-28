@@ -1,5 +1,6 @@
 package ir.codelighthouse.bazikhooneh.account;
 
+import ir.codelighthouse.bazikhooneh.BuildConfig;
 import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -16,7 +17,7 @@ public final class AccountManagementClient {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final OkHttpClient http = new OkHttpClient.Builder().connectTimeout(20,java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(45,java.util.concurrent.TimeUnit.SECONDS).writeTimeout(30,java.util.concurrent.TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true).build();
+            .retryOnConnectionFailure(true).authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();
     private final String baseUrl, token;
     private final Listener listener;
 

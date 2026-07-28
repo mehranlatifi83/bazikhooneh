@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
+import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
 public final class CommunityRoomActivity extends NavigableActivity implements CommunityClient.Events {
     private CommunityClient client;
@@ -178,12 +179,16 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         if(error!=null){startingGame=false;show(error);return;} JSONObject player=data.optJSONObject("player");
         if("ludo".equals(key))openLudo(player);else openTic(player);}));}
     private void openTic(JSONObject player){if(player==null)return;JSONObject game=player.optJSONObject("game");
-        getSharedPreferences("online_session",MODE_PRIVATE).edit().putString("room",game.optString("room_code"))
-                .putString("symbol",player.optString("symbol")).putString("token",player.optString("reconnect_token")).apply();
+        SecurePreferences secure=SecurePreferences.open(this,"online_session");
+        secure.putString("room",game.optString("room_code"));
+        secure.putString("symbol",player.optString("symbol"));
+        secure.putString("token",player.optString("reconnect_token"));
         startActivity(new Intent(this,MainActivity.class).putExtra(MainActivity.EXTRA_MODE,"online"));}
     private void openLudo(JSONObject player){if(player==null)return;
-        getSharedPreferences("ludo_online",MODE_PRIVATE).edit().putString("room",player.optString("room_code"))
-                .putInt("color",player.optInt("color")).putString("token",player.optString("reconnect_token")).apply();
+        SecurePreferences secure=SecurePreferences.open(this,"ludo_online");
+        secure.putString("room",player.optString("room_code"));
+        secure.putInt("color",player.optInt("color"));
+        secure.putString("token",player.optString("reconnect_token"));
         startActivity(new Intent(this,LudoOnlineActivity.class));}
     private void joinSelectedGame(JSONObject event){if(startingGame){startingGame=false;return;}String name=getString("ludo".equals(event.optString("game_key"))?R.string.ludo_title:R.string.tic_tac_toe_title);
         new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.room_game_started,name))

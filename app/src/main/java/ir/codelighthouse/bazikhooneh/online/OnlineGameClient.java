@@ -1,5 +1,7 @@
 package ir.codelighthouse.bazikhooneh.online;
 
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -29,7 +31,8 @@ public final class OnlineGameClient {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final OkHttpClient http = new OkHttpClient.Builder().connectTimeout(20,java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(45,java.util.concurrent.TimeUnit.SECONDS).writeTimeout(30,java.util.concurrent.TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true).build();
+            .retryOnConnectionFailure(true)
+            .authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL)).build();
     private final String baseUrl;
     private final Listener listener;
     private WebSocket socket;

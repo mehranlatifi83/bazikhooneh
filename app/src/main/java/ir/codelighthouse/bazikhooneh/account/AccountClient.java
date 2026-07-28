@@ -11,6 +11,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.json.JSONException;
 import org.json.JSONObject;
+import android.os.Build;
+import ir.codelighthouse.bazikhooneh.BuildConfig;
 
 public final class AccountClient {
     public interface Listener {
@@ -35,6 +37,7 @@ public final class AccountClient {
         try {
             JSONObject body = new JSONObject().put("username", username)
                     .put("display_name", displayName).put("password", password);
+            addDevice(body);
             sessionRequest("/api/v1/accounts/register/", body);
         } catch (JSONException error) {
             listener.onError("invalid_request");
@@ -44,10 +47,36 @@ public final class AccountClient {
     public void login(String username, String password) {
         try {
             JSONObject body = new JSONObject().put("username", username).put("password", password);
+            addDevice(body);
             sessionRequest("/api/v1/accounts/login/", body);
         } catch (JSONException error) {
             listener.onError("invalid_request");
         }
+    }
+
+    public void refresh(String refreshToken) {
+        try {
+            JSONObject body = new JSONObject().put("refresh_token", refreshToken);
+            addDevice(body);
+            sessionRequest("/api/v1/accounts/refresh/", body);
+        } catch (JSONException error) {
+            listener.onError("invalid_request");
+        }
+    }
+
+    public void upgrade(String accessToken) {
+        try {
+            JSONObject body = new JSONObject();
+            addDevice(body);
+            sessionRequest("/api/v1/accounts/session/upgrade/", body, accessToken);
+        } catch (JSONException error) {
+            listener.onError("invalid_request");
+        }
+    }
+
+    private static void addDevice(JSONObject body) throws JSONException {
+        body.put("device_name", (Build.MANUFACTURER + " " + Build.MODEL).trim());
+        body.put("app_version", BuildConfig.VERSION_NAME);
     }
 
     public void logout(String token) {
@@ -64,8 +93,14 @@ public final class AccountClient {
     }
 
     private void sessionRequest(String path, JSONObject body) {
-        Request request = new Request.Builder().url(baseUrl + path)
-                .post(RequestBody.create(body.toString(), JSON)).build();
+        sessionRequest(path, body, "");
+    }
+
+    private void sessionRequest(String path, JSONObject body, String accessToken) {
+        Request.Builder builder = new Request.Builder().url(baseUrl + path)
+                .post(RequestBody.create(body.toString(), JSON));
+        if (!accessToken.isEmpty()) builder.header("Authorization", "Bearer " + accessToken);
+        Request request = builder.build();
         http.newCall(request).enqueue(new Callback() {
             @Override public void onFailure(Call call, IOException error) {
                 listener.onError("connection_failed");

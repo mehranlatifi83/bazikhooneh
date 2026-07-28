@@ -1,4 +1,11 @@
 <resources>
+    <string name="unknown_device">دستگاه ناشناس</string>
+    <string name="revoke_session">خروج دستگاه</string>
+    <string name="revoke_session_confirmation">دستگاه %1$s از حساب خارج شود؟</string>
+    <string name="revoke_device_session">خروج دستگاه %1$s</string>
+    <string name="session_revoked">دستگاه انتخاب‌شده از حساب خارج شد.</string>
+    <string name="current_session_device_item">دستگاه فعلی: %1$s\nنسخهٔ برنامه: %2$s\nزمان ورود: %3$s\nآخرین فعالیت: %4$s</string>
+    <string name="other_session_device_item">دستگاه: %1$s\nنسخهٔ برنامه: %2$s\nزمان ورود: %3$s\nآخرین فعالیت: %4$s</string>
     <string name="choose_language_title">زبان برنامه را انتخاب کنید</string>
     <string name="choose_language_description">بعداً هم می‌توانید زبان برنامه را از تنظیمات تغییر دهید.</string>
     <string name="language_title">زبان برنامه</string>

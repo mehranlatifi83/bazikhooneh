@@ -46,17 +46,63 @@ class AccountToken(models.Model):
     token_hash = models.CharField(max_length=64, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
-    last_used_at = models.DateTimeField(auto_now=True)
+    last_used_at = models.DateTimeField(default=timezone.now)
+    session = models.ForeignKey(
+        "AccountSession", related_name="access_tokens", on_delete=models.CASCADE,
+        null=True, blank=True)
 
     @classmethod
-    def issue(cls, account: Account):
+    def issue(cls, account: Account, session=None, lifetime=timedelta(hours=1)):
         raw = secrets.token_urlsafe(40)
         cls.objects.create(
             account=account,
             token_hash=hash_token(raw),
-            expires_at=timezone.now() + timedelta(days=30),
+            session=session,
+            expires_at=timezone.now() + lifetime,
         )
         return raw
+
+
+class AccountSession(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    family_id = models.UUIDField(default=uuid.uuid4, db_index=True, editable=False)
+    account = models.ForeignKey(Account, related_name="sessions", on_delete=models.CASCADE)
+    refresh_token_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    device_name = models.CharField(max_length=120, blank=True)
+    app_version = models.CharField(max_length=40, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    replaced_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="replaces")
+
+    @classmethod
+    def issue(cls, account, device_name="", app_version="", ip_address=None,
+              family_id=None):
+        raw = secrets.token_urlsafe(48)
+        session = cls.objects.create(
+            account=account,
+            family_id=family_id or uuid.uuid4(),
+            refresh_token_hash=hash_token(raw),
+            device_name=str(device_name)[:120],
+            app_version=str(app_version)[:40],
+            ip_address=ip_address,
+            expires_at=timezone.now() + timedelta(days=30),
+        )
+        access = AccountToken.issue(account, session=session)
+        return session, access, raw
+
+    def revoke_family(self):
+        now = timezone.now()
+        AccountSession.objects.filter(
+            account=self.account, family_id=self.family_id, revoked_at__isnull=True
+        ).update(revoked_at=now)
+        AccountToken.objects.filter(
+            session__account=self.account, session__family_id=self.family_id
+        ).delete()
 
 
 class UsernameReservation(models.Model):
