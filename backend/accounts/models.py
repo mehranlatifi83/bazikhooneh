@@ -3,7 +3,8 @@ import secrets
 import uuid
 from datetime import timedelta
 
-from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
@@ -16,28 +17,52 @@ def invite_expiry():
     return timezone.now() + timedelta(hours=24)
 
 
-class Account(models.Model):
+class AccountManager(BaseUserManager):
+    use_in_migrations = True
+
+    def create_user(self, username, password=None, **extra_fields):
+        if not username:
+            raise ValueError("A username is required")
+        username = str(username).strip().lower()
+        email = self.normalize_email(extra_fields.pop("email", ""))
+        extra_fields.setdefault("display_name", username)
+        account = self.model(username=username, email=email, **extra_fields)
+        account.set_password(password)
+        account.save(using=self._db)
+        return account
+
+    def create_superuser(self, username, email="", password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+        if not extra_fields["is_staff"] or not extra_fields["is_superuser"]:
+            raise ValueError("A superuser must have is_staff and is_superuser enabled")
+        return self.create_user(username, password, email=email, **extra_fields)
+
+
+class Account(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Keep the existing database column so deployed password hashes survive
+    # the transition from the legacy Account implementation.
+    password = models.CharField(max_length=128, db_column="password_hash")
     username = models.CharField(max_length=30, unique=True, db_index=True)
     display_name = models.CharField(max_length=40)
     email = models.EmailField(blank=True, db_index=True)
     email_verified = models.BooleanField(default=False)
-    password_hash = models.CharField(max_length=128)
     avatar_color = models.CharField(max_length=7, default="#2E7D32")
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     username_changed_at = models.DateTimeField(null=True, blank=True)
 
-    @property
-    def is_authenticated(self):
-        return True
+    objects = AccountManager()
 
-    def set_password(self, password: str):
-        self.password_hash = make_password(password)
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email", "display_name"]
 
-    def check_password(self, password: str) -> bool:
-        return check_password(password, self.password_hash)
+    def __str__(self):
+        return self.username
 
 
 class AccountToken(models.Model):

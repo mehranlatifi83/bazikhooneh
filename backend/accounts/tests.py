@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from rest_framework.test import APITestCase
 from django.core import mail
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from .models import Account, AccountToken, SecurityEvent
@@ -21,7 +21,7 @@ class AccountApiTests(APITestCase):
         self.assertEqual(201, registered.status_code)
         self.assertEqual("mehran_83", registered.data["account"]["username"])
         account = Account.objects.get(username="mehran_83")
-        self.assertNotEqual(self.registration["password"], account.password_hash)
+        self.assertNotEqual(self.registration["password"], account.password)
 
         token = registered.data["access_token"]
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
@@ -194,11 +194,18 @@ class AccountApiTests(APITestCase):
         self.assertEqual(6, len(invited.data["room"]["code"]))
         self.assertGreaterEqual(invited.data["room"]["max_members"], 4)
 
-    def test_django_admin_credentials_create_matching_game_account(self):
-        User.objects.create_superuser("site_admin", "admin@example.com", "admin-password")
+    def test_superuser_is_the_same_game_account(self):
+        user_model = get_user_model()
+        admin = user_model.objects.create_superuser(
+            "site_admin", "admin@example.com", "admin-password",
+            display_name="Site admin")
         response=self.client.post("/api/v1/accounts/login/",{"username":"site_admin","password":"admin-password"},format="json")
         self.assertEqual(200,response.status_code)
-        self.assertTrue(Account.objects.get(username="site_admin").check_password("admin-password"))
+        self.assertEqual(admin.pk, Account.objects.get(username="site_admin").pk)
+        self.client.credentials()
+        self.assertTrue(self.client.login(
+            username="site_admin", password="admin-password"))
+        self.assertEqual(200, self.client.get("/admin/").status_code)
 
     def test_search_reject_remove_block_report_and_notifications(self):
         first,_=self.authenticated()

@@ -1,6 +1,5 @@
 from datetime import timedelta
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -122,30 +121,11 @@ class LoginView(APIView):
         try:
             account = Account.objects.get(username=serializer.validated_data["username"], is_active=True)
         except Account.DoesNotExist:
-            django_user = authenticate(
-                username=serializer.validated_data["username"],
-                password=serializer.validated_data["password"],
-            )
-            if not django_user or not django_user.is_active:
-                log_security(request,"login_failed",username=serializer.validated_data["username"])
-                return Response({"error": "invalid_credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-            account = Account.objects.create(
-                username=django_user.username.lower(),
-                display_name=django_user.get_full_name() or django_user.username,
-                email=django_user.email.lower(),
-                email_verified=bool(django_user.email),
-                password_hash=django_user.password,
-            )
+            log_security(request,"login_failed",username=serializer.validated_data["username"])
+            return Response({"error": "invalid_credentials"}, status=status.HTTP_401_UNAUTHORIZED)
         if not account.check_password(serializer.validated_data["password"]):
-            django_user = authenticate(
-                username=serializer.validated_data["username"],
-                password=serializer.validated_data["password"],
-            )
-            if not django_user or not django_user.is_active:
-                log_security(request,"login_failed",account=account)
-                return Response({"error": "invalid_credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-            account.password_hash = django_user.password
-            account.save(update_fields=("password_hash", "updated_at"))
+            log_security(request,"login_failed",account=account)
+            return Response({"error": "invalid_credentials"}, status=status.HTTP_401_UNAUTHORIZED)
         log_security(request,"login_succeeded",account=account)
         return Response(issue_session(request, account))
 
