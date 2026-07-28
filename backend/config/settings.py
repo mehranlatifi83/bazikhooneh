@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "config.middleware.RequestContextMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -75,6 +76,14 @@ DATABASES = {
 
 redis_url = os.getenv("REDIS_URL")
 if redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": redis_url,
+            "TIMEOUT": 300,
+            "KEY_PREFIX": "bazikhooneh",
+        }
+    }
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -82,6 +91,9 @@ if redis_url:
         }
     }
 else:
+    CACHES = {
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+    }
     CHANNEL_LAYERS = {
         "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
     }
@@ -95,9 +107,14 @@ AUTH_PASSWORD_VALIDATORS = [] if DEBUG else [
 AUTH_USER_MODEL = "accounts.Account"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["accounts.authentication.AccountTokenAuthentication"],
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.ScopedRateThrottle"],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "accounts.throttling.IPRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("API_ANON_RATE", "30/min"),
+        "ip": os.getenv("API_IP_RATE", "300/min"),
+        "user": os.getenv("API_USER_RATE", "600/min"),
         "login": os.getenv("API_LOGIN_RATE", "100/min" if DEBUG else "10/min"),
         "sensitive": os.getenv("API_SENSITIVE_RATE", "30/min" if DEBUG else "5/min"),
         "social": os.getenv("API_SOCIAL_RATE", "100/min" if DEBUG else "30/min"),
@@ -134,6 +151,7 @@ FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
 FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "bazikhooneh-cfcba")
 
 TURN_HOST = os.environ.get("TURN_HOST", "bazikhooneh.codelighthouse.ir")
+TURN_PORT = int(os.environ.get("TURN_PORT", "3478"))
 TURN_USERNAME = os.environ.get("TURN_USERNAME", "")
 TURN_PASSWORD = os.environ.get("TURN_PASSWORD", "")
 TURN_SHARED_SECRET = os.environ.get("TURN_SHARED_SECRET", "")
@@ -149,3 +167,20 @@ SECURE_HSTS_PRELOAD = False
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 CSRF_TRUSTED_ORIGINS = [item.strip() for item in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if item.strip()]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {"()": "config.logging.JsonFormatter"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "json"},
+    },
+    "root": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "INFO")},
+    "loggers": {
+        "django.server": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "bazikhooneh.request": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "bazikhooneh.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
+}

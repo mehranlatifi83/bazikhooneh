@@ -1,0 +1,7 @@
+[Unit]
+Description=BaziKhooneh production health monitor
+After=network-online.target bazikhooneh.service postgresql.service redis-server.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/bazikhooneh-monitor
