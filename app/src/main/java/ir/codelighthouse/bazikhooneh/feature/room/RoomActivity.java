@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.*;
 import ir.codelighthouse.bazikhooneh.*;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.call.CallKeepAliveService;
 import ir.codelighthouse.bazikhooneh.call.VoiceCallActivity;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
 import ir.codelighthouse.bazikhooneh.community.RoomSharing;
@@ -21,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class RoomActivity extends NavigableActivity implements CommunityClient.Events {
+  public static final String EXTRA_ROOM_CODE = "room_code";
   private CommunityClient client;
   private String code;
   private boolean moderator;
@@ -45,7 +47,7 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
   protected void onCreate(Bundle state) {
     super.onCreate(state);
     setContentView(R.layout.activity_community_room);
-    code = getIntent().getStringExtra("room_code");
+    code = getIntent().getStringExtra(EXTRA_ROOM_CODE);
     SessionStore store = new SessionStore(this);
     ownUsername = store.username();
     if (!store.isSignedIn() || code == null) {
@@ -58,6 +60,12 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     status = findViewById(R.id.community_room_status);
     findViewById(R.id.community_send).setOnClickListener(v -> send());
     findViewById(R.id.community_share).setOnClickListener(v -> shareRoom());
+    findViewById(R.id.community_copy)
+        .setOnClickListener(
+            v -> {
+              RoomSharing.copyCode(this, code);
+              show(getString(R.string.room_code_copied, code));
+            });
     findViewById(R.id.community_invite).setOnClickListener(v -> inviteFriend());
     findViewById(R.id.community_start_call).setOnClickListener(v -> startCall());
     findViewById(R.id.community_join_call).setOnClickListener(v -> openCall());
@@ -69,7 +77,8 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
         .setOnClickListener(
             v ->
                 startActivity(
-                    new Intent(this, RoomEventsActivity.class).putExtra("room_code", code)));
+                    new Intent(this, RoomEventsActivity.class)
+                        .putExtra(RoomActivity.EXTRA_ROOM_CODE, code)));
     findViewById(R.id.community_settings).setOnClickListener(v -> showRoomSettings());
     findViewById(R.id.community_leave).setOnClickListener(v -> confirmLeave());
     client.details(
@@ -509,7 +518,9 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
   }
 
   private void openCall() {
-    startActivity(new Intent(this, VoiceCallActivity.class).putExtra("room_code", code));
+    startActivity(
+        new Intent(this, VoiceCallActivity.class)
+            .putExtra(CallKeepAliveService.EXTRA_ROOM_CODE, code));
   }
 
   private void joinActiveGame() {
@@ -558,6 +569,9 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     JSONObject game = player.optJSONObject("game");
     SecurePreferences secure = SecurePreferences.open(this, "online_session");
     secure.putString("community_room", code);
+    secure.putString(
+        "community_title",
+        currentRoom == null ? getString(R.string.app_name) : currentRoom.optString("title"));
     secure.putString("room", game.optString("room_code"));
     secure.putString("symbol", player.optString("symbol"));
     secure.putString("token", player.optString("reconnect_token"));
@@ -570,6 +584,9 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     if (player == null) return;
     SecurePreferences secure = SecurePreferences.open(this, "ludo_online");
     secure.putString("community_room", code);
+    secure.putString(
+        "community_title",
+        currentRoom == null ? getString(R.string.app_name) : currentRoom.optString("title"));
     secure.putString("room", player.optString("room_code"));
     secure.putInt("color", player.optInt("color"));
     secure.putString("token", player.optString("reconnect_token"));

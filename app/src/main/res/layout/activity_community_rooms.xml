@@ -4,17 +4,27 @@
     android:fillViewport="true" android:background="@color/screen_background">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="vertical" android:padding="24dp">
+        <TextView android:id="@+id/community_room_browser_title"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/rooms_title" android:textSize="24sp" android:textStyle="bold"
+            android:accessibilityHeading="true" />
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="@string/community_rooms_description" android:textSize="17sp"
+            android:layout_marginTop="8dp" android:text="@string/community_rooms_description" android:textSize="17sp"
             android:textColor="@color/text_secondary" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" android:text="@string/create_room_section"
+            android:textSize="20sp" android:textStyle="bold" android:accessibilityHeading="true" />
         <EditText android:id="@+id/community_title" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_marginTop="20dp"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
             android:hint="@string/community_room_name" android:maxLength="80" />
         <Button android:id="@+id/community_create" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:minHeight="56dp"
             android:text="@string/community_create_room" android:textAllCaps="false" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" android:text="@string/join_room_section"
+            android:textSize="20sp" android:textStyle="bold" android:accessibilityHeading="true" />
         <EditText android:id="@+id/community_code" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_marginTop="20dp"
+            android:layout_height="wrap_content" android:layout_marginTop="8dp"
             android:hint="@string/room_code_hint" android:maxLength="6"
             android:inputType="textCapCharacters" />
         <Button android:id="@+id/community_join" android:layout_width="match_parent"
@@ -22,7 +32,8 @@
             android:text="@string/join_room" android:textAllCaps="false" />
         <TextView android:id="@+id/community_game_label"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="20dp" android:text="@string/select_quick_game"
+            android:layout_marginTop="24dp" android:text="@string/select_quick_game"
+            android:textSize="20sp" android:textStyle="bold" android:accessibilityHeading="true"
             android:labelFor="@id/community_game" />
         <Spinner android:id="@+id/community_game" android:layout_width="match_parent"
             android:layout_height="56dp" />

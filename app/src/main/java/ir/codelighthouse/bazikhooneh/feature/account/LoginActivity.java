@@ -106,7 +106,7 @@ public final class LoginActivity extends NavigableActivity {
                   finish();
                   return;
                 }
-                String roomCode = getIntent().getStringExtra("room_code");
+                String roomCode = getIntent().getStringExtra(RoomListActivity.EXTRA_ROOM_CODE);
                 String gameKey = getIntent().getStringExtra(RoomListActivity.EXTRA_GAME_KEY);
                 if (roomCode != null || getIntent().getBooleanExtra("open_online", false)) {
                   Intent lobby = new Intent(LoginActivity.this, RoomListActivity.class);

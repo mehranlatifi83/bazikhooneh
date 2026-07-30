@@ -17,7 +17,7 @@ public final class RoomEventsActivity extends NavigableActivity {
   protected void onCreate(Bundle state) {
     super.onCreate(state);
     setContentView(R.layout.activity_room_events);
-    String code = getIntent().getStringExtra("room_code");
+    String code = getIntent().getStringExtra(RoomActivity.EXTRA_ROOM_CODE);
     SessionStore store = new SessionStore(this);
     if (code == null || !store.isSignedIn()) {
       finish();

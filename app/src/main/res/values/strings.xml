@@ -15,6 +15,15 @@
     <string name="notification_item">%1$s\n%2$s</string>
     <string name="room_title_with_code">%1$s — %2$s</string>
     <string name="friend_item_remove">%1$s\n%2$s</string>
+    <string name="return_to_room">Return to room</string>
+    <string name="room_game_header">%1$s\nRoom code: %2$s\nGame: %3$s\nPlayers: %4$s</string>
+    <string name="rooms_title">Rooms</string>
+    <string name="create_room_section">Create a room</string>
+    <string name="join_room_section">Join with a code</string>
+    <string name="quick_match_section">Quick match</string>
+    <string name="invite_to_game_room">Invite a friend to a game room</string>
+    <string name="select_game">Choose a game</string>
+    <string name="invited_game_room_title">%1$s game room</string>
     <string-array name="language_choices"><item>فارسی</item><item>English</item></string-array>
     <string name="app_name">BaziKhooneh</string>
     <string name="tic_tac_toe_title">Tic-Tac-Toe</string>
@@ -40,7 +49,6 @@
     <string name="mode_play_bot">Play bot</string>
     <string name="mode_online">Online</string>
     <string name="room_code_hint">Six-character room code</string>
-    <string name="create_room">Create room</string>
     <string name="join_room">Join room</string>
     <string name="room_code_required">Enter the six-character room code.</string>
     <string name="room_created">Room %1$s created. Share this code and wait for the other player.</string>
@@ -66,8 +74,6 @@
     <string name="copy_room_code">Copy code</string>
     <string name="share_room_code">Share code</string>
     <string name="room_code_copied">Room code %1$s copied.</string>
-    <string name="room_invitation">Join my BaziKhooneh room with this code: %1$s</string>
-    <string name="share_room_title">Share room code</string>
     <string name="leaving_room">Leaving the room…</string>
     <string name="opponent_left_room">The other player left the room.</string>
     <string name="account_username">Username</string>
@@ -149,7 +155,6 @@
     <string name="friends_title">Friends and invitations</string>
     <string name="friends_description">Find people by username, accept requests, see their status, and invite friends to a private game.</string>
     <string name="send_friend_request">Send friend request</string>
-    <string name="invite_to_tic_tac_toe">Invite to Tic-Tac-Toe</string>
     <string name="friend_item">%1$s, @%2$s, %3$s</string>
     <string name="online_label">online</string>
     <string name="offline_label">offline</string>
@@ -224,11 +229,9 @@
     <string name="ludo_turn_roll">%1$s’s turn. Roll the dice.</string><string name="ludo_choose_piece">%1$s rolled %2$d. Choose a piece.</string><string name="ludo_piece_action">Move piece %1$d, currently %2$s</string>
     <string name="ludo_red">Red</string><string name="ludo_blue">Blue</string><string name="ludo_green">Green</string><string name="ludo_yellow">Yellow</string><string name="ludo_human_player">%1$s player</string><string name="ludo_bot_player">%1$s bot</string>
     <string name="ludo_at_home">at home</string><string name="ludo_finished">finished</string><string name="ludo_final_lane">final lane square %1$d</string><string name="ludo_track_position">track square %1$d</string><string name="ludo_winner">%1$s wins!</string>
-    <string name="ludo_online_title">Online Ludo</string><string name="ludo_online_lobby_description">Create or join a four-seat room. The host can start after adding bots to any empty seats.</string>
+    <string name="ludo_online_title">Online Ludo</string>
     <string name="share_room">Share room code</string>
-    <string name="ludo_share_text">Join my Ludo game in BaziKhooneh. Room code: %1$s</string>
     <string name="ludo_start_with_bots">Start and fill empty seats with bots</string>
-    <string name="ludo_online_room_info">Room %1$s. Players: %2$s</string>
     <string name="ludo_waiting_players">Waiting for players. The host can start and fill empty seats with bots.</string>
     <string name="ludo_online_your_roll">Your turn. Roll the die.</string>
     <string name="ludo_online_other_turn">Waiting for %1$s.</string>

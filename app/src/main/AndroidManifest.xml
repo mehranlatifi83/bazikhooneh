@@ -48,7 +48,6 @@
         <activity android:name=".feature.ludo.LudoMenuActivity" android:exported="false" android:label="@string/ludo_title" />
         <activity android:name=".feature.ludo.LudoGuideActivity" android:exported="false" android:label="@string/ludo_guide_title" />
         <activity android:name=".feature.ludo.LudoGameActivity" android:exported="false" android:label="@string/ludo_title" />
-        <activity android:name=".feature.ludo.LudoOnlineLobbyActivity" android:exported="false" android:label="@string/ludo_online_title" />
         <activity android:name=".feature.ludo.LudoOnlineGameActivity" android:exported="false" android:label="@string/ludo_online_title" />
         <activity android:name=".feature.social.FriendsActivity" android:exported="false" android:label="@string/friends_title" />
         <activity android:name=".feature.account.AccountSecurityActivity" android:exported="false" android:label="@string/account_security_title" />

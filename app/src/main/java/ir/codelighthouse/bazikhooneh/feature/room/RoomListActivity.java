@@ -80,14 +80,17 @@ public class RoomListActivity extends NavigableActivity {
     gameSelector.setSelection(selected);
 
     boolean fixedGame = !preferredGame.isEmpty();
-    findViewById(R.id.community_game_label).setVisibility(fixedGame ? View.GONE : View.VISIBLE);
+    TextView gameLabel = findViewById(R.id.community_game_label);
+    gameLabel.setVisibility(View.VISIBLE);
+    gameLabel.setText(fixedGame ? R.string.quick_match_section : R.string.select_quick_game);
     gameSelector.setVisibility(fixedGame ? View.GONE : View.VISIBLE);
   }
 
   private void showPreferredGame() {
     GameDefinition game = GameCatalog.find(preferredGame);
     if (game != null) {
-      status.setText(getString(R.string.rooms_for_game, getString(game.titleRes)));
+      ((TextView) findViewById(R.id.community_room_browser_title))
+          .setText(getString(R.string.rooms_for_game, getString(game.titleRes)));
     }
   }
 

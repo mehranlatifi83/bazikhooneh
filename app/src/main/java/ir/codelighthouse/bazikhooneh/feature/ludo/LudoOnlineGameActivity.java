@@ -1,6 +1,5 @@
 package ir.codelighthouse.bazikhooneh.feature.ludo;
 
-import android.content.Intent;
 import android.os.*;
 import android.view.*;
 import android.widget.*;
@@ -8,6 +7,7 @@ import ir.codelighthouse.bazikhooneh.BuildConfig;
 import ir.codelighthouse.bazikhooneh.R;
 import ir.codelighthouse.bazikhooneh.accessibility.FocusStableAnnouncer;
 import ir.codelighthouse.bazikhooneh.account.*;
+import ir.codelighthouse.bazikhooneh.community.RoomSharing;
 import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.game.ludo.*;
 import ir.codelighthouse.bazikhooneh.online.LudoOnlineClient;
@@ -20,6 +20,7 @@ public final class LudoOnlineGameActivity extends NavigableActivity {
   private final List<String> deferredMessages = new ArrayList<>();
   private LudoOnlineClient client;
   private String room, token, host;
+  private String communityRoomCode, communityRoomTitle;
   private int ownColor, lastVersion = -1;
   private boolean destroyed, connected;
   private LudoGame game;
@@ -43,6 +44,8 @@ public final class LudoOnlineGameActivity extends NavigableActivity {
     announcer = new FocusStableAnnouncer(this, status);
     SecurePreferences prefs = SecurePreferences.open(this, "ludo_online");
     room = prefs.getString("room", "");
+    communityRoomCode = prefs.getString("community_room", "");
+    communityRoomTitle = prefs.getString("community_title", getString(R.string.app_name));
     token = prefs.getString("token", "");
     ownColor = prefs.getInt("color", 0);
     host = prefs.getString("host", "");
@@ -51,14 +54,15 @@ public final class LudoOnlineGameActivity extends NavigableActivity {
     findViewById(R.id.ludo_roll).setOnClickListener(v -> client.roll());
     findViewById(R.id.ludo_start_with_bots).setOnClickListener(v -> client.start(room));
     findViewById(R.id.ludo_share_room)
+        .setOnClickListener(v -> RoomSharing.share(this, communityRoomTitle, communityRoomCode));
+    findViewById(R.id.ludo_copy_room)
         .setOnClickListener(
-            v ->
-                startActivity(
-                    Intent.createChooser(
-                        new Intent(Intent.ACTION_SEND)
-                            .setType("text/plain")
-                            .putExtra(Intent.EXTRA_TEXT, getString(R.string.ludo_share_text, room)),
-                        getString(R.string.share_room))));
+            v -> {
+              RoomSharing.copyCode(this, communityRoomCode);
+              announce(getString(R.string.room_code_copied, communityRoomCode));
+            });
+    findViewById(R.id.ludo_return_to_room)
+        .setOnClickListener(v -> RoomSharing.openRoom(this, communityRoomCode));
     client.reconnect(room, token);
   }
 
@@ -67,7 +71,13 @@ public final class LudoOnlineGameActivity extends NavigableActivity {
     int version = value.optInt("version");
     boolean waiting = "waiting".equals(value.optString("room_state"));
     if (!waiting && game != null && version == lastVersion) return;
-    roomInfo.setText(getString(R.string.ludo_online_room_info, room, seatsDescription()));
+    roomInfo.setText(
+        getString(
+            R.string.room_game_header,
+            communityRoomTitle,
+            communityRoomCode,
+            getString(R.string.ludo_title),
+            seatsDescription()));
     findViewById(R.id.ludo_start_with_bots)
         .setVisibility(
             waiting && new SessionStore(this).username().equals(host) ? View.VISIBLE : View.GONE);

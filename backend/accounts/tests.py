@@ -263,10 +263,17 @@ class AccountApiTests(APITestCase):
             ).status_code,
         )
         invited = self.client.post(
-            "/api/v1/accounts/invites/", {"username": "first_user"}, format="json"
+            "/api/v1/accounts/invites/",
+            {
+                "username": "first_user",
+                "game_key": "ludo",
+                "room_title": "اتاق بازی منچ",
+            },
+            format="json",
         )
         self.assertEqual(201, invited.status_code)
         self.assertEqual(6, len(invited.data["room"]["code"]))
+        self.assertEqual("اتاق بازی منچ", invited.data["room"]["title"])
         self.assertGreaterEqual(invited.data["room"]["max_members"], 4)
 
     def test_superuser_is_the_same_game_account(self):

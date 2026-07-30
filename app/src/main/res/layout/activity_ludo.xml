@@ -5,7 +5,9 @@
   <TextView android:id="@+id/ludo_event_log" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:paddingTop="8dp" android:paddingBottom="8dp" android:textSize="16sp" android:focusable="true" android:visibility="gone" />
   <LinearLayout android:id="@+id/ludo_online_controls" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
    <TextView android:id="@+id/ludo_room_info" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp" />
-   <Button android:id="@+id/ludo_share_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/share_room" />
+   <Button android:id="@+id/ludo_copy_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/copy_room_code" android:textAllCaps="false" />
+   <Button android:id="@+id/ludo_share_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="48dp" android:text="@string/share_room" android:textAllCaps="false" />
+   <Button android:id="@+id/ludo_return_to_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:minHeight="48dp" android:text="@string/return_to_room" android:textAllCaps="false" />
    <Button android:id="@+id/ludo_start_with_bots" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/ludo_start_with_bots" android:visibility="gone" />
   </LinearLayout>
   <ir.codelighthouse.bazikhooneh.feature.ludo.LudoBoardView android:id="@+id/ludo_board" android:layout_width="match_parent" android:layout_height="360dp" android:importantForAccessibility="no" />

@@ -89,7 +89,7 @@ public final class NotificationSync {
     if (data != null && data.has("room_code")) {
       if ("game_invite".equals(kind) || "room_invite".equals(kind))
         intent.putExtra(RoomListActivity.EXTRA_ROOM_CODE, data.optString("room_code"));
-      else intent.putExtra("room_code", data.optString("room_code"));
+      else intent.putExtra(RoomActivity.EXTRA_ROOM_CODE, data.optString("room_code"));
     }
     PendingIntent target =
         PendingIntent.getActivity(

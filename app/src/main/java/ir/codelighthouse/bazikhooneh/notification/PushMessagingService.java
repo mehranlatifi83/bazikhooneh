@@ -61,7 +61,7 @@ public final class PushMessagingService extends FirebaseMessagingService {
     String room = value(data, "room_code");
     if ("friend_request".equals(kind)) return new Intent(this, FriendsActivity.class);
     if (!room.isEmpty() && ("room_message".equals(kind) || "room_call".equals(kind)))
-      return new Intent(this, RoomActivity.class).putExtra("room_code", room);
+      return new Intent(this, RoomActivity.class).putExtra(RoomActivity.EXTRA_ROOM_CODE, room);
     if (!room.isEmpty())
       return new Intent(this, RoomListActivity.class)
           .putExtra(RoomListActivity.EXTRA_ROOM_CODE, room);

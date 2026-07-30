@@ -4,11 +4,13 @@
   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/friends_description" android:textSize="18sp" />
   <LinearLayout android:id="@+id/friend_action_choices" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="16dp">
    <Button android:id="@+id/add_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/send_friend_request" android:textAllCaps="false" />
-   <Button android:id="@+id/invite_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/invite_to_tic_tac_toe" android:textAllCaps="false" />
+   <Button android:id="@+id/invite_friend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/invite_to_game_room" android:textAllCaps="false" />
   </LinearLayout>
   <LinearLayout android:id="@+id/friend_action_form" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
    <TextView android:id="@+id/friend_action_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp" />
    <EditText android:id="@+id/friend_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/account_username" />
+   <TextView android:id="@+id/invite_game_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/select_game" android:labelFor="@id/invite_game" android:visibility="gone" />
+   <Spinner android:id="@+id/invite_game" android:layout_width="match_parent" android:layout_height="56dp" android:visibility="gone" />
    <Button android:id="@+id/friend_action_submit" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAllCaps="false" />
    <Button android:id="@+id/cancel_friend_action" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/cancel_action" android:textAllCaps="false" style="?android:attr/borderlessButtonStyle" />
    <LinearLayout android:id="@+id/search_results" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />

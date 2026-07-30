@@ -193,9 +193,10 @@ class InvitesView(APIView):
         game_key = str(request.data.get("game_key", "three_piece_tic_tac_toe"))
         if game_key not in ("three_piece_tic_tac_toe", "ludo"):
             return Response({"error": "unsupported_game"}, status=400)
-        room = CommunityRoom.create_unique(
-            request.user, f"{request.user.display_name}'s game room"
-        )
+        room_title = str(request.data.get("room_title", "")).strip()
+        if not room_title or len(room_title) > 80:
+            room_title = request.user.display_name
+        room = CommunityRoom.create_unique(request.user, room_title)
         invite = GameInvite.objects.create(
             sender=request.user,
             recipient=recipient,

@@ -1,8 +1,5 @@
 package ir.codelighthouse.bazikhooneh.feature.tictactoe;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Intent;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -21,9 +18,9 @@ import android.widget.TextView;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
 import ir.codelighthouse.bazikhooneh.R;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.community.RoomSharing;
 import ir.codelighthouse.bazikhooneh.core.preferences.AppPreferences;
 import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
-import ir.codelighthouse.bazikhooneh.feature.account.LoginActivity;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotAction;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotDifficulty;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.GamePhase;
@@ -32,6 +29,7 @@ import ir.codelighthouse.bazikhooneh.game.tictactoe.Mark;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.MoveResult;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeBot;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.TicTacToeGame;
+import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
@@ -81,6 +79,8 @@ public final class TicTacToeGameActivity extends NavigableActivity {
   private long onlineStartAt;
   private boolean opponentConnected = true;
   private String accountToken = "";
+  private String communityRoomCode = "";
+  private String communityRoomTitle = "";
   private ToneGenerator toneGenerator;
   private final Runnable reconnectRunnable = this::restoreOnlineSession;
 
@@ -98,6 +98,9 @@ public final class TicTacToeGameActivity extends NavigableActivity {
     rematchButton = findViewById(R.id.rematch_button);
     onlineClient = new OnlineGameClient(this, BuildConfig.API_BASE_URL, onlineListener);
     sessionStore = new SessionStore(this);
+    SecurePreferences roomPreferences = SecurePreferences.open(this, ONLINE_PREFS);
+    communityRoomCode = roomPreferences.getString("community_room", "");
+    communityRoomTitle = roomPreferences.getString("community_title", getString(R.string.app_name));
     restoreAccountSession();
     configureGameOptions(savedInstanceState);
     int[] cellIds = {
@@ -111,19 +114,22 @@ public final class TicTacToeGameActivity extends NavigableActivity {
       cells[index].setOnClickListener(view -> onCellClicked(cellIndex));
     }
     findViewById(R.id.restart_button).setOnClickListener(view -> restartGame());
-    findViewById(R.id.create_room_button).setOnClickListener(view -> createOnlineRoom());
-    findViewById(R.id.join_room_button).setOnClickListener(view -> joinOnlineRoom());
     rematchButton.setOnClickListener(view -> onlineClient.requestRematch());
     findViewById(R.id.leave_room_button).setOnClickListener(view -> leaveOnlineRoom());
     findViewById(R.id.copy_room_code_button).setOnClickListener(view -> copyRoomCode());
     findViewById(R.id.share_room_code_button).setOnClickListener(view -> shareRoomCode());
+    findViewById(R.id.return_to_room_button)
+        .setOnClickListener(view -> RoomSharing.openRoom(this, communityRoomCode));
 
     restoreState(savedInstanceState);
     render(false);
     if (onlineMode) {
-      String invitedCode = getIntent().getStringExtra("room_code");
-      if (invitedCode != null) roomCodeInput.setText(invitedCode.toUpperCase(Locale.ROOT));
-      else restoreOnlineSession();
+      if (communityRoomCode.isEmpty()) {
+        AppNavigator.openRooms(this, "three_piece_tic_tac_toe");
+        finish();
+        return;
+      }
+      restoreOnlineSession();
     }
     if (botMode && game.getCurrentPlayer() == Mark.O) {
       scheduleBotAction();
@@ -436,34 +442,6 @@ public final class TicTacToeGameActivity extends NavigableActivity {
     findViewById(R.id.restart_button).setVisibility(onlineMode ? View.GONE : View.VISIBLE);
   }
 
-  private void createOnlineRoom() {
-    if (!ensureAccount()) return;
-    beginOnlineRequest();
-    onlineClient.createRoom();
-  }
-
-  private void joinOnlineRoom() {
-    if (!ensureAccount()) return;
-    String code = roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT);
-    if (code.length() != 6) {
-      announce(getString(R.string.room_code_required));
-      roomCodeInput.requestFocus();
-      return;
-    }
-    beginOnlineRequest();
-    onlineClient.joinRoom(code);
-  }
-
-  private void beginOnlineRequest() {
-    reconnectAllowed = true;
-    onlineConnected = false;
-    selectedSource = -1;
-    onlineState = null;
-    roomInformation.setText("");
-    statusText.setText(R.string.online_connecting);
-    announce(getString(R.string.online_connecting));
-  }
-
   private void onOnlineCellClicked(int index) {
     if (onlineState == null
         || !"active".equals(onlineState.roomState)
@@ -497,9 +475,10 @@ public final class TicTacToeGameActivity extends NavigableActivity {
 
   private void renderOnline(boolean animateMove) {
     boolean hasRoom = onlineState != null;
-    findViewById(R.id.room_entry_actions).setVisibility(hasRoom ? View.GONE : View.VISIBLE);
     findViewById(R.id.room_share_actions).setVisibility(hasRoom ? View.VISIBLE : View.GONE);
     findViewById(R.id.room_management_actions).setVisibility(hasRoom ? View.VISIBLE : View.GONE);
+    findViewById(R.id.return_to_room_button)
+        .setVisibility(communityRoomCode.isEmpty() ? View.GONE : View.VISIBLE);
     roomCodeInput.setEnabled(!hasRoom);
     boolean showBoard = hasRoom && !"waiting".equals(onlineState.roomState);
     findViewById(R.id.game_board).setVisibility(showBoard ? View.VISIBLE : View.GONE);
@@ -598,7 +577,8 @@ public final class TicTacToeGameActivity extends NavigableActivity {
                 secure.putString(PREF_ROOM, session.game.roomCode);
                 secure.putString(PREF_SYMBOL, session.symbol);
                 secure.putString(PREF_TOKEN, session.token);
-                roomCodeInput.setText(session.game.roomCode);
+                roomCodeInput.setText(
+                    communityRoomCode.isEmpty() ? session.game.roomCode : communityRoomCode);
                 String message =
                     "waiting".equals(session.game.roomState)
                         ? getString(R.string.room_created, session.game.roomCode)
@@ -721,7 +701,7 @@ public final class TicTacToeGameActivity extends NavigableActivity {
     reconnectAllowed = true;
     onlineConnected = false;
     onlineSymbol = symbol;
-    roomCodeInput.setText(room);
+    roomCodeInput.setText(communityRoomCode.isEmpty() ? room : communityRoomCode);
     statusText.setText(R.string.online_connecting);
     onlineClient.reconnect(room, token);
   }
@@ -773,28 +753,28 @@ public final class TicTacToeGameActivity extends NavigableActivity {
   }
 
   private void copyRoomCode() {
-    String code = roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT);
+    String code =
+        communityRoomCode.isEmpty()
+            ? roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT)
+            : communityRoomCode;
     if (code.length() != 6) {
       announce(getString(R.string.room_code_required));
       return;
     }
-    ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-    clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.room_code_hint), code));
+    RoomSharing.copyCode(this, code);
     announce(getString(R.string.room_code_copied, code));
   }
 
   private void shareRoomCode() {
-    String code = roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT);
+    String code =
+        communityRoomCode.isEmpty()
+            ? roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT)
+            : communityRoomCode;
     if (code.length() != 6) {
       announce(getString(R.string.room_code_required));
       return;
     }
-    Intent send = new Intent(Intent.ACTION_SEND);
-    send.setType("text/plain");
-    send.putExtra(
-        Intent.EXTRA_TEXT,
-        getString(R.string.room_invitation, code) + "\n" + "bazikhooneh://room/" + code);
-    startActivity(Intent.createChooser(send, getString(R.string.share_room_title)));
+    RoomSharing.share(this, communityRoomTitle, code);
   }
 
   private String onlineErrorMessage(String error) {
@@ -843,12 +823,6 @@ public final class TicTacToeGameActivity extends NavigableActivity {
     else if (mark == Mark.O)
       cell.setTextColor(getColor(contrast ? R.color.brand_primary_dark : R.color.piece_o));
     else cell.setTextColor(getColor(R.color.text_primary));
-  }
-
-  private boolean ensureAccount() {
-    if (!accountToken.isEmpty()) return true;
-    startActivity(new Intent(this, LoginActivity.class));
-    return false;
   }
 
   private void restoreAccountSession() {

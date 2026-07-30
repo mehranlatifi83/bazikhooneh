@@ -3,19 +3,25 @@ package ir.codelighthouse.bazikhooneh.feature.social;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
 import ir.codelighthouse.bazikhooneh.R;
 import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
 import ir.codelighthouse.bazikhooneh.account.AccountManagementClient;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.catalog.GameCatalog;
+import ir.codelighthouse.bazikhooneh.catalog.GameDefinition;
 import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.feature.account.LoginActivity;
 import ir.codelighthouse.bazikhooneh.feature.room.RoomActivity;
 import ir.codelighthouse.bazikhooneh.feature.room.RoomListActivity;
+import java.util.ArrayList;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +32,7 @@ public final class FriendsActivity extends NavigableActivity {
   private TextView status;
   private String action;
   private JSONArray latestFriends;
+  private List<GameDefinition> onlineGames;
 
   @Override
   protected void onCreate(Bundle state) {
@@ -45,7 +52,8 @@ public final class FriendsActivity extends NavigableActivity {
     findViewById(R.id.add_friend)
         .setOnClickListener(v -> showAction("friend", R.string.send_friend_request));
     findViewById(R.id.invite_friend)
-        .setOnClickListener(v -> showAction("invite", R.string.invite_to_tic_tac_toe));
+        .setOnClickListener(v -> showAction("invite", R.string.invite_to_game_room));
+    setupGameSelector();
     findViewById(R.id.friend_action_submit)
         .setOnClickListener(
             v -> {
@@ -81,6 +89,9 @@ public final class FriendsActivity extends NavigableActivity {
     ((Button) findViewById(R.id.friend_action_submit)).setText(title);
     LinearLayout results = findViewById(R.id.search_results);
     results.removeAllViews();
+    boolean inviting = "invite".equals(value);
+    findViewById(R.id.invite_game_label).setVisibility(inviting ? View.VISIBLE : View.GONE);
+    findViewById(R.id.invite_game).setVisibility(inviting ? View.VISIBLE : View.GONE);
     if ("invite".equals(value)) {
       for (int i = 0; latestFriends != null && i < latestFriends.length(); i++) {
         JSONObject friend = latestFriends.optJSONObject(i);
@@ -94,6 +105,30 @@ public final class FriendsActivity extends NavigableActivity {
       }
     }
     findViewById(R.id.friend_username).requestFocus();
+  }
+
+  private void setupGameSelector() {
+    onlineGames = GameCatalog.onlineGames();
+    List<String> titles = new ArrayList<>();
+    for (GameDefinition game : onlineGames) titles.add(getString(game.titleRes));
+    ArrayAdapter<String> adapter =
+        new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, titles);
+    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    ((Spinner) findViewById(R.id.invite_game)).setAdapter(adapter);
+  }
+
+  private String selectedGameKey() {
+    int position = ((Spinner) findViewById(R.id.invite_game)).getSelectedItemPosition();
+    return position >= 0 && position < onlineGames.size()
+        ? onlineGames.get(position).id
+        : "three_piece_tic_tac_toe";
+  }
+
+  private String selectedGameTitle() {
+    int position = ((Spinner) findViewById(R.id.invite_game)).getSelectedItemPosition();
+    return position >= 0 && position < onlineGames.size()
+        ? getString(onlineGames.get(position).titleRes)
+        : getString(R.string.tic_tac_toe_title);
   }
 
   private void hideAction() {
@@ -119,7 +154,8 @@ public final class FriendsActivity extends NavigableActivity {
               .put(
                   "username",
                   ((EditText) findViewById(R.id.friend_username)).getText().toString().trim())
-              .put("game_key", "three_piece_tic_tac_toe"));
+              .put("game_key", selectedGameKey())
+              .put("room_title", getString(R.string.invited_game_room_title, selectedGameTitle())));
     } catch (JSONException ignored) {
     }
   }
@@ -284,7 +320,7 @@ public final class FriendsActivity extends NavigableActivity {
                   if (room != null)
                     startActivity(
                         new Intent(FriendsActivity.this, RoomActivity.class)
-                            .putExtra("room_code", room.optString("code")));
+                            .putExtra(RoomActivity.EXTRA_ROOM_CODE, room.optString("code")));
                   else status.setText(R.string.error_generic);
                 } else {
                   status.setText(R.string.changes_saved);

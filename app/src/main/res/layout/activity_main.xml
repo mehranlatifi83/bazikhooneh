@@ -76,32 +76,6 @@
                 android:minHeight="48dp"
                 android:singleLine="true" />
 
-            <LinearLayout
-                android:id="@+id/room_entry_actions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/create_room_button"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="48dp"
-                    android:text="@string/create_room"
-                    android:textAllCaps="false" />
-
-                <Button
-                    android:id="@+id/join_room_button"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:minHeight="48dp"
-                    android:text="@string/join_room"
-                    android:textAllCaps="false" />
-            </LinearLayout>
-
             <TextView
                 android:id="@+id/room_information"
                 android:layout_width="match_parent"
@@ -117,26 +91,33 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:visibility="gone">
 
                 <Button
                     android:id="@+id/copy_room_code_button"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:minHeight="48dp"
                     android:text="@string/copy_room_code"
                     android:textAllCaps="false" />
 
                 <Button
                     android:id="@+id/share_room_code_button"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
+                    android:layout_marginTop="8dp"
                     android:minHeight="48dp"
                     android:text="@string/share_room_code"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/return_to_room_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:minHeight="48dp"
+                    android:text="@string/return_to_room"
                     android:textAllCaps="false" />
             </LinearLayout>
 

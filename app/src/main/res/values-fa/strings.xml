@@ -15,6 +15,15 @@
     <string name="notification_item">%1$s\n%2$s</string>
     <string name="room_title_with_code">%1$s — %2$s</string>
     <string name="friend_item_remove">%1$s\n%2$s</string>
+    <string name="return_to_room">بازگشت به اتاق</string>
+    <string name="room_game_header">%1$s\nکد اتاق: %2$s\nبازی: %3$s\nبازیکنان: %4$s</string>
+    <string name="rooms_title">اتاق‌ها</string>
+    <string name="create_room_section">ساخت اتاق</string>
+    <string name="join_room_section">ورود با کد</string>
+    <string name="quick_match_section">بازی سریع</string>
+    <string name="invite_to_game_room">دعوت دوست به اتاق بازی</string>
+    <string name="select_game">انتخاب بازی</string>
+    <string name="invited_game_room_title">اتاق بازی %1$s</string>
     <string-array name="language_choices"><item>فارسی</item><item>English</item></string-array>
     <string name="app_name">بازی‌خونه</string>
     <string name="tic_tac_toe_title">دوز</string>
@@ -40,7 +49,6 @@
     <string name="mode_play_bot">بازی با ربات</string>
     <string name="mode_online">بازی آنلاین</string>
     <string name="room_code_hint">کد شش‌حرفی اتاق</string>
-    <string name="create_room">ساخت اتاق</string>
     <string name="join_room">پیوستن به اتاق</string>
     <string name="room_code_required">کد شش‌حرفی اتاق را وارد کنید.</string>
     <string name="room_created">اتاق %1$s ساخته شد. این کد را برای بازیکن دیگر بفرستید و منتظر بمانید.</string>
@@ -66,8 +74,6 @@
     <string name="copy_room_code">کپی کد</string>
     <string name="share_room_code">اشتراک کد</string>
     <string name="room_code_copied">کد اتاق %1$s کپی شد.</string>
-    <string name="room_invitation">با این کد به اتاق من در بازی‌خونه بیا: %1$s</string>
-    <string name="share_room_title">اشتراک‌گذاری کد اتاق</string>
     <string name="leaving_room">در حال خروج از اتاق…</string>
     <string name="opponent_left_room">بازیکن دیگر از اتاق خارج شد.</string>
     <string name="account_username">نام کاربری</string>
@@ -149,7 +155,6 @@
     <string name="friends_title">دوستان و دعوت‌ها</string>
     <string name="friends_description">افراد را با نام کاربری پیدا کنید، درخواست‌ها را بپذیرید، وضعیتشان را ببینید و به بازی خصوصی دعوتشان کنید.</string>
     <string name="send_friend_request">ارسال درخواست دوستی</string>
-    <string name="invite_to_tic_tac_toe">دعوت به دوز</string>
     <string name="friend_item">%1$s، نام کاربری %2$s، %3$s</string>
     <string name="online_label">آنلاین</string>
     <string name="offline_label">آفلاین</string>
@@ -224,11 +229,9 @@
     <string name="ludo_turn_roll">نوبت %1$s است. تاس بیندازید.</string><string name="ludo_choose_piece">%1$s عدد %2$d آورده است. یک مهره انتخاب کنید.</string><string name="ludo_piece_action">حرکت مهره %1$d، موقعیت فعلی: %2$s</string>
     <string name="ludo_red">قرمز</string><string name="ludo_blue">آبی</string><string name="ludo_green">سبز</string><string name="ludo_yellow">زرد</string><string name="ludo_human_player">بازیکن %1$s</string><string name="ludo_bot_player">ربات %1$s</string>
     <string name="ludo_at_home">در خانه</string><string name="ludo_finished">رسیده به پایان</string><string name="ludo_final_lane">خانه %1$d مسیر پایانی</string><string name="ludo_track_position">خانه %1$d مسیر</string><string name="ludo_winner">%1$s برنده شد!</string>
-    <string name="ludo_online_title">منچ آنلاین</string><string name="ludo_online_lobby_description">یک اتاق چهار جایگاهی بسازید یا وارد شوید. میزبان می‌تواند جایگاه‌های خالی را با ربات پر کند و بازی را شروع کند.</string>
+    <string name="ludo_online_title">منچ آنلاین</string>
     <string name="share_room">اشتراک‌گذاری کد اتاق</string>
-    <string name="ludo_share_text">در بازی منچ من در بازی‌خونه شرکت کن. کد اتاق: %1$s</string>
     <string name="ludo_start_with_bots">شروع بازی و پرکردن جاهای خالی با ربات</string>
-    <string name="ludo_online_room_info">اتاق %1$s. بازیکنان: %2$s</string>
     <string name="ludo_waiting_players">منتظر بازیکنان هستیم. میزبان می‌تواند بازی را شروع کند و جاهای خالی را با ربات پر کند.</string>
     <string name="ludo_online_your_roll">نوبت شماست. تاس بیندازید.</string>
     <string name="ludo_online_other_turn">منتظر نوبت %1$s هستیم.</string>
