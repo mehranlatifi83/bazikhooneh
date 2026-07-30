@@ -24,56 +24,53 @@
         android:theme="@style/Theme.BaziKhooneh"
         android:usesCleartextTraffic="${usesCleartextTraffic}"
         tools:targetApi="31">
-        <service android:name=".NotificationJobService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />
-        <service android:name=".PushMessagingService" android:exported="false">
+        <service android:name=".notification.NotificationJobService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />
+        <service android:name=".notification.PushMessagingService" android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".CallKeepAliveService" android:exported="false"
+        <service android:name=".call.CallKeepAliveService" android:exported="false"
             android:foregroundServiceType="microphone" />
-        <activity android:name=".RegisterActivity" android:exported="false" android:label="@string/account_register" />
+        <activity android:name=".feature.account.RegisterActivity" android:exported="false" android:label="@string/account_register" />
         <activity android:name=".feature.room.RoomListActivity" android:exported="false" android:label="@string/community_rooms_title" />
         <activity android:name=".feature.room.RoomActivity" android:exported="false" android:label="@string/community_room_title" />
         <activity android:name=".feature.room.RoomEventsActivity" android:exported="false" android:label="@string/room_history" />
-        <activity android:name=".CommunityRoomsActivity" android:exported="false" />
-        <activity android:name=".CommunityRoomActivity" android:exported="false" />
-        <activity android:name=".LeaderboardActivity" android:exported="false" android:label="@string/leaderboard_title" />
-        <activity android:name=".VoiceCallActivity" android:exported="false" android:label="@string/voice_call_title" android:launchMode="singleTop" />
-        <activity android:name=".UsernameChangeActivity" android:exported="false" android:label="@string/change_username_title" />
-        <activity android:name=".EmailVerificationActivity" android:exported="false" android:label="@string/email_security_title" />
-        <activity android:name=".PasswordChangeActivity" android:exported="false" android:label="@string/change_password_title" />
-        <activity android:name=".SessionsActivity" android:exported="false" android:label="@string/sessions_title" />
-        <activity android:name=".DeleteAccountActivity" android:exported="false" android:label="@string/delete_account_title" />
-        <activity android:name=".NotificationsActivity" android:exported="false" android:label="@string/notifications_title" />
-        <activity android:name=".SafetyActivity" android:exported="false" android:label="@string/safety_title" />
+        <activity android:name=".feature.social.LeaderboardActivity" android:exported="false" android:label="@string/leaderboard_title" />
+        <activity android:name=".call.VoiceCallActivity" android:exported="false" android:label="@string/voice_call_title" android:launchMode="singleTop" />
+        <activity android:name=".feature.account.UsernameChangeActivity" android:exported="false" android:label="@string/change_username_title" />
+        <activity android:name=".feature.account.EmailVerificationActivity" android:exported="false" android:label="@string/email_security_title" />
+        <activity android:name=".feature.account.PasswordChangeActivity" android:exported="false" android:label="@string/change_password_title" />
+        <activity android:name=".feature.account.SessionsActivity" android:exported="false" android:label="@string/sessions_title" />
+        <activity android:name=".feature.account.DeleteAccountActivity" android:exported="false" android:label="@string/delete_account_title" />
+        <activity android:name=".feature.social.NotificationsActivity" android:exported="false" android:label="@string/notifications_title" />
+        <activity android:name=".feature.social.SafetyActivity" android:exported="false" android:label="@string/safety_title" />
         <activity android:name=".feature.ludo.LudoMenuActivity" android:exported="false" android:label="@string/ludo_title" />
         <activity android:name=".feature.ludo.LudoGuideActivity" android:exported="false" android:label="@string/ludo_guide_title" />
         <activity android:name=".feature.ludo.LudoGameActivity" android:exported="false" android:label="@string/ludo_title" />
         <activity android:name=".feature.ludo.LudoOnlineLobbyActivity" android:exported="false" android:label="@string/ludo_online_title" />
         <activity android:name=".feature.ludo.LudoOnlineGameActivity" android:exported="false" android:label="@string/ludo_online_title" />
-        <activity android:name=".FriendsActivity" android:exported="false" android:label="@string/friends_title" />
-        <activity android:name=".AccountSecurityActivity" android:exported="false" android:label="@string/account_security_title" />
-        <activity android:name=".PasswordResetActivity" android:exported="false" android:label="@string/forgot_password" />
-        <activity android:name=".TicTacToeGuideActivity" android:exported="false" android:label="@string/tic_tac_toe_guide_title" />
-        <activity android:name=".OnlineLobbyActivity" android:exported="false" android:label="@string/online_lobby_title" />
-        <activity android:name=".TicTacToeMenuActivity" android:exported="false" android:label="@string/tic_tac_toe_title" />
-        <activity android:name=".LoginActivity" android:exported="false" android:label="@string/account_title" />
-        <activity android:name=".GuideActivity" android:exported="false" android:label="@string/guide_title" />
-        <activity android:name=".SettingsActivity" android:exported="false" android:label="@string/settings_title" />
-        <activity android:name=".ProfileActivity" android:exported="false" android:label="@string/profile_title" />
+        <activity android:name=".feature.social.FriendsActivity" android:exported="false" android:label="@string/friends_title" />
+        <activity android:name=".feature.account.AccountSecurityActivity" android:exported="false" android:label="@string/account_security_title" />
+        <activity android:name=".feature.account.PasswordResetActivity" android:exported="false" android:label="@string/forgot_password" />
+        <activity android:name=".feature.tictactoe.TicTacToeGuideActivity" android:exported="false" android:label="@string/tic_tac_toe_guide_title" />
+        <activity android:name=".feature.tictactoe.TicTacToeMenuActivity" android:exported="false" android:label="@string/tic_tac_toe_title" />
+        <activity android:name=".feature.account.LoginActivity" android:exported="false" android:label="@string/account_title" />
+        <activity android:name=".feature.home.GuideActivity" android:exported="false" android:label="@string/guide_title" />
+        <activity android:name=".feature.settings.SettingsActivity" android:exported="false" android:label="@string/settings_title" />
+        <activity android:name=".feature.account.ProfileActivity" android:exported="false" android:label="@string/profile_title" />
         <activity
             android:name=".feature.tictactoe.TicTacToeGameActivity"
             android:exported="false"
             android:label="@string/tic_tac_toe_title" />
-        <activity android:name=".LanguageActivity" android:exported="true">
+        <activity android:name=".feature.settings.LanguageActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="ir.codelighthouse.bazikhooneh.HomeActivity"
+            android:name=".feature.home.HomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

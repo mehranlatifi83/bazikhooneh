@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.RadioGroup;
-import ir.codelighthouse.bazikhooneh.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.R;
+import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
 
 public final class LudoMenuActivity extends NavigableActivity {

@@ -6,8 +6,11 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import ir.codelighthouse.bazikhooneh.*;
+import ir.codelighthouse.bazikhooneh.core.preferences.AppPreferences;
 import ir.codelighthouse.bazikhooneh.feature.room.RoomActivity;
 import ir.codelighthouse.bazikhooneh.feature.room.RoomListActivity;
+import ir.codelighthouse.bazikhooneh.feature.social.FriendsActivity;
+import ir.codelighthouse.bazikhooneh.feature.social.NotificationsActivity;
 import org.json.*;
 
 public final class NotificationSync {
@@ -28,8 +31,8 @@ public final class NotificationSync {
   public static void refreshBackground(Context context) {
     SessionStore store = new SessionStore(context);
     android.content.SharedPreferences settings =
-        context.getSharedPreferences(SettingsActivity.PREFS, Context.MODE_PRIVATE);
-    if (!store.isSignedIn() || !settings.getBoolean(SettingsActivity.NOTIFICATIONS, true)) return;
+        context.getSharedPreferences(AppPreferences.PREFS, Context.MODE_PRIVATE);
+    if (!store.isSignedIn() || !settings.getBoolean(AppPreferences.NOTIFICATIONS, true)) return;
     new AccountManagementClient(
             BuildConfig.API_BASE_URL,
             store.token(),
@@ -48,7 +51,7 @@ public final class NotificationSync {
     if (values == null) return;
     android.content.SharedPreferences
         state = context.getSharedPreferences("notification_state", Context.MODE_PRIVATE),
-        settings = context.getSharedPreferences(SettingsActivity.PREFS, Context.MODE_PRIVATE);
+        settings = context.getSharedPreferences(AppPreferences.PREFS, Context.MODE_PRIVATE);
     long last = state.getLong("last_id", 0), newest = last;
     for (int i = values.length() - 1; i >= 0; i--) {
       JSONObject item = values.optJSONObject(i);
@@ -58,8 +61,8 @@ public final class NotificationSync {
       String kind = item.optString("kind");
       boolean allowed =
           "friend_request".equals(kind)
-              ? settings.getBoolean(SettingsActivity.FRIEND_NOTIFICATIONS, true)
-              : settings.getBoolean(SettingsActivity.GAME_NOTIFICATIONS, true);
+              ? settings.getBoolean(AppPreferences.FRIEND_NOTIFICATIONS, true)
+              : settings.getBoolean(AppPreferences.GAME_NOTIFICATIONS, true);
       if (allowed) show(context, item, id);
     }
     state.edit().putLong("last_id", newest).apply();

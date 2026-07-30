@@ -1,18 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:gravity="center_vertical"
-    android:padding="24dp" android:background="@color/screen_background">
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="@string/choose_language_title" android:textSize="26sp"
-        android:textStyle="bold" android:accessibilityHeading="true" />
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="12dp" android:text="@string/choose_language_description"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_background"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityHeading="true"
+        android:text="@string/choose_language_title"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/choose_language_description"
         android:textSize="18sp" />
-    <Button android:id="@+id/choose_persian" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_marginTop="28dp"
-        android:minHeight="64dp" android:text="فارسی" android:textAllCaps="false" />
-    <Button android:id="@+id/choose_english" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_marginTop="12dp"
-        android:minHeight="64dp" android:text="English" android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/choose_persian"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:minHeight="64dp"
+        android:text="@string/language_persian"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/choose_english"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:minHeight="64dp"
+        android:text="@string/language_english"
+        android:textAllCaps="false" />
 </LinearLayout>

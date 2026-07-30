@@ -8,8 +8,10 @@ import android.view.View;
 import android.widget.*;
 import ir.codelighthouse.bazikhooneh.*;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.call.VoiceCallActivity;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
 import ir.codelighthouse.bazikhooneh.community.RoomSharing;
+import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.feature.ludo.LudoOnlineGameActivity;
 import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGameActivity;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
@@ -89,7 +91,7 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     if (room == null) return;
     currentRoom = room;
     ((TextView) findViewById(R.id.community_room_header))
-        .setText(room.optString("title") + " — " + code);
+        .setText(getString(R.string.room_title_with_code, room.optString("title"), code));
     JSONObject own = room.optJSONObject("membership");
     String role = own == null ? "member" : own.optString("role");
     moderator = "owner".equals(role) || "admin".equals(role);
@@ -286,7 +288,7 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
   }
 
   private void addMessage(JSONObject item, boolean announce) {
-    if (item == null) return;
+    if (item == null || item.optBoolean("deleted")) return;
     long id = item.optLong("id");
     if (id > 0 && messageViews.containsKey(id)) return;
     JSONObject sender = item.optJSONObject("sender");
@@ -294,11 +296,7 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     LinearLayout container = new LinearLayout(this);
     container.setOrientation(LinearLayout.VERTICAL);
     TextView row = new TextView(this);
-    boolean deleted = item.optBoolean("deleted");
-    row.setText(
-        deleted
-            ? getString(R.string.deleted_message)
-            : getString(R.string.community_message_item, name, item.optString("text")));
+    row.setText(getString(R.string.community_message_item, name, item.optString("text")));
     row.setTextSize(17);
     row.setPadding(12, 12, 12, 12);
     row.setFocusable(true);
@@ -307,14 +305,12 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     actions.setText(getString(R.string.message_actions_for, name));
     actions.setAllCaps(false);
     actions.setMinHeight(dp(48));
-    actions.setVisibility(deleted ? View.GONE : View.VISIBLE);
     actions.setOnClickListener(v -> showMessageMenu(actions, item));
     container.addView(actions);
     messages.addView(container);
     messageViews.put(id, row);
     messageActionViews.put(id, actions);
     messageContainers.put(id, container);
-    String senderUsername = sender == null ? "" : sender.optString("username");
     row.setOnLongClickListener(
         v -> {
           showMessageMenu(row, item);

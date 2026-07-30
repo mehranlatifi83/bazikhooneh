@@ -3,8 +3,8 @@ package ir.codelighthouse.bazikhooneh.navigation;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import ir.codelighthouse.bazikhooneh.LoginActivity;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.feature.account.LoginActivity;
 import ir.codelighthouse.bazikhooneh.feature.room.RoomListActivity;
 
 public final class AppNavigator {

@@ -19,11 +19,11 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
-import ir.codelighthouse.bazikhooneh.LoginActivity;
-import ir.codelighthouse.bazikhooneh.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.R;
-import ir.codelighthouse.bazikhooneh.SettingsActivity;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.core.preferences.AppPreferences;
+import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.feature.account.LoginActivity;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotAction;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotDifficulty;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.GamePhase;
@@ -37,6 +37,7 @@ import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public final class TicTacToeGameActivity extends NavigableActivity {
   public static final String EXTRA_MODE = "game_mode";
@@ -121,7 +122,7 @@ public final class TicTacToeGameActivity extends NavigableActivity {
     render(false);
     if (onlineMode) {
       String invitedCode = getIntent().getStringExtra("room_code");
-      if (invitedCode != null) roomCodeInput.setText(invitedCode.toUpperCase());
+      if (invitedCode != null) roomCodeInput.setText(invitedCode.toUpperCase(Locale.ROOT));
       else restoreOnlineSession();
     }
     if (botMode && game.getCurrentPlayer() == Mark.O) {
@@ -381,8 +382,8 @@ public final class TicTacToeGameActivity extends NavigableActivity {
 
   private void announce(String message) {
     boolean detailed =
-        getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-            .getBoolean(SettingsActivity.DETAILED_ANNOUNCEMENTS, true);
+        getSharedPreferences(AppPreferences.PREFS, MODE_PRIVATE)
+            .getBoolean(AppPreferences.DETAILED_ANNOUNCEMENTS, true);
     statusText.announceForAccessibility(
         (detailed ? message : statusText.getText().toString()).trim());
   }
@@ -443,7 +444,7 @@ public final class TicTacToeGameActivity extends NavigableActivity {
 
   private void joinOnlineRoom() {
     if (!ensureAccount()) return;
-    String code = roomCodeInput.getText().toString().trim().toUpperCase();
+    String code = roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT);
     if (code.length() != 6) {
       announce(getString(R.string.room_code_required));
       roomCodeInput.requestFocus();
@@ -623,7 +624,8 @@ public final class TicTacToeGameActivity extends NavigableActivity {
                     && "active".equals(state.roomState)) startOnlineCountdown();
                 onlineActionPending = false;
                 if (leavingRoom
-                    && state.outcomeReason.equals(onlineSymbol.toLowerCase() + "_left")) {
+                    && state.outcomeReason.equals(
+                        onlineSymbol.toLowerCase(Locale.ROOT) + "_left")) {
                   finishLocalLeave();
                   return;
                 }
@@ -771,7 +773,7 @@ public final class TicTacToeGameActivity extends NavigableActivity {
   }
 
   private void copyRoomCode() {
-    String code = roomCodeInput.getText().toString().trim().toUpperCase();
+    String code = roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT);
     if (code.length() != 6) {
       announce(getString(R.string.room_code_required));
       return;
@@ -782,7 +784,7 @@ public final class TicTacToeGameActivity extends NavigableActivity {
   }
 
   private void shareRoomCode() {
-    String code = roomCodeInput.getText().toString().trim().toUpperCase();
+    String code = roomCodeInput.getText().toString().trim().toUpperCase(Locale.ROOT);
     if (code.length() != 6) {
       announce(getString(R.string.room_code_required));
       return;
@@ -819,23 +821,23 @@ public final class TicTacToeGameActivity extends NavigableActivity {
   }
 
   private void performMoveHaptic(View view) {
-    if (getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-        .getBoolean(SettingsActivity.HAPTIC, true)) {
+    if (getSharedPreferences(AppPreferences.PREFS, MODE_PRIVATE)
+        .getBoolean(AppPreferences.HAPTIC, true)) {
       view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
     }
-    if (getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-        .getBoolean(SettingsActivity.SOUND, true)) {
+    if (getSharedPreferences(AppPreferences.PREFS, MODE_PRIVATE)
+        .getBoolean(AppPreferences.SOUND, true)) {
       toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 80);
     }
   }
 
   private void applyPieceAppearance(Button cell, Mark mark) {
     boolean large =
-        getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-            .getBoolean(SettingsActivity.LARGE_TEXT, false);
+        getSharedPreferences(AppPreferences.PREFS, MODE_PRIVATE)
+            .getBoolean(AppPreferences.LARGE_TEXT, false);
     boolean contrast =
-        getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
-            .getBoolean(SettingsActivity.HIGH_CONTRAST, false);
+        getSharedPreferences(AppPreferences.PREFS, MODE_PRIVATE)
+            .getBoolean(AppPreferences.HIGH_CONTRAST, false);
     cell.setTextSize(large ? 34 : 28);
     if (mark == Mark.X) cell.setTextColor(getColor(contrast ? R.color.black : R.color.piece_x));
     else if (mark == Mark.O)

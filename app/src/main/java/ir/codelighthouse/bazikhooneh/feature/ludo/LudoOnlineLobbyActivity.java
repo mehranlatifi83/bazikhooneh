@@ -4,12 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.*;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
-import ir.codelighthouse.bazikhooneh.LoginActivity;
-import ir.codelighthouse.bazikhooneh.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.R;
 import ir.codelighthouse.bazikhooneh.account.*;
+import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.feature.account.LoginActivity;
 import ir.codelighthouse.bazikhooneh.online.LudoOnlineClient;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
+import java.util.Locale;
 import org.json.JSONObject;
 
 public final class LudoOnlineLobbyActivity extends NavigableActivity {
@@ -43,7 +44,7 @@ public final class LudoOnlineLobbyActivity extends NavigableActivity {
                       .getText()
                       .toString()
                       .trim()
-                      .toUpperCase();
+                      .toUpperCase(Locale.ROOT);
               if (code.length() != 6) {
                 status.setText(R.string.room_code_required);
                 return;

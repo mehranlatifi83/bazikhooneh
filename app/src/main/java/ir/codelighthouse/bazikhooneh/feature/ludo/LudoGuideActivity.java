@@ -1,8 +1,8 @@
 package ir.codelighthouse.bazikhooneh.feature.ludo;
 
 import android.os.Bundle;
-import ir.codelighthouse.bazikhooneh.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.R;
+import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 
 public final class LudoGuideActivity extends NavigableActivity {
   @Override

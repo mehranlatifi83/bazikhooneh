@@ -6,6 +6,10 @@ import static org.junit.Assert.assertNotNull;
 import android.view.View;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import ir.codelighthouse.bazikhooneh.feature.account.LoginActivity;
+import ir.codelighthouse.bazikhooneh.feature.account.PasswordResetActivity;
+import ir.codelighthouse.bazikhooneh.feature.account.RegisterActivity;
+import ir.codelighthouse.bazikhooneh.feature.settings.SettingsActivity;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

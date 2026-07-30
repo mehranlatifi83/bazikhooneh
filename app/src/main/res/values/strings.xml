@@ -9,6 +9,12 @@
     <string name="choose_language_title">Choose your language</string>
     <string name="choose_language_description">You can change the app language later in Settings.</string>
     <string name="language_title">App language</string>
+    <string name="language_persian">فارسی</string>
+    <string name="language_english">English</string>
+    <string name="game_card_content">%1$s\n%2$s</string>
+    <string name="notification_item">%1$s\n%2$s</string>
+    <string name="room_title_with_code">%1$s — %2$s</string>
+    <string name="friend_item_remove">%1$s\n%2$s</string>
     <string-array name="language_choices"><item>فارسی</item><item>English</item></string-array>
     <string name="app_name">BaziKhooneh</string>
     <string name="tic_tac_toe_title">Tic-Tac-Toe</string>
@@ -44,7 +50,6 @@
     <string name="online_your_turn">Your turn. You are %1$s.</string>
     <string name="online_opponent_turn">Opponent’s turn. You are %1$s.</string>
     <string name="online_disconnected">Connection to the game server was lost.</string>
-    <string name="online_error">Online game error: %1$s</string>
     <string name="online_select_own_piece">Select one of your pieces first.</string>
     <string name="request_rematch">Play again</string>
     <string name="leave_room">Leave room</string>
@@ -71,12 +76,7 @@
     <string name="account_login">Log in</string>
     <string name="account_register">Create account</string>
     <string name="account_logout">Log out</string>
-    <string name="account_signed_in">Signed in as %1$s, @%2$s</string>
-    <string name="account_required">Log in or create an account to play online.</string>
     <string name="account_fields_required">Enter a username and a password of at least eight characters.</string>
-    <string name="display_name_required">Enter a display name to create an account.</string>
-    <string name="account_logged_out">You are logged out.</string>
-    <string name="account_error">Account error: %1$s</string>
     <string name="home_guest">Play locally, against the bot, or sign in for online games.</string>
     <string name="home_welcome">Welcome, %1$s</string>
     <string name="games_heading">Games</string>
@@ -108,7 +108,6 @@
     <string name="match_loss">Loss</string>
     <string name="match_history_item">%1$s against %2$s, round %3$d</string>
     <string name="ludo_match_history_item">Ludo: %1$s against %2$s</string>
-    <string name="login_title">Your BaziKhooneh account</string>
     <string name="account_title">Account</string>
     <string name="login_description">One account is used for every online game, profile, score, and invitation in BaziKhooneh.</string>
     <string name="tic_tac_toe_description">Local, bot, and online play</string>
@@ -122,9 +121,6 @@
     <string name="difficulty_hard">Hard</string>
     <string name="start_game">Start game</string>
     <string name="mode_online_description">Play online with another player</string>
-    <string name="online_lobby_title">Online Tic-Tac-Toe</string>
-    <string name="online_lobby_description">Create a private room or join one with its six-character code.</string>
-    <string name="or_join_room">or join an existing room</string>
     <string name="account_security_title">Account and security</string>
     <string name="change_username_title">Change username</string>
     <string name="username_policy">Your first change is available now. After a change, you must wait 30 days. Your previous username remains reserved for you for 90 days.</string>
@@ -144,7 +140,6 @@
     <string name="revoke_other_sessions">Log out of other devices</string>
     <string name="active_sessions_count">Active sessions: %1$d</string>
     <string name="changes_saved">Changes saved.</string>
-    <string name="account_action_error">Could not complete the request: %1$s</string>
     <string name="forgot_password">Forgot password</string>
     <string name="password_reset_description">Enter your verified email to receive a one-time reset code.</string>
     <string name="send_reset_code">Send reset code</string>
@@ -159,8 +154,6 @@
     <string name="online_label">online</string>
     <string name="offline_label">offline</string>
     <string name="accept_friend">Accept request from %1$s</string>
-    <string name="join_friend_invite">Join %1$s in room %2$s</string>
-    <string name="tic_tac_toe_settings">Tic-Tac-Toe settings</string>
     <string name="error_invalid_credentials">The username or password is incorrect.</string>
     <string name="error_username_taken">This username is already in use.</string>
     <string name="error_username_cooldown">Your username cannot be changed again yet.</string>
@@ -187,7 +180,6 @@
     <string name="sessions_description">Review how many devices are signed in and remotely sign out the other devices.</string>
     <string name="password_change_description">Changing your password keeps this device signed in and signs out your other devices.</string>
     <string name="password_changed_other_sessions">Password changed. Other devices have been signed out.</string>
-    <string name="other_sessions_revoked">Other devices have been signed out.</string>
     <string name="email_verification_description">Add and verify an email address for account recovery. We will ask for the code in the next step.</string>
     <string name="use_different_email">Use a different email</string>
     <string name="code_sent_to">Enter the code sent to %1$s. If it has not arrived, check Spam or Junk.</string>
@@ -218,7 +210,6 @@
     <string name="setting_friend_notifications">Friend-request notifications</string><string name="setting_game_notifications">Game invitation and event notifications</string>
     <string name="retry">Try again</string><string name="confirm_action">Confirm</string>
     <string name="revoke_sessions_confirmation">Log out every other device? This device will remain signed in.</string>
-    <string name="current_session_item">This device\nSigned in: %1$s\nLast active: %2$s</string><string name="other_session_item">Other device\nSigned in: %1$s\nLast active: %2$s</string>
     <string name="join_friend_invite_timed">Join %1$s in room %2$s; expires in %3$d minutes</string>
     <string name="online_status_with_opponent">%1$s Opponent: %2$s, %3$s.</string>
     <string name="no_friends">No friends yet.</string><string name="no_friend_requests">No pending requests.</string><string name="no_game_invites">No active game invitations.</string>
@@ -229,7 +220,7 @@
     <string name="ludo_rules">Each active player has four pieces. Players roll one die in turn. A six is required to move a piece out of home and onto its starting square, and grants another roll. The optional three-sixes penalty ends the turn without using the third six; it is off by default. Move one legal piece by exactly the number rolled. Landing on an opponent on a non-safe square sends that piece home and grants another roll. Starting squares and marked star squares are safe and pieces on them cannot be captured. After completing the 52-square outer track, a piece enters its own final lane. The exact number is required to reach the finish. The first player to finish all four pieces wins.</string>
     <string name="ludo_accessibility">The visual board uses color, piece numbers, and player names together, so color is never the only cue. The status announces the player, die result, move, capture, and next turn in order. Every legal move also appears as a labeled button with the piece number and position, allowing the entire game to be played with a screen reader without exploring the visual board.</string>
     <string name="ludo_board_description">Visual Ludo board. Use the labeled move buttons below the board with a screen reader.</string><string name="ludo_roll_dice">Roll dice</string>
-    <string name="ludo_roll_announcement">%1$s rolled %2$d.</string><string name="ludo_move_announcement">%1$s moved piece %2$d to %3$s.</string><string name="ludo_capture_announcement">Captured %1$d opposing piece.</string>
+    <string name="ludo_roll_announcement">%1$s rolled %2$d.</string><string name="ludo_move_announcement">%1$s moved piece %2$d to %3$s.</string>
     <string name="ludo_turn_roll">%1$s’s turn. Roll the dice.</string><string name="ludo_choose_piece">%1$s rolled %2$d. Choose a piece.</string><string name="ludo_piece_action">Move piece %1$d, currently %2$s</string>
     <string name="ludo_red">Red</string><string name="ludo_blue">Blue</string><string name="ludo_green">Green</string><string name="ludo_yellow">Yellow</string><string name="ludo_human_player">%1$s player</string><string name="ludo_bot_player">%1$s bot</string>
     <string name="ludo_at_home">at home</string><string name="ludo_finished">finished</string><string name="ludo_final_lane">final lane square %1$d</string><string name="ludo_track_position">track square %1$d</string><string name="ludo_winner">%1$s wins!</string>
@@ -245,7 +236,6 @@
     <string name="ludo_player_summary">%1$s, player %2$d: %3$s</string>
     <string name="ludo_waiting_player_summary">%1$s, player %2$d, %3$s</string>
     <string name="ludo_named_player">%1$s, player %2$d, %3$s</string>
-    <string name="ludo_capture_opportunity">Piece %1$d can capture %2$d opponent piece(s).</string>
     <string name="ludo_piece_action_capture">Piece %1$d, currently %2$s; captures an opponent piece</string>
     <string name="ludo_capture_target_opportunity">Piece %1$d can capture piece %2$d belonging to %3$s.</string>
     <string name="ludo_captured_piece">Piece %2$d belonging to %1$s was captured.</string>
@@ -283,7 +273,6 @@
     <string name="call_force_muted">A room administrator muted your microphone.</string>
     <string name="call_kicked">You were removed from the call.</string>
     <string name="room_connected">Connected to room.</string>
-    <string name="room_disconnected">Room connection was interrupted.</string>
     <string name="open_community_rooms">Rooms and group play</string>
     <string name="mute_room_chat">Mute room chat</string><string name="ban_from_call">Ban from calls</string>
     <string name="ban_from_room">Ban from room</string><string name="make_room_admin">Make room administrator</string>
@@ -304,7 +293,6 @@
     <string name="edit_message">Edit message</string>
     <string name="delete_message">Delete message</string>
     <string name="delete_message_confirmation">Delete this message for everyone?</string>
-    <string name="deleted_message">Deleted message</string>
     <string name="save">Save</string>
     <string name="leaderboard_title">Stats and leaderboard</string>
     <string name="player_stats_value">Your score: %1$d\nTic-tac-toe: %2$d played, %3$d wins\nLudo: %4$d played, %5$d wins</string>
@@ -329,7 +317,6 @@
     <string name="not_now">Not now</string>
     <string name="rooms_for_game">Shared rooms for %1$s. The room remains available when you switch games.</string>
     <string name="message_send_failed">Message was not sent. Your text was kept. Error: %1$s</string>
-    <string name="room_verifying_connection">Connected to the room. Verifying two-way data transfer…</string>
     <string name="message_actions_for">Message actions for %1$s</string>
     <string name="message_removed">Message removed</string>
     <string name="room_reconnecting">Room connection was interrupted. Reconnecting…</string>

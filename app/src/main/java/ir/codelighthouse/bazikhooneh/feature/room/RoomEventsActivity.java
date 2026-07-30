@@ -5,10 +5,10 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
-import ir.codelighthouse.bazikhooneh.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.R;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
+import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

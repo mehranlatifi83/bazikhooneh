@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import ir.codelighthouse.bazikhooneh.feature.home.HomeActivity;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;

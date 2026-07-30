@@ -1,10 +1,10 @@
 package ir.codelighthouse.bazikhooneh.catalog;
 
 import ir.codelighthouse.bazikhooneh.R;
-import ir.codelighthouse.bazikhooneh.TicTacToeGuideActivity;
-import ir.codelighthouse.bazikhooneh.TicTacToeMenuActivity;
 import ir.codelighthouse.bazikhooneh.feature.ludo.LudoGuideActivity;
 import ir.codelighthouse.bazikhooneh.feature.ludo.LudoMenuActivity;
+import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGuideActivity;
+import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeMenuActivity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

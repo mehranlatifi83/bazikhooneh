@@ -9,6 +9,12 @@
     <string name="choose_language_title">زبان برنامه را انتخاب کنید</string>
     <string name="choose_language_description">بعداً هم می‌توانید زبان برنامه را از تنظیمات تغییر دهید.</string>
     <string name="language_title">زبان برنامه</string>
+    <string name="language_persian">فارسی</string>
+    <string name="language_english">English</string>
+    <string name="game_card_content">%1$s\n%2$s</string>
+    <string name="notification_item">%1$s\n%2$s</string>
+    <string name="room_title_with_code">%1$s — %2$s</string>
+    <string name="friend_item_remove">%1$s\n%2$s</string>
     <string-array name="language_choices"><item>فارسی</item><item>English</item></string-array>
     <string name="app_name">بازی‌خونه</string>
     <string name="tic_tac_toe_title">دوز</string>
@@ -44,7 +50,6 @@
     <string name="online_your_turn">نوبت شماست. مهره شما %1$s است.</string>
     <string name="online_opponent_turn">نوبت بازیکن دیگر است. مهره شما %1$s است.</string>
     <string name="online_disconnected">ارتباط با سرور بازی قطع شد.</string>
-    <string name="online_error">خطای بازی آنلاین: %1$s</string>
     <string name="online_select_own_piece">ابتدا یکی از مهره‌های خودتان را انتخاب کنید.</string>
     <string name="request_rematch">بازی دوباره</string>
     <string name="leave_room">خروج از اتاق</string>
@@ -71,12 +76,7 @@
     <string name="account_login">ورود</string>
     <string name="account_register">ساخت حساب</string>
     <string name="account_logout">خروج از حساب</string>
-    <string name="account_signed_in">واردشده با نام %1$s، نام کاربری %2$s</string>
-    <string name="account_required">برای بازی آنلاین وارد شوید یا حساب بسازید.</string>
     <string name="account_fields_required">نام کاربری و گذرواژه‌ای با حداقل هشت نویسه وارد کنید.</string>
-    <string name="display_name_required">برای ساخت حساب، نام نمایشی را وارد کنید.</string>
-    <string name="account_logged_out">از حساب خارج شدید.</string>
-    <string name="account_error">خطای حساب کاربری: %1$s</string>
     <string name="home_guest">می‌توانید دونفره، با ربات یا پس از ورود به‌صورت آنلاین بازی کنید.</string>
     <string name="home_welcome">خوش آمدید، %1$s</string>
     <string name="games_heading">بازی‌ها</string>
@@ -108,7 +108,6 @@
     <string name="match_loss">باخت</string>
     <string name="match_history_item">%1$s مقابل %2$s، دور %3$d</string>
     <string name="ludo_match_history_item">منچ: %1$s مقابل %2$s</string>
-    <string name="login_title">حساب بازی‌خونه</string>
     <string name="account_title">حساب کاربری</string>
     <string name="login_description">یک حساب برای همه بازی‌های آنلاین، پروفایل، امتیاز و دعوت‌های بازی‌خونه استفاده می‌شود.</string>
     <string name="tic_tac_toe_description">بازی دونفره، با ربات و آنلاین</string>
@@ -122,9 +121,6 @@
     <string name="difficulty_hard">سخت</string>
     <string name="start_game">شروع بازی</string>
     <string name="mode_online_description">بازی آنلاین با یک بازیکن دیگر</string>
-    <string name="online_lobby_title">دوز آنلاین</string>
-    <string name="online_lobby_description">یک اتاق خصوصی بسازید یا با کد شش‌حرفی وارد اتاق شوید.</string>
-    <string name="or_join_room">یا وارد یک اتاق موجود شوید</string>
     <string name="account_security_title">حساب و امنیت</string>
     <string name="change_username_title">تغییر نام کاربری</string>
     <string name="username_policy">اولین تغییر از همین حالا ممکن است. پس از تغییر باید ۳۰ روز صبر کنید و نام کاربری قبلی تا ۹۰ روز برای خودتان رزرو می‌ماند.</string>
@@ -144,7 +140,6 @@
     <string name="revoke_other_sessions">خروج از دستگاه‌های دیگر</string>
     <string name="active_sessions_count">نشست‌های فعال: %1$d</string>
     <string name="changes_saved">تغییرات ذخیره شد.</string>
-    <string name="account_action_error">انجام درخواست ممکن نشد: %1$s</string>
     <string name="forgot_password">فراموشی گذرواژه</string>
     <string name="password_reset_description">ایمیل تأییدشدهٔ خود را وارد کنید تا کد یک‌بارمصرف بازیابی برایتان ارسال شود.</string>
     <string name="send_reset_code">ارسال کد بازیابی</string>
@@ -159,8 +154,6 @@
     <string name="online_label">آنلاین</string>
     <string name="offline_label">آفلاین</string>
     <string name="accept_friend">پذیرفتن درخواست %1$s</string>
-    <string name="join_friend_invite">پیوستن به %1$s در اتاق %2$s</string>
-    <string name="tic_tac_toe_settings">تنظیمات دوز</string>
     <string name="error_invalid_credentials">نام کاربری یا گذرواژه نادرست است.</string>
     <string name="error_username_taken">این نام کاربری قبلاً استفاده شده است.</string>
     <string name="error_username_cooldown">هنوز زمان تغییر دوبارهٔ نام کاربری نرسیده است.</string>
@@ -187,7 +180,6 @@
     <string name="sessions_description">تعداد دستگاه‌های واردشده را ببینید و از دستگاه‌های دیگر از راه دور خارج شوید.</string>
     <string name="password_change_description">با تغییر گذرواژه، این دستگاه وارد می‌ماند و دستگاه‌های دیگر خارج می‌شوند.</string>
     <string name="password_changed_other_sessions">گذرواژه تغییر کرد و دستگاه‌های دیگر خارج شدند.</string>
-    <string name="other_sessions_revoked">دستگاه‌های دیگر از حساب خارج شدند.</string>
     <string name="email_verification_description">برای بازیابی حساب، ایمیل خود را اضافه و تأیید کنید. کد در مرحلهٔ بعد وارد می‌شود.</string>
     <string name="use_different_email">استفاده از ایمیل دیگر</string>
     <string name="code_sent_to">کد ارسال‌شده به %1$s را وارد کنید. اگر کد نرسید، پوشهٔ هرزنامه یا Spam را هم بررسی کنید.</string>
@@ -218,7 +210,6 @@
     <string name="setting_friend_notifications">اعلان درخواست‌های دوستی</string><string name="setting_game_notifications">اعلان دعوت‌ها و رویدادهای بازی</string>
     <string name="retry">تلاش دوباره</string><string name="confirm_action">تأیید</string>
     <string name="revoke_sessions_confirmation">از همهٔ دستگاه‌های دیگر خارج می‌شوید؟ این دستگاه وارد باقی می‌ماند.</string>
-    <string name="current_session_item">این دستگاه\nزمان ورود: %1$s\nآخرین فعالیت: %2$s</string><string name="other_session_item">دستگاه دیگر\nزمان ورود: %1$s\nآخرین فعالیت: %2$s</string>
     <string name="join_friend_invite_timed">پیوستن به %1$s در اتاق %2$s؛ %3$d دقیقه تا انقضا</string>
     <string name="online_status_with_opponent">%1$s حریف: %2$s، %3$s.</string>
     <string name="no_friends">هنوز دوستی ندارید.</string><string name="no_friend_requests">درخواست در انتظاری ندارید.</string><string name="no_game_invites">دعوت فعال بازی ندارید.</string>
@@ -229,7 +220,7 @@
     <string name="ludo_rules">هر بازیکن فعال چهار مهره دارد. بازیکنان به نوبت یک تاس می‌اندازند. برای بیرون‌آوردن مهره از خانه و قرارگرفتن روی خانه شروع باید ۶ بیاورید و آوردن ۶ یک تاس دیگر می‌دهد. قانون اختیاری سه ۶ پیاپی، نوبت را بدون استفاده از ۶ سوم می‌سوزاند؛ این گزینه به‌صورت پیش‌فرض خاموش است. یک مهره مجاز را دقیقاً به‌اندازه عدد تاس حرکت دهید. فرود روی مهره حریف در خانه غیرامن، آن مهره را به خانه برمی‌گرداند و یک تاس دیگر می‌دهد. خانه‌های شروع و خانه‌های ستاره‌دار امن‌اند و مهره روی آن‌ها زده نمی‌شود. پس از پیمودن ۵۲ خانه مسیر بیرونی، مهره وارد مسیر پایانی مخصوص رنگ خود می‌شود. برای رسیدن به پایان باید عدد دقیق بیاورید. نخستین بازیکنی که هر چهار مهره را به پایان برساند برنده است.</string>
     <string name="ludo_accessibility">صفحه دیداری علاوه بر رنگ از شماره مهره و نام بازیکن استفاده می‌کند؛ بنابراین رنگ تنها نشانه نیست. وضعیت بازی نام بازیکن، نتیجه تاس، حرکت، زدن مهره و نوبت بعد را به‌ترتیب اعلام می‌کند. همه حرکت‌های مجاز نیز به‌شکل دکمه دارای نام مهره و موقعیت نمایش داده می‌شوند تا کل بازی بدون کاوش صفحه دیداری با صفحه‌خوان قابل انجام باشد.</string>
     <string name="ludo_board_description">صفحه دیداری منچ؛ هنگام استفاده از صفحه‌خوان از دکمه‌های حرکت زیر صفحه استفاده کنید.</string><string name="ludo_roll_dice">انداختن تاس</string>
-    <string name="ludo_roll_announcement">%1$s عدد %2$d آورد.</string><string name="ludo_move_announcement">%1$s مهره %2$d را به %3$s برد.</string><string name="ludo_capture_announcement">%1$d مهره حریف زده شد.</string>
+    <string name="ludo_roll_announcement">%1$s عدد %2$d آورد.</string><string name="ludo_move_announcement">%1$s مهره %2$d را به %3$s برد.</string>
     <string name="ludo_turn_roll">نوبت %1$s است. تاس بیندازید.</string><string name="ludo_choose_piece">%1$s عدد %2$d آورده است. یک مهره انتخاب کنید.</string><string name="ludo_piece_action">حرکت مهره %1$d، موقعیت فعلی: %2$s</string>
     <string name="ludo_red">قرمز</string><string name="ludo_blue">آبی</string><string name="ludo_green">سبز</string><string name="ludo_yellow">زرد</string><string name="ludo_human_player">بازیکن %1$s</string><string name="ludo_bot_player">ربات %1$s</string>
     <string name="ludo_at_home">در خانه</string><string name="ludo_finished">رسیده به پایان</string><string name="ludo_final_lane">خانه %1$d مسیر پایانی</string><string name="ludo_track_position">خانه %1$d مسیر</string><string name="ludo_winner">%1$s برنده شد!</string>
@@ -245,7 +236,6 @@
     <string name="ludo_player_summary">%1$s، بازیکن %2$d: %3$s</string>
     <string name="ludo_waiting_player_summary">%1$s، بازیکن %2$d، %3$s</string>
     <string name="ludo_named_player">%1$s، بازیکن %2$d، %3$s</string>
-    <string name="ludo_capture_opportunity">مهره %1$d می‌تواند %2$d مهره حریف را بزند.</string>
     <string name="ludo_piece_action_capture">مهره %1$d، اکنون %2$s؛ با این حرکت مهره حریف زده می‌شود</string>
     <string name="ludo_capture_target_opportunity">مهره %1$d می‌تواند مهره %2$d متعلق به %3$s را بزند.</string>
     <string name="ludo_captured_piece">مهره %2$d متعلق به %1$s زده شد.</string>
@@ -283,7 +273,6 @@
     <string name="call_force_muted">مدیر اتاق میکروفون شما را خاموش کرد.</string>
     <string name="call_kicked">مدیر شما را از تماس خارج کرد.</string>
     <string name="room_connected">به اتاق متصل شدید.</string>
-    <string name="room_disconnected">ارتباط اتاق قطع شد.</string>
     <string name="open_community_rooms">اتاق‌ها و بازی گروهی</string>
     <string name="mute_room_chat">بی‌صدا کردن در گفتگو</string><string name="ban_from_call">محروم کردن از تماس‌ها</string>
     <string name="ban_from_room">مسدود کردن از اتاق</string><string name="make_room_admin">تبدیل به مدیر اتاق</string>
@@ -304,7 +293,6 @@
     <string name="edit_message">ویرایش پیام</string>
     <string name="delete_message">حذف پیام</string>
     <string name="delete_message_confirmation">این پیام برای همه حذف شود؟</string>
-    <string name="deleted_message">پیام حذف‌شده</string>
     <string name="save">ذخیره</string>
     <string name="leaderboard_title">آمار و جدول رتبه‌بندی</string>
     <string name="player_stats_value">امتیاز شما: %1$d\nدوز: %2$d بازی، %3$d برد\nمنچ: %4$d بازی، %5$d برد</string>
@@ -329,7 +317,6 @@
     <string name="not_now">فعلاً نه</string>
     <string name="rooms_for_game">اتاق‌های مشترک برای %1$s. با عوض‌کردن بازی، اتاق و امکاناتش باقی می‌ماند.</string>
     <string name="message_send_failed">پیام ارسال نشد و متن آن نگه داشته شد. خطا: %1$s</string>
-    <string name="room_verifying_connection">اتصال اتاق برقرار شد؛ در حال بررسی انتقال دوطرفهٔ داده…</string>
     <string name="message_actions_for">عملیات پیامِ %1$s</string>
     <string name="message_removed">پیام حذف شد</string>
     <string name="room_reconnecting">ارتباط اتاق موقتاً قطع شد؛ در حال اتصال دوباره…</string>
