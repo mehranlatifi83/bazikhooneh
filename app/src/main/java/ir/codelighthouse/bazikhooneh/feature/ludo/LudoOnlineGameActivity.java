@@ -1,19 +1,350 @@
 package ir.codelighthouse.bazikhooneh.feature.ludo;
-import android.content.Intent;import android.os.*;import android.view.*;import android.widget.*;import java.util.*;import org.json.*;import ir.codelighthouse.bazikhooneh.accessibility.FocusStableAnnouncer;import ir.codelighthouse.bazikhooneh.account.*;import ir.codelighthouse.bazikhooneh.game.ludo.*;import ir.codelighthouse.bazikhooneh.online.LudoOnlineClient;import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
-import ir.codelighthouse.bazikhooneh.BuildConfig;import ir.codelighthouse.bazikhooneh.NavigableActivity;import ir.codelighthouse.bazikhooneh.R;
-public final class LudoOnlineGameActivity extends NavigableActivity{
- private final Handler handler=new Handler(Looper.getMainLooper());private final List<String> deferredMessages=new ArrayList<>();private LudoOnlineClient client;private String room,token,host;private int ownColor,lastVersion=-1;private boolean destroyed,connected;private LudoGame game;private LudoBoardView board;private LinearLayout actions,summary;private TextView status,roomInfo,eventLog;private JSONArray seats;private FocusStableAnnouncer announcer;
- @Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_ludo);findViewById(R.id.ludo_online_controls).setVisibility(View.VISIBLE);board=findViewById(R.id.ludo_board);actions=findViewById(R.id.ludo_piece_actions);status=findViewById(R.id.ludo_status);eventLog=findViewById(R.id.ludo_event_log);summary=findViewById(R.id.ludo_summary);roomInfo=findViewById(R.id.ludo_room_info);announcer=new FocusStableAnnouncer(this,status);SecurePreferences prefs=SecurePreferences.open(this,"ludo_online");room=prefs.getString("room","");token=prefs.getString("token","");ownColor=prefs.getInt("color",0);host=prefs.getString("host","");SessionStore store=new SessionStore(this);client=new LudoOnlineClient(this,BuildConfig.API_BASE_URL,store.token(),listener);findViewById(R.id.ludo_roll).setOnClickListener(v->client.roll());findViewById(R.id.ludo_start_with_bots).setOnClickListener(v->client.start(room));findViewById(R.id.ludo_share_room).setOnClickListener(v->startActivity(Intent.createChooser(new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,getString(R.string.ludo_share_text,room)),getString(R.string.share_room))));client.reconnect(room,token);}
- private void render(JSONObject value){seats=value.optJSONArray("seats");int version=value.optInt("version");boolean waiting="waiting".equals(value.optString("room_state"));if(!waiting&&game!=null&&version==lastVersion)return;roomInfo.setText(getString(R.string.ludo_online_room_info,room,seatsDescription()));findViewById(R.id.ludo_start_with_bots).setVisibility(waiting&&new SessionStore(this).username().equals(host)?View.VISIBLE:View.GONE);findViewById(R.id.ludo_roll).setVisibility(waiting?View.GONE:View.VISIBLE);if(waiting){status.setText(R.string.ludo_waiting_players);board.setVisibility(View.GONE);renderWaitingCards();if(lastVersion<0)announce(status.getText().toString());lastVersion=version;return;}JSONObject state=value.optJSONObject("game");game=parse(state);List<Integer> legal=connected&&game.currentPlayer()==ownColor?game.legalPieces():Collections.emptyList();boolean turn=game.currentPlayer()==ownColor,newVersion=lastVersion>=0&&version>lastVersion;if(newVersion)deferredMessages.addAll(eventMessages(state.optJSONArray("events")));if(connected&&turn&&!game.awaitingRoll()&&legal.size()==1&&game.winner()<0){int piece=legal.get(0);addCaptureOpportunities(piece);lastVersion=version;findViewById(R.id.ludo_roll).setEnabled(false);client.move(piece);return;}board.setVisibility(View.VISIBLE);board.bind(game,legal,client::move);actions.removeAllViews();findViewById(R.id.ludo_roll).setEnabled(connected&&turn&&game.awaitingRoll());String current=game.winner()>=0?getString(R.string.ludo_winner,playerLabel(game.winner())):turn?(game.awaitingRoll()?getString(R.string.ludo_online_your_roll):getString(R.string.ludo_choose_piece,playerLabel(ownColor),game.die())):getString(R.string.ludo_online_other_turn,playerLabel(game.currentPlayer()));status.setText(current);for(int piece:legal){Button button=new Button(this);button.setText(captureButtonText(piece));int selected=piece;button.setOnClickListener(v->{announcer.beforeFocusedViewIsRemoved();client.move(selected);});actions.addView(button);if(newVersion)addCaptureOpportunities(piece);}renderGameCards();if(newVersion){deferredMessages.add(current);announceDeferred();}else if(lastVersion<0)announce(current);lastVersion=version;}
- private void addCaptureOpportunities(int piece){for(String target:game.captureTargets(piece)){String[] values=target.split(":");deferredMessages.add(getString(R.string.ludo_capture_target_opportunity,piece+1,Integer.parseInt(values[1])+1,playerLabel(Integer.parseInt(values[0]))));}}
- private String captureButtonText(int piece){List<String> targets=game.captureTargets(piece);if(targets.isEmpty())return getString(R.string.ludo_piece_action,piece+1,position(game.progress(ownColor,piece)));String[] target=targets.get(0).split(":");return getString(R.string.ludo_capture_target_opportunity,piece+1,Integer.parseInt(target[1])+1,playerLabel(Integer.parseInt(target[0])));}
- private List<String> eventMessages(JSONArray events){List<String> result=new ArrayList<>();for(int i=0;events!=null&&i<events.length();i++){JSONObject event=events.optJSONObject(i);int player=event.optInt("player");if("roll".equals(event.optString("kind")))result.add(getString(R.string.ludo_roll_announcement,playerLabel(player),event.optInt("die")));else{result.add(getString(R.string.ludo_move_announcement,playerLabel(player),event.optInt("piece")+1,position(event.optInt("to"))));JSONArray captured=event.optJSONArray("captured");for(int j=0;captured!=null&&j<captured.length();j++){JSONArray victim=captured.optJSONArray(j);result.add(getString(R.string.ludo_captured_piece,playerLabel(victim.optInt(0)),victim.optInt(1)+1));}}}return result;}private void announceDeferred(){if(deferredMessages.isEmpty())return;StringBuilder text=new StringBuilder();for(String message:deferredMessages){if(text.length()>0)text.append(". ");text.append(message);}deferredMessages.clear();announce(text.toString());}private void announce(String text){eventLog.setText(getString(R.string.ludo_last_turn_log,text));eventLog.setVisibility(View.VISIBLE);announcer.announce(text);}
- private LudoGame parse(JSONObject state){int[][] positions=new int[4][4];boolean[] active=new boolean[4],bots=new boolean[4];JSONArray rows=state.optJSONArray("positions"),a=state.optJSONArray("active"),b=state.optJSONArray("bots");for(int p=0;p<4;p++){active[p]=a.optBoolean(p);bots[p]=b.optBoolean(p);JSONArray row=rows.optJSONArray(p);for(int i=0;i<4;i++)positions[p][i]=row.optInt(i,-1);}return LudoGame.snapshot(positions,active,bots,state.optInt("current_player"),state.optInt("die"),state.optBoolean("awaiting_roll"),state.optInt("winner",-1),state.optInt("consecutive_sixes"),state.optBoolean("third_six_penalty"));}
- private void renderWaitingCards(){summary.removeAllViews();for(int i=0;seats!=null&&i<seats.length();i++){JSONObject seat=seats.optJSONObject(i);addCard(getString(R.string.ludo_waiting_player_summary,seat.optString("display_name"),seat.optInt("color")+1,color(seat.optInt("color"))));}}
- private void renderGameCards(){summary.removeAllViews();for(int p=0;p<4;p++)if(game.isActive(p)){StringBuilder pieces=new StringBuilder();for(int i=0;i<4;i++){if(i>0)pieces.append(", ");pieces.append(position(game.progress(p,i)));}addCard(getString(R.string.ludo_player_summary,displayName(p),p+1,pieces));}}
- private void addCard(String text){TextView card=new TextView(this);card.setText(text);card.setTextSize(17);card.setPadding(24,20,24,20);card.setBackgroundColor(getColor(R.color.surface));LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);params.bottomMargin=12;summary.addView(card,params);}
- private String seatsDescription(){StringBuilder text=new StringBuilder();for(int i=0;seats!=null&&i<seats.length();i++){JSONObject seat=seats.optJSONObject(i);if(i>0)text.append('\n');text.append(seat.optString("display_name")).append(" — ").append(color(seat.optInt("color")));}return text.toString();}
- private String displayName(int player){for(int i=0;seats!=null&&i<seats.length();i++){JSONObject seat=seats.optJSONObject(i);if(seat.optInt("color")==player)return seat.optString("display_name");}return color(player);}private String playerLabel(int player){return getString(R.string.ludo_named_player,displayName(player),player+1,color(player));}private String color(int p){int[] ids={R.string.ludo_red,R.string.ludo_blue,R.string.ludo_green,R.string.ludo_yellow};return getString(ids[Math.max(0,Math.min(3,p))]);}private String position(int v){return v<0?getString(R.string.ludo_at_home):v==57?getString(R.string.ludo_finished):v>=52?getString(R.string.ludo_final_lane,v-51):getString(R.string.ludo_track_position,v+1);}
- private final LudoOnlineClient.Listener listener=new LudoOnlineClient.Listener(){public void onSession(JSONObject s){}public void onState(JSONObject state){runOnUiThread(()->render(state));}public void onConnected(){runOnUiThread(()->{connected=true;lastVersion=-1;});}public void onError(String error){runOnUiThread(()->{String message=AccountErrorMessages.get(LudoOnlineGameActivity.this,error);status.setText(message);announce(message);});}public void onDisconnected(){runOnUiThread(()->{if(destroyed)return;connected=false;findViewById(R.id.ludo_roll).setEnabled(false);actions.removeAllViews();status.setText(R.string.online_disconnected);announce(status.getText().toString());});}};
- @Override protected void onDestroy(){destroyed=true;handler.removeCallbacksAndMessages(null);announcer.close();client.disconnect();super.onDestroy();}
+
+import android.content.Intent;
+import android.os.*;
+import android.view.*;
+import android.widget.*;
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.R;
+import ir.codelighthouse.bazikhooneh.accessibility.FocusStableAnnouncer;
+import ir.codelighthouse.bazikhooneh.account.*;
+import ir.codelighthouse.bazikhooneh.game.ludo.*;
+import ir.codelighthouse.bazikhooneh.online.LudoOnlineClient;
+import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
+import java.util.*;
+import org.json.*;
+
+public final class LudoOnlineGameActivity extends NavigableActivity {
+  private final Handler handler = new Handler(Looper.getMainLooper());
+  private final List<String> deferredMessages = new ArrayList<>();
+  private LudoOnlineClient client;
+  private String room, token, host;
+  private int ownColor, lastVersion = -1;
+  private boolean destroyed, connected;
+  private LudoGame game;
+  private LudoBoardView board;
+  private LinearLayout actions, summary;
+  private TextView status, roomInfo, eventLog;
+  private JSONArray seats;
+  private FocusStableAnnouncer announcer;
+
+  @Override
+  protected void onCreate(Bundle state) {
+    super.onCreate(state);
+    setContentView(R.layout.activity_ludo);
+    findViewById(R.id.ludo_online_controls).setVisibility(View.VISIBLE);
+    board = findViewById(R.id.ludo_board);
+    actions = findViewById(R.id.ludo_piece_actions);
+    status = findViewById(R.id.ludo_status);
+    eventLog = findViewById(R.id.ludo_event_log);
+    summary = findViewById(R.id.ludo_summary);
+    roomInfo = findViewById(R.id.ludo_room_info);
+    announcer = new FocusStableAnnouncer(this, status);
+    SecurePreferences prefs = SecurePreferences.open(this, "ludo_online");
+    room = prefs.getString("room", "");
+    token = prefs.getString("token", "");
+    ownColor = prefs.getInt("color", 0);
+    host = prefs.getString("host", "");
+    SessionStore store = new SessionStore(this);
+    client = new LudoOnlineClient(this, BuildConfig.API_BASE_URL, store.token(), listener);
+    findViewById(R.id.ludo_roll).setOnClickListener(v -> client.roll());
+    findViewById(R.id.ludo_start_with_bots).setOnClickListener(v -> client.start(room));
+    findViewById(R.id.ludo_share_room)
+        .setOnClickListener(
+            v ->
+                startActivity(
+                    Intent.createChooser(
+                        new Intent(Intent.ACTION_SEND)
+                            .setType("text/plain")
+                            .putExtra(Intent.EXTRA_TEXT, getString(R.string.ludo_share_text, room)),
+                        getString(R.string.share_room))));
+    client.reconnect(room, token);
+  }
+
+  private void render(JSONObject value) {
+    seats = value.optJSONArray("seats");
+    int version = value.optInt("version");
+    boolean waiting = "waiting".equals(value.optString("room_state"));
+    if (!waiting && game != null && version == lastVersion) return;
+    roomInfo.setText(getString(R.string.ludo_online_room_info, room, seatsDescription()));
+    findViewById(R.id.ludo_start_with_bots)
+        .setVisibility(
+            waiting && new SessionStore(this).username().equals(host) ? View.VISIBLE : View.GONE);
+    findViewById(R.id.ludo_roll).setVisibility(waiting ? View.GONE : View.VISIBLE);
+    if (waiting) {
+      status.setText(R.string.ludo_waiting_players);
+      board.setVisibility(View.GONE);
+      renderWaitingCards();
+      if (lastVersion < 0) announce(status.getText().toString());
+      lastVersion = version;
+      return;
+    }
+    JSONObject state = value.optJSONObject("game");
+    game = parse(state);
+    List<Integer> legal =
+        connected && game.currentPlayer() == ownColor
+            ? game.legalPieces()
+            : Collections.emptyList();
+    boolean turn = game.currentPlayer() == ownColor,
+        newVersion = lastVersion >= 0 && version > lastVersion;
+    if (newVersion) deferredMessages.addAll(eventMessages(state.optJSONArray("events")));
+    if (connected && turn && !game.awaitingRoll() && legal.size() == 1 && game.winner() < 0) {
+      int piece = legal.get(0);
+      addCaptureOpportunities(piece);
+      lastVersion = version;
+      findViewById(R.id.ludo_roll).setEnabled(false);
+      client.move(piece);
+      return;
+    }
+    board.setVisibility(View.VISIBLE);
+    board.bind(game, legal, client::move);
+    actions.removeAllViews();
+    findViewById(R.id.ludo_roll).setEnabled(connected && turn && game.awaitingRoll());
+    String current =
+        game.winner() >= 0
+            ? getString(R.string.ludo_winner, playerLabel(game.winner()))
+            : turn
+                ? (game.awaitingRoll()
+                    ? getString(R.string.ludo_online_your_roll)
+                    : getString(R.string.ludo_choose_piece, playerLabel(ownColor), game.die()))
+                : getString(R.string.ludo_online_other_turn, playerLabel(game.currentPlayer()));
+    status.setText(current);
+    for (int piece : legal) {
+      Button button = new Button(this);
+      button.setText(captureButtonText(piece));
+      int selected = piece;
+      button.setOnClickListener(
+          v -> {
+            announcer.beforeFocusedViewIsRemoved();
+            client.move(selected);
+          });
+      actions.addView(button);
+      if (newVersion) addCaptureOpportunities(piece);
+    }
+    renderGameCards();
+    if (newVersion) {
+      deferredMessages.add(current);
+      announceDeferred();
+    } else if (lastVersion < 0) announce(current);
+    lastVersion = version;
+  }
+
+  private void addCaptureOpportunities(int piece) {
+    for (String target : game.captureTargets(piece)) {
+      String[] values = target.split(":");
+      deferredMessages.add(
+          getString(
+              R.string.ludo_capture_target_opportunity,
+              piece + 1,
+              Integer.parseInt(values[1]) + 1,
+              playerLabel(Integer.parseInt(values[0]))));
+    }
+  }
+
+  private String captureButtonText(int piece) {
+    List<String> targets = game.captureTargets(piece);
+    if (targets.isEmpty())
+      return getString(
+          R.string.ludo_piece_action, piece + 1, position(game.progress(ownColor, piece)));
+    String[] target = targets.get(0).split(":");
+    return getString(
+        R.string.ludo_capture_target_opportunity,
+        piece + 1,
+        Integer.parseInt(target[1]) + 1,
+        playerLabel(Integer.parseInt(target[0])));
+  }
+
+  private List<String> eventMessages(JSONArray events) {
+    List<String> result = new ArrayList<>();
+    for (int i = 0; events != null && i < events.length(); i++) {
+      JSONObject event = events.optJSONObject(i);
+      int player = event.optInt("player");
+      if ("roll".equals(event.optString("kind")))
+        result.add(
+            getString(R.string.ludo_roll_announcement, playerLabel(player), event.optInt("die")));
+      else {
+        result.add(
+            getString(
+                R.string.ludo_move_announcement,
+                playerLabel(player),
+                event.optInt("piece") + 1,
+                position(event.optInt("to"))));
+        JSONArray captured = event.optJSONArray("captured");
+        for (int j = 0; captured != null && j < captured.length(); j++) {
+          JSONArray victim = captured.optJSONArray(j);
+          result.add(
+              getString(
+                  R.string.ludo_captured_piece,
+                  playerLabel(victim.optInt(0)),
+                  victim.optInt(1) + 1));
+        }
+      }
+    }
+    return result;
+  }
+
+  private void announceDeferred() {
+    if (deferredMessages.isEmpty()) return;
+    StringBuilder text = new StringBuilder();
+    for (String message : deferredMessages) {
+      if (text.length() > 0) text.append(". ");
+      text.append(message);
+    }
+    deferredMessages.clear();
+    announce(text.toString());
+  }
+
+  private void announce(String text) {
+    eventLog.setText(getString(R.string.ludo_last_turn_log, text));
+    eventLog.setVisibility(View.VISIBLE);
+    announcer.announce(text);
+  }
+
+  private LudoGame parse(JSONObject state) {
+    int[][] positions = new int[4][4];
+    boolean[] active = new boolean[4], bots = new boolean[4];
+    JSONArray rows = state.optJSONArray("positions"),
+        a = state.optJSONArray("active"),
+        b = state.optJSONArray("bots");
+    for (int p = 0; p < 4; p++) {
+      active[p] = a.optBoolean(p);
+      bots[p] = b.optBoolean(p);
+      JSONArray row = rows.optJSONArray(p);
+      for (int i = 0; i < 4; i++) positions[p][i] = row.optInt(i, -1);
+    }
+    return LudoGame.snapshot(
+        positions,
+        active,
+        bots,
+        state.optInt("current_player"),
+        state.optInt("die"),
+        state.optBoolean("awaiting_roll"),
+        state.optInt("winner", -1),
+        state.optInt("consecutive_sixes"),
+        state.optBoolean("third_six_penalty"));
+  }
+
+  private void renderWaitingCards() {
+    summary.removeAllViews();
+    for (int i = 0; seats != null && i < seats.length(); i++) {
+      JSONObject seat = seats.optJSONObject(i);
+      addCard(
+          getString(
+              R.string.ludo_waiting_player_summary,
+              seat.optString("display_name"),
+              seat.optInt("color") + 1,
+              color(seat.optInt("color"))));
+    }
+  }
+
+  private void renderGameCards() {
+    summary.removeAllViews();
+    for (int p = 0; p < 4; p++)
+      if (game.isActive(p)) {
+        StringBuilder pieces = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+          if (i > 0) pieces.append(", ");
+          pieces.append(position(game.progress(p, i)));
+        }
+        addCard(getString(R.string.ludo_player_summary, displayName(p), p + 1, pieces));
+      }
+  }
+
+  private void addCard(String text) {
+    TextView card = new TextView(this);
+    card.setText(text);
+    card.setTextSize(17);
+    card.setPadding(24, 20, 24, 20);
+    card.setBackgroundColor(getColor(R.color.surface));
+    LinearLayout.LayoutParams params =
+        new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    params.bottomMargin = 12;
+    summary.addView(card, params);
+  }
+
+  private String seatsDescription() {
+    StringBuilder text = new StringBuilder();
+    for (int i = 0; seats != null && i < seats.length(); i++) {
+      JSONObject seat = seats.optJSONObject(i);
+      if (i > 0) text.append('\n');
+      text.append(seat.optString("display_name")).append(" — ").append(color(seat.optInt("color")));
+    }
+    return text.toString();
+  }
+
+  private String displayName(int player) {
+    for (int i = 0; seats != null && i < seats.length(); i++) {
+      JSONObject seat = seats.optJSONObject(i);
+      if (seat.optInt("color") == player) return seat.optString("display_name");
+    }
+    return color(player);
+  }
+
+  private String playerLabel(int player) {
+    return getString(R.string.ludo_named_player, displayName(player), player + 1, color(player));
+  }
+
+  private String color(int p) {
+    int[] ids = {R.string.ludo_red, R.string.ludo_blue, R.string.ludo_green, R.string.ludo_yellow};
+    return getString(ids[Math.max(0, Math.min(3, p))]);
+  }
+
+  private String position(int v) {
+    return v < 0
+        ? getString(R.string.ludo_at_home)
+        : v == 57
+            ? getString(R.string.ludo_finished)
+            : v >= 52
+                ? getString(R.string.ludo_final_lane, v - 51)
+                : getString(R.string.ludo_track_position, v + 1);
+  }
+
+  private final LudoOnlineClient.Listener listener =
+      new LudoOnlineClient.Listener() {
+        public void onSession(JSONObject s) {}
+
+        public void onState(JSONObject state) {
+          runOnUiThread(() -> render(state));
+        }
+
+        public void onConnected() {
+          runOnUiThread(
+              () -> {
+                connected = true;
+                lastVersion = -1;
+              });
+        }
+
+        public void onError(String error) {
+          runOnUiThread(
+              () -> {
+                String message = AccountErrorMessages.get(LudoOnlineGameActivity.this, error);
+                status.setText(message);
+                announce(message);
+              });
+        }
+
+        public void onDisconnected() {
+          runOnUiThread(
+              () -> {
+                if (destroyed) return;
+                connected = false;
+                findViewById(R.id.ludo_roll).setEnabled(false);
+                actions.removeAllViews();
+                status.setText(R.string.online_disconnected);
+                announce(status.getText().toString());
+              });
+        }
+      };
+
+  @Override
+  protected void onDestroy() {
+    destroyed = true;
+    handler.removeCallbacksAndMessages(null);
+    announcer.close();
+    client.disconnect();
+    super.onDestroy();
+  }
 }

@@ -4,332 +4,359 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Single owner for a logical WebSocket connection.
  *
- * It rejects callbacks from superseded sockets, uses exponential backoff with
- * jitter, waits for a usable network, and never reconnects after an explicit
- * stop or an authentication failure.
+ * <p>It rejects callbacks from superseded sockets, uses exponential backoff with jitter, waits for
+ * a usable network, and never reconnects after an explicit stop or an authentication failure.
  */
 public final class ReliableWebSocket {
-    public enum State { IDLE, CONNECTING, OPEN, WAITING, STOPPED }
+  public enum State {
+    IDLE,
+    CONNECTING,
+    OPEN,
+    WAITING,
+    STOPPED
+  }
 
-    public interface Listener {
-        void onOpen();
-        void onMessage(JSONObject message);
-        void onReconnecting(long delayMillis);
-        void onClosed();
-        void onError(String error);
-    }
+  public interface Listener {
+    void onOpen();
 
-    private final Context context;
-    private final OkHttpClient client;
-    private final Listener listener;
-    private final ScheduledExecutorService scheduler =
-            Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "bazikhooneh-websocket");
-                thread.setDaemon(true);
-                return thread;
-            });
-    private final Object lock = new Object();
-    private final ConnectivityManager connectivityManager;
-    private final ConnectivityManager.NetworkCallback networkCallback;
+    void onMessage(JSONObject message);
 
-    private Request request;
-    private WebSocket socket;
-    private ScheduledFuture<?> reconnectFuture;
-    private ScheduledFuture<?> heartbeatFuture;
-    private State state = State.IDLE;
-    private long generation;
-    private int reconnectAttempt;
-    private boolean stopped = true;
-    private boolean disconnectNotified;
-    private boolean networkCallbackRegistered;
-    private Network activeNetwork;
-    private long lastServerMessageNanos;
+    void onReconnecting(long delayMillis);
 
-    public ReliableWebSocket(
-            Context context, OkHttpClient client, Listener listener) {
-        this.context = context.getApplicationContext();
-        this.client = client;
-        this.listener = listener;
-        connectivityManager = (ConnectivityManager)
-                this.context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        networkCallback = new ConnectivityManager.NetworkCallback() {
-            @Override public void onAvailable(Network network) {
-                executeSafely(() -> {
-                    synchronized (lock) {
-                        boolean changed = activeNetwork != null
-                                && !activeNetwork.equals(network);
-                        activeNetwork = network;
-                        if (!stopped && (state == State.WAITING
-                                || (state == State.OPEN && changed))) {
-                            reconnectNowLocked();
-                        }
+    void onClosed();
+
+    void onError(String error);
+  }
+
+  private final Context context;
+  private final OkHttpClient client;
+  private final Listener listener;
+  private final ScheduledExecutorService scheduler =
+      Executors.newSingleThreadScheduledExecutor(
+          runnable -> {
+            Thread thread = new Thread(runnable, "bazikhooneh-websocket");
+            thread.setDaemon(true);
+            return thread;
+          });
+  private final Object lock = new Object();
+  private final ConnectivityManager connectivityManager;
+  private final ConnectivityManager.NetworkCallback networkCallback;
+
+  private Request request;
+  private WebSocket socket;
+  private ScheduledFuture<?> reconnectFuture;
+  private ScheduledFuture<?> heartbeatFuture;
+  private State state = State.IDLE;
+  private long generation;
+  private int reconnectAttempt;
+  private boolean stopped = true;
+  private boolean disconnectNotified;
+  private boolean networkCallbackRegistered;
+  private Network activeNetwork;
+  private long lastServerMessageNanos;
+
+  public ReliableWebSocket(Context context, OkHttpClient client, Listener listener) {
+    this.context = context.getApplicationContext();
+    this.client = client;
+    this.listener = listener;
+    connectivityManager =
+        (ConnectivityManager) this.context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    networkCallback =
+        new ConnectivityManager.NetworkCallback() {
+          @Override
+          public void onAvailable(Network network) {
+            executeSafely(
+                () -> {
+                  synchronized (lock) {
+                    boolean changed = activeNetwork != null && !activeNetwork.equals(network);
+                    activeNetwork = network;
+                    if (!stopped && (state == State.WAITING || (state == State.OPEN && changed))) {
+                      reconnectNowLocked();
                     }
+                  }
                 });
-            }
+          }
 
-            @Override public void onLost(Network network) {
-                executeSafely(() -> {
-                    synchronized (lock) {
-                        if (network.equals(activeNetwork)) activeNetwork = null;
-                        if (!stopped && activeNetwork == null
-                                && (state == State.OPEN || state == State.CONNECTING)) {
-                            reconnectNowLocked();
-                        }
+          @Override
+          public void onLost(Network network) {
+            executeSafely(
+                () -> {
+                  synchronized (lock) {
+                    if (network.equals(activeNetwork)) activeNetwork = null;
+                    if (!stopped
+                        && activeNetwork == null
+                        && (state == State.OPEN || state == State.CONNECTING)) {
+                      reconnectNowLocked();
                     }
+                  }
                 });
-            }
+          }
         };
-    }
+  }
 
-    private void executeSafely(Runnable runnable) {
-        try {
-            scheduler.execute(runnable);
-        } catch (java.util.concurrent.RejectedExecutionException ignored) { }
+  private void executeSafely(Runnable runnable) {
+    try {
+      scheduler.execute(runnable);
+    } catch (java.util.concurrent.RejectedExecutionException ignored) {
     }
+  }
 
-    public void start(Request request) {
-        synchronized (lock) {
-            stopLocked(false);
-            this.request = request;
-            stopped = false;
-            reconnectAttempt = 0;
-            disconnectNotified = false;
-            registerNetworkCallbackLocked();
-            generation++;
-            openLocked(generation);
-        }
+  public void start(Request request) {
+    synchronized (lock) {
+      stopLocked(false);
+      this.request = request;
+      stopped = false;
+      reconnectAttempt = 0;
+      disconnectNotified = false;
+      registerNetworkCallbackLocked();
+      generation++;
+      openLocked(generation);
     }
+  }
 
-    public boolean send(JSONObject message) {
-        synchronized (lock) {
-            if (state != State.OPEN || socket == null) return false;
-            boolean sent = socket.send(message.toString());
-            if (!sent) {
-                reconnectNowLocked();
-            }
-            return sent;
-        }
+  public boolean send(JSONObject message) {
+    synchronized (lock) {
+      if (state != State.OPEN || socket == null) return false;
+      boolean sent = socket.send(message.toString());
+      if (!sent) {
+        reconnectNowLocked();
+      }
+      return sent;
     }
+  }
 
-    public State state() {
-        synchronized (lock) {
-            return state;
-        }
+  public State state() {
+    synchronized (lock) {
+      return state;
     }
+  }
 
-    public void stop() {
-        synchronized (lock) {
-            stopLocked(true);
-        }
+  public void stop() {
+    synchronized (lock) {
+      stopLocked(true);
     }
+  }
 
-    public void shutdown() {
-        stop();
-        scheduler.shutdownNow();
+  public void shutdown() {
+    stop();
+    scheduler.shutdownNow();
+  }
+
+  private void stopLocked(boolean notify) {
+    stopped = true;
+    generation++;
+    cancelReconnectLocked();
+    cancelHeartbeatLocked();
+    WebSocket previous = socket;
+    socket = null;
+    State previousState = state;
+    state = State.STOPPED;
+    if (previous != null) previous.close(1000, "client_stopped");
+    unregisterNetworkCallbackLocked();
+    if (notify && previousState != State.STOPPED && previousState != State.IDLE) {
+      listener.onClosed();
     }
+  }
 
-    private void stopLocked(boolean notify) {
-        stopped = true;
-        generation++;
-        cancelReconnectLocked();
-        cancelHeartbeatLocked();
-        WebSocket previous = socket;
-        socket = null;
-        State previousState = state;
-        state = State.STOPPED;
-        if (previous != null) previous.close(1000, "client_stopped");
-        unregisterNetworkCallbackLocked();
-        if (notify && previousState != State.STOPPED && previousState != State.IDLE) {
-            listener.onClosed();
-        }
+  private void openLocked(long expectedGeneration) {
+    if (stopped || request == null || expectedGeneration != generation) return;
+    if (!networkAvailable()) {
+      scheduleReconnectLocked(expectedGeneration);
+      return;
     }
-
-    private void openLocked(long expectedGeneration) {
-        if (stopped || request == null || expectedGeneration != generation) return;
-        if (!networkAvailable()) {
-            scheduleReconnectLocked(expectedGeneration);
-            return;
-        }
-        state = State.CONNECTING;
-        final WebSocket[] created = new WebSocket[1];
-        created[0] = client.newWebSocket(request, new WebSocketListener() {
-            @Override public void onOpen(WebSocket webSocket, Response response) {
+    state = State.CONNECTING;
+    final WebSocket[] created = new WebSocket[1];
+    created[0] =
+        client.newWebSocket(
+            request,
+            new WebSocketListener() {
+              @Override
+              public void onOpen(WebSocket webSocket, Response response) {
                 synchronized (lock) {
-                    if (!isCurrent(expectedGeneration, webSocket)) {
-                        webSocket.close(1000, "superseded");
-                        return;
-                    }
-                    state = State.OPEN;
-                    reconnectAttempt = 0;
-                    disconnectNotified = false;
-                    lastServerMessageNanos = System.nanoTime();
-                    scheduleHeartbeatLocked(expectedGeneration);
+                  if (!isCurrent(expectedGeneration, webSocket)) {
+                    webSocket.close(1000, "superseded");
+                    return;
+                  }
+                  state = State.OPEN;
+                  reconnectAttempt = 0;
+                  disconnectNotified = false;
+                  lastServerMessageNanos = System.nanoTime();
+                  scheduleHeartbeatLocked(expectedGeneration);
                 }
                 listener.onOpen();
-            }
+              }
 
-            @Override public void onMessage(WebSocket webSocket, String text) {
+              @Override
+              public void onMessage(WebSocket webSocket, String text) {
                 synchronized (lock) {
-                    if (!isCurrent(expectedGeneration, webSocket)) return;
-                    lastServerMessageNanos = System.nanoTime();
+                  if (!isCurrent(expectedGeneration, webSocket)) return;
+                  lastServerMessageNanos = System.nanoTime();
                 }
                 try {
-                    listener.onMessage(new JSONObject(text));
+                  listener.onMessage(new JSONObject(text));
                 } catch (JSONException ignored) {
-                    listener.onError("invalid_server_message");
+                  listener.onError("invalid_server_message");
                 }
-            }
+              }
 
-            @Override public void onClosed(
-                    WebSocket webSocket, int code, String reason) {
+              @Override
+              public void onClosed(WebSocket webSocket, int code, String reason) {
                 handleDisconnect(expectedGeneration, webSocket, code, null);
-            }
+              }
 
-            @Override public void onFailure(
-                    WebSocket webSocket, Throwable error, Response response) {
+              @Override
+              public void onFailure(WebSocket webSocket, Throwable error, Response response) {
                 int code = response == null ? 0 : response.code();
                 handleDisconnect(expectedGeneration, webSocket, code, error);
-            }
-        });
-        socket = created[0];
-    }
+              }
+            });
+    socket = created[0];
+  }
 
-    private void handleDisconnect(
-            long expectedGeneration, WebSocket disconnected, int code, Throwable error) {
-        boolean terminalAuthentication = code == 401 || code == 403 || code == 4401;
-        boolean notifyClosed = false;
-        synchronized (lock) {
-            if (!isCurrent(expectedGeneration, disconnected)) return;
-            socket = null;
-            cancelHeartbeatLocked();
-            if (stopped) return;
-            if (terminalAuthentication) {
-                stopped = true;
-                state = State.STOPPED;
-            } else {
-                scheduleReconnectLocked(expectedGeneration);
-                if (!disconnectNotified) {
-                    disconnectNotified = true;
-                    notifyClosed = true;
-                }
-            }
+  private void handleDisconnect(
+      long expectedGeneration, WebSocket disconnected, int code, Throwable error) {
+    boolean terminalAuthentication = code == 401 || code == 403 || code == 4401;
+    boolean notifyClosed = false;
+    synchronized (lock) {
+      if (!isCurrent(expectedGeneration, disconnected)) return;
+      socket = null;
+      cancelHeartbeatLocked();
+      if (stopped) return;
+      if (terminalAuthentication) {
+        stopped = true;
+        state = State.STOPPED;
+      } else {
+        scheduleReconnectLocked(expectedGeneration);
+        if (!disconnectNotified) {
+          disconnectNotified = true;
+          notifyClosed = true;
         }
-        if (terminalAuthentication) listener.onError("authentication_failed");
-        else if (notifyClosed) listener.onClosed();
+      }
     }
+    if (terminalAuthentication) listener.onError("authentication_failed");
+    else if (notifyClosed) listener.onClosed();
+  }
 
-    private void scheduleReconnectLocked(long expectedGeneration) {
-        if (stopped || expectedGeneration != generation) return;
-        cancelReconnectLocked();
-        state = State.WAITING;
-        long delay = reconnectDelayMillis(
-                reconnectAttempt++, ThreadLocalRandom.current().nextDouble());
-        listener.onReconnecting(delay);
-        reconnectFuture = scheduler.schedule(() -> {
-            synchronized (lock) {
+  private void scheduleReconnectLocked(long expectedGeneration) {
+    if (stopped || expectedGeneration != generation) return;
+    cancelReconnectLocked();
+    state = State.WAITING;
+    long delay = reconnectDelayMillis(reconnectAttempt++, ThreadLocalRandom.current().nextDouble());
+    listener.onReconnecting(delay);
+    reconnectFuture =
+        scheduler.schedule(
+            () -> {
+              synchronized (lock) {
                 reconnectFuture = null;
                 openLocked(expectedGeneration);
-            }
-        }, delay, TimeUnit.MILLISECONDS);
-    }
+              }
+            },
+            delay,
+            TimeUnit.MILLISECONDS);
+  }
 
-    private void reconnectNowLocked() {
-        if (stopped || request == null) return;
-        cancelReconnectLocked();
-        cancelHeartbeatLocked();
-        WebSocket previous = socket;
-        socket = null;
-        generation++;
-        if (previous != null) previous.cancel();
-        openLocked(generation);
-    }
+  private void reconnectNowLocked() {
+    if (stopped || request == null) return;
+    cancelReconnectLocked();
+    cancelHeartbeatLocked();
+    WebSocket previous = socket;
+    socket = null;
+    generation++;
+    if (previous != null) previous.cancel();
+    openLocked(generation);
+  }
 
-    private boolean isCurrent(long expectedGeneration, WebSocket candidate) {
-        return !stopped && expectedGeneration == generation && candidate == socket;
-    }
+  private boolean isCurrent(long expectedGeneration, WebSocket candidate) {
+    return !stopped && expectedGeneration == generation && candidate == socket;
+  }
 
-    private void cancelReconnectLocked() {
-        if (reconnectFuture != null) {
-            reconnectFuture.cancel(false);
-            reconnectFuture = null;
-        }
+  private void cancelReconnectLocked() {
+    if (reconnectFuture != null) {
+      reconnectFuture.cancel(false);
+      reconnectFuture = null;
     }
+  }
 
-    private void scheduleHeartbeatLocked(long expectedGeneration) {
-        cancelHeartbeatLocked();
-        heartbeatFuture = scheduler.scheduleAtFixedRate(() -> {
-            synchronized (lock) {
-                if (stopped || expectedGeneration != generation
-                        || state != State.OPEN || socket == null) return;
-                if (System.nanoTime() - lastServerMessageNanos
-                        > TimeUnit.SECONDS.toNanos(45)) {
-                    reconnectNowLocked();
-                    return;
+  private void scheduleHeartbeatLocked(long expectedGeneration) {
+    cancelHeartbeatLocked();
+    heartbeatFuture =
+        scheduler.scheduleAtFixedRate(
+            () -> {
+              synchronized (lock) {
+                if (stopped
+                    || expectedGeneration != generation
+                    || state != State.OPEN
+                    || socket == null) return;
+                if (System.nanoTime() - lastServerMessageNanos > TimeUnit.SECONDS.toNanos(45)) {
+                  reconnectNowLocked();
+                  return;
                 }
                 if (!socket.send("{\"type\":\"ping\"}")) reconnectNowLocked();
-            }
-        }, 15, 15, TimeUnit.SECONDS);
-    }
+              }
+            },
+            15,
+            15,
+            TimeUnit.SECONDS);
+  }
 
-    private void cancelHeartbeatLocked() {
-        if (heartbeatFuture != null) {
-            heartbeatFuture.cancel(false);
-            heartbeatFuture = null;
-        }
+  private void cancelHeartbeatLocked() {
+    if (heartbeatFuture != null) {
+      heartbeatFuture.cancel(false);
+      heartbeatFuture = null;
     }
+  }
 
-    private boolean networkAvailable() {
-        ConnectivityManager manager = connectivityManager;
-        if (manager == null) return true;
-        Network active = manager.getActiveNetwork();
-        if (active == null) return false;
-        NetworkCapabilities capabilities = manager.getNetworkCapabilities(active);
-        return capabilities != null
-                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-    }
+  private boolean networkAvailable() {
+    ConnectivityManager manager = connectivityManager;
+    if (manager == null) return true;
+    Network active = manager.getActiveNetwork();
+    if (active == null) return false;
+    NetworkCapabilities capabilities = manager.getNetworkCapabilities(active);
+    return capabilities != null
+        && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+  }
 
-    private void registerNetworkCallbackLocked() {
-        if (networkCallbackRegistered || connectivityManager == null) return;
-        try {
-            connectivityManager.registerDefaultNetworkCallback(networkCallback);
-            networkCallbackRegistered = true;
-        } catch (RuntimeException ignored) { }
+  private void registerNetworkCallbackLocked() {
+    if (networkCallbackRegistered || connectivityManager == null) return;
+    try {
+      connectivityManager.registerDefaultNetworkCallback(networkCallback);
+      networkCallbackRegistered = true;
+    } catch (RuntimeException ignored) {
     }
+  }
 
-    private void unregisterNetworkCallbackLocked() {
-        if (!networkCallbackRegistered || connectivityManager == null) return;
-        try {
-            connectivityManager.unregisterNetworkCallback(networkCallback);
-        } catch (RuntimeException ignored) { }
-        networkCallbackRegistered = false;
-        activeNetwork = null;
+  private void unregisterNetworkCallbackLocked() {
+    if (!networkCallbackRegistered || connectivityManager == null) return;
+    try {
+      connectivityManager.unregisterNetworkCallback(networkCallback);
+    } catch (RuntimeException ignored) {
     }
+    networkCallbackRegistered = false;
+    activeNetwork = null;
+  }
 
-    public static long reconnectDelayMillis(int attempt, double randomUnit) {
-        if (attempt <= 0) return 250L;
-        int boundedAttempt = Math.min(attempt - 1, 5);
-        long base = Math.min(30_000L, 1_000L << boundedAttempt);
-        double boundedRandom = Math.max(0.0, Math.min(1.0, randomUnit));
-        double jitter = 0.75 + boundedRandom * 0.5;
-        return Math.min(30_000L, Math.max(500L, Math.round(base * jitter)));
-    }
+  public static long reconnectDelayMillis(int attempt, double randomUnit) {
+    if (attempt <= 0) return 250L;
+    int boundedAttempt = Math.min(attempt - 1, 5);
+    long base = Math.min(30_000L, 1_000L << boundedAttempt);
+    double boundedRandom = Math.max(0.0, Math.min(1.0, randomUnit));
+    double jitter = 0.75 + boundedRandom * 0.5;
+    return Math.min(30_000L, Math.max(500L, Math.round(base * jitter)));
+  }
 }

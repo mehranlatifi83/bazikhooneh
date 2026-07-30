@@ -1,11 +1,93 @@
 package ir.codelighthouse.bazikhooneh;
-import android.os.Bundle;import android.widget.*;import ir.codelighthouse.bazikhooneh.account.*;import org.json.*;
-public final class SafetyActivity extends NavigableActivity{
- private AccountManagementClient client;private TextView status;private LinearLayout list;
- @Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_safety);SessionStore store=new SessionStore(this);client=new AccountManagementClient(BuildConfig.API_BASE_URL,store.token(),listener);status=findViewById(R.id.safety_status);list=findViewById(R.id.blocked_list);findViewById(R.id.block_user).setOnClickListener(v->postBlock());findViewById(R.id.report_user).setOnClickListener(v->postReport());load();}
- private String text(int id){return((EditText)findViewById(id)).getText().toString().trim();}
- private void load(){client.get("list","/api/v1/accounts/blocks/");}
- private void postBlock(){try{client.post("block","/api/v1/accounts/blocks/",new JSONObject().put("username",text(R.id.safety_username)));}catch(JSONException ignored){}}
- private void postReport(){try{client.post("report","/api/v1/accounts/reports/",new JSONObject().put("username",text(R.id.safety_username)).put("reason",text(R.id.report_reason)).put("details",text(R.id.report_details)));}catch(JSONException ignored){}}
- private final AccountManagementClient.Listener listener=new AccountManagementClient.Listener(){public void onSuccess(String op,JSONObject json){runOnUiThread(()->{if("list".equals(op)){list.removeAllViews();JSONArray values=json.optJSONArray("results");for(int i=0;values!=null&&i<values.length();i++){JSONObject user=values.optJSONObject(i);Button button=new Button(SafetyActivity.this);String username=user.optString("username");button.setText(getString(R.string.unblock_user,username));button.setOnClickListener(v->{try{client.delete("unblock","/api/v1/accounts/blocks/",new JSONObject().put("username",username));}catch(JSONException ignored){}});list.addView(button);}}else{status.setText(R.string.changes_saved);load();}});}public void onError(String error){runOnUiThread(()->status.setText(AccountErrorMessages.get(SafetyActivity.this,error)));}};
+
+import android.os.Bundle;
+import android.widget.*;
+import ir.codelighthouse.bazikhooneh.account.*;
+import org.json.*;
+
+public final class SafetyActivity extends NavigableActivity {
+  private AccountManagementClient client;
+  private TextView status;
+  private LinearLayout list;
+
+  @Override
+  protected void onCreate(Bundle state) {
+    super.onCreate(state);
+    setContentView(R.layout.activity_safety);
+    SessionStore store = new SessionStore(this);
+    client = new AccountManagementClient(BuildConfig.API_BASE_URL, store.token(), listener);
+    status = findViewById(R.id.safety_status);
+    list = findViewById(R.id.blocked_list);
+    findViewById(R.id.block_user).setOnClickListener(v -> postBlock());
+    findViewById(R.id.report_user).setOnClickListener(v -> postReport());
+    load();
+  }
+
+  private String text(int id) {
+    return ((EditText) findViewById(id)).getText().toString().trim();
+  }
+
+  private void load() {
+    client.get("list", "/api/v1/accounts/blocks/");
+  }
+
+  private void postBlock() {
+    try {
+      client.post(
+          "block",
+          "/api/v1/accounts/blocks/",
+          new JSONObject().put("username", text(R.id.safety_username)));
+    } catch (JSONException ignored) {
+    }
+  }
+
+  private void postReport() {
+    try {
+      client.post(
+          "report",
+          "/api/v1/accounts/reports/",
+          new JSONObject()
+              .put("username", text(R.id.safety_username))
+              .put("reason", text(R.id.report_reason))
+              .put("details", text(R.id.report_details)));
+    } catch (JSONException ignored) {
+    }
+  }
+
+  private final AccountManagementClient.Listener listener =
+      new AccountManagementClient.Listener() {
+        public void onSuccess(String op, JSONObject json) {
+          runOnUiThread(
+              () -> {
+                if ("list".equals(op)) {
+                  list.removeAllViews();
+                  JSONArray values = json.optJSONArray("results");
+                  for (int i = 0; values != null && i < values.length(); i++) {
+                    JSONObject user = values.optJSONObject(i);
+                    Button button = new Button(SafetyActivity.this);
+                    String username = user.optString("username");
+                    button.setText(getString(R.string.unblock_user, username));
+                    button.setOnClickListener(
+                        v -> {
+                          try {
+                            client.delete(
+                                "unblock",
+                                "/api/v1/accounts/blocks/",
+                                new JSONObject().put("username", username));
+                          } catch (JSONException ignored) {
+                          }
+                        });
+                    list.addView(button);
+                  }
+                } else {
+                  status.setText(R.string.changes_saved);
+                  load();
+                }
+              });
+        }
+
+        public void onError(String error) {
+          runOnUiThread(() -> status.setText(AccountErrorMessages.get(SafetyActivity.this, error)));
+        }
+      };
 }

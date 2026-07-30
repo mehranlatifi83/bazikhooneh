@@ -1,7 +1,84 @@
 package ir.codelighthouse.bazikhooneh.feature.ludo;
-import android.content.Intent;import android.os.Bundle;import android.widget.*;import ir.codelighthouse.bazikhooneh.account.*;import ir.codelighthouse.bazikhooneh.online.LudoOnlineClient;import ir.codelighthouse.bazikhooneh.security.SecurePreferences;import org.json.JSONObject;
-import ir.codelighthouse.bazikhooneh.BuildConfig;import ir.codelighthouse.bazikhooneh.LoginActivity;import ir.codelighthouse.bazikhooneh.NavigableActivity;import ir.codelighthouse.bazikhooneh.R;
-public final class LudoOnlineLobbyActivity extends NavigableActivity{private LudoOnlineClient client;private TextView status;
-@Override protected void onCreate(Bundle state){super.onCreate(state);setContentView(R.layout.activity_ludo_online_lobby);SessionStore store=new SessionStore(this);if(!store.isSignedIn()){startActivity(new Intent(this,LoginActivity.class));finish();return;}status=findViewById(R.id.ludo_lobby_status);client=new LudoOnlineClient(this,BuildConfig.API_BASE_URL,store.token(),listener);findViewById(R.id.ludo_create_online).setOnClickListener(v->{status.setText(R.string.online_connecting);client.create(((CheckBox)findViewById(R.id.ludo_online_third_six_penalty)).isChecked());});findViewById(R.id.ludo_join_online).setOnClickListener(v->{String code=((EditText)findViewById(R.id.ludo_room_code)).getText().toString().trim().toUpperCase();if(code.length()!=6){status.setText(R.string.room_code_required);return;}status.setText(R.string.online_connecting);client.join(code);});}
- private final LudoOnlineClient.Listener listener=new LudoOnlineClient.Listener(){public void onSession(JSONObject session){runOnUiThread(()->{SecurePreferences secure=SecurePreferences.open(LudoOnlineLobbyActivity.this,"ludo_online");secure.putString("room",session.optString("room_code"));secure.putString("token",session.optString("reconnect_token"));secure.putInt("color",session.optInt("color"));secure.putString("host",session.optString("host"));startActivity(new Intent(LudoOnlineLobbyActivity.this,LudoOnlineGameActivity.class));finish();});}public void onState(JSONObject state){}public void onConnected(){}public void onError(String error){runOnUiThread(()->status.setText(AccountErrorMessages.get(LudoOnlineLobbyActivity.this,error)));}public void onDisconnected(){}};
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.*;
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.LoginActivity;
+import ir.codelighthouse.bazikhooneh.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.R;
+import ir.codelighthouse.bazikhooneh.account.*;
+import ir.codelighthouse.bazikhooneh.online.LudoOnlineClient;
+import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
+import org.json.JSONObject;
+
+public final class LudoOnlineLobbyActivity extends NavigableActivity {
+  private LudoOnlineClient client;
+  private TextView status;
+
+  @Override
+  protected void onCreate(Bundle state) {
+    super.onCreate(state);
+    setContentView(R.layout.activity_ludo_online_lobby);
+    SessionStore store = new SessionStore(this);
+    if (!store.isSignedIn()) {
+      startActivity(new Intent(this, LoginActivity.class));
+      finish();
+      return;
+    }
+    status = findViewById(R.id.ludo_lobby_status);
+    client = new LudoOnlineClient(this, BuildConfig.API_BASE_URL, store.token(), listener);
+    findViewById(R.id.ludo_create_online)
+        .setOnClickListener(
+            v -> {
+              status.setText(R.string.online_connecting);
+              client.create(
+                  ((CheckBox) findViewById(R.id.ludo_online_third_six_penalty)).isChecked());
+            });
+    findViewById(R.id.ludo_join_online)
+        .setOnClickListener(
+            v -> {
+              String code =
+                  ((EditText) findViewById(R.id.ludo_room_code))
+                      .getText()
+                      .toString()
+                      .trim()
+                      .toUpperCase();
+              if (code.length() != 6) {
+                status.setText(R.string.room_code_required);
+                return;
+              }
+              status.setText(R.string.online_connecting);
+              client.join(code);
+            });
+  }
+
+  private final LudoOnlineClient.Listener listener =
+      new LudoOnlineClient.Listener() {
+        public void onSession(JSONObject session) {
+          runOnUiThread(
+              () -> {
+                SecurePreferences secure =
+                    SecurePreferences.open(LudoOnlineLobbyActivity.this, "ludo_online");
+                secure.putString("room", session.optString("room_code"));
+                secure.putString("token", session.optString("reconnect_token"));
+                secure.putInt("color", session.optInt("color"));
+                secure.putString("host", session.optString("host"));
+                startActivity(
+                    new Intent(LudoOnlineLobbyActivity.this, LudoOnlineGameActivity.class));
+                finish();
+              });
+        }
+
+        public void onState(JSONObject state) {}
+
+        public void onConnected() {}
+
+        public void onError(String error) {
+          runOnUiThread(
+              () -> status.setText(AccountErrorMessages.get(LudoOnlineLobbyActivity.this, error)));
+        }
+
+        public void onDisconnected() {}
+      };
 }
