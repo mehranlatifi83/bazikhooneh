@@ -1,4 +1,4 @@
-package ir.codelighthouse.bazikhooneh;
+package ir.codelighthouse.bazikhooneh.feature.tictactoe;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -21,6 +21,11 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.R;
+import ir.codelighthouse.bazikhooneh.LoginActivity;
+import ir.codelighthouse.bazikhooneh.SettingsActivity;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotAction;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.BotDifficulty;
 import ir.codelighthouse.bazikhooneh.game.tictactoe.GamePhase;
@@ -35,7 +40,7 @@ import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
-public final class MainActivity extends NavigableActivity {
+public final class TicTacToeGameActivity extends NavigableActivity {
     public static final String EXTRA_MODE = "game_mode";
     public static final String EXTRA_DIFFICULTY = "bot_difficulty";
     private static final String STATE_ACTIONS = "state_actions";
@@ -548,7 +553,8 @@ public final class MainActivity extends NavigableActivity {
                 onlineSymbol = session.symbol;
                 reconnectAllowed = true;
                 onlineState = session.game;
-                SecurePreferences secure = SecurePreferences.open(MainActivity.this, ONLINE_PREFS);
+                SecurePreferences secure = SecurePreferences.open(
+                        TicTacToeGameActivity.this, ONLINE_PREFS);
                 secure.putString(PREF_ROOM, session.game.roomCode);
                 secure.putString(PREF_SYMBOL, session.symbol);
                 secure.putString(PREF_TOKEN, session.token);

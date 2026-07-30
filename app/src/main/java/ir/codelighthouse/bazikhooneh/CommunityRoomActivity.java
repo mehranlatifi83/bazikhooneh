@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
 import ir.codelighthouse.bazikhooneh.community.RoomSharing;
+import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGameActivity;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
 public final class CommunityRoomActivity extends NavigableActivity implements CommunityClient.Events {
@@ -185,7 +186,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         secure.putString("room",game.optString("room_code"));
         secure.putString("symbol",player.optString("symbol"));
         secure.putString("token",player.optString("reconnect_token"));
-        startActivity(new Intent(this,MainActivity.class).putExtra(MainActivity.EXTRA_MODE,"online"));}
+        startActivity(new Intent(this,TicTacToeGameActivity.class).putExtra(TicTacToeGameActivity.EXTRA_MODE,"online"));}
     private void openLudo(JSONObject player){if(player==null)return;
         SecurePreferences secure=SecurePreferences.open(this,"ludo_online");
         secure.putString("community_room", code);

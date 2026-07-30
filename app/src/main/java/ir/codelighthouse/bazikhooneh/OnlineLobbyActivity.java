@@ -7,6 +7,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameClient;
+import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGameActivity;
 import ir.codelighthouse.bazikhooneh.online.OnlineGameState;
 import ir.codelighthouse.bazikhooneh.online.OnlineSession;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
@@ -59,8 +60,9 @@ public final class OnlineLobbyActivity extends NavigableActivity {
                 secure.putString("symbol", session.symbol);
                 secure.putString("token", session.token);
                 openingGame = true;
-                startActivity(new Intent(OnlineLobbyActivity.this, MainActivity.class)
-                        .putExtra(MainActivity.EXTRA_MODE, "online"));
+                startActivity(new Intent(
+                        OnlineLobbyActivity.this, TicTacToeGameActivity.class)
+                        .putExtra(TicTacToeGameActivity.EXTRA_MODE, "online"));
                 finish();
             });
         }

@@ -1,4 +1,4 @@
-package ir.codelighthouse.bazikhooneh;
+package ir.codelighthouse.bazikhooneh.feature.tictactoe;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import ir.codelighthouse.bazikhooneh.R;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Rule;
@@ -22,10 +23,10 @@ import static org.junit.Assert.assertTrue;
 
 /** Device tests for the main local game flow and essential accessibility metadata. */
 @RunWith(AndroidJUnit4.class)
-public final class MainActivityUiTest {
+public final class TicTacToeGameActivityUiTest {
     @Rule
-    public final ActivityScenarioRule<MainActivity> activityRule =
-            new ActivityScenarioRule<>(MainActivity.class);
+    public final ActivityScenarioRule<TicTacToeGameActivity> activityRule =
+            new ActivityScenarioRule<>(TicTacToeGameActivity.class);
 
     @Test
     public void everyBoardCellHasAccessibleLabelAndTouchSize() {
@@ -110,9 +111,10 @@ public final class MainActivityUiTest {
     public void onlineGameCanResumeBeforeServerStateArrives() {
         Context context = ApplicationProvider.getApplicationContext();
         context.getSharedPreferences("online_session", Context.MODE_PRIVATE).edit().clear().commit();
-        Intent intent = new Intent(context, MainActivity.class)
-                .putExtra(MainActivity.EXTRA_MODE, "online");
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(intent)) {
+        Intent intent = new Intent(context, TicTacToeGameActivity.class)
+                .putExtra(TicTacToeGameActivity.EXTRA_MODE, "online");
+        try (ActivityScenario<TicTacToeGameActivity> scenario =
+                     ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 assertNotNull(activity.findViewById(R.id.online_controls));
                 assertNotNull(activity.findViewById(R.id.game_status));

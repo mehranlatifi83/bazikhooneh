@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioGroup;
 import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
+import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGameActivity;
 
 public final class TicTacToeMenuActivity extends NavigableActivity {
     private RadioGroup difficulty;
@@ -33,9 +34,9 @@ public final class TicTacToeMenuActivity extends NavigableActivity {
     }
 
     private void openGame(String mode, int botDifficulty) {
-        startActivity(new Intent(this, MainActivity.class)
-                .putExtra(MainActivity.EXTRA_MODE, mode)
-                .putExtra(MainActivity.EXTRA_DIFFICULTY, botDifficulty));
+        startActivity(new Intent(this, TicTacToeGameActivity.class)
+                .putExtra(TicTacToeGameActivity.EXTRA_MODE, mode)
+                .putExtra(TicTacToeGameActivity.EXTRA_DIFFICULTY, botDifficulty));
     }
 
     private void openOnline() {
