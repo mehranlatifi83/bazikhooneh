@@ -289,7 +289,7 @@
     <string name="ban_from_room">مسدود کردن از اتاق</string><string name="make_room_admin">تبدیل به مدیر اتاق</string>
     <string name="remove_room_admin">گرفتن نقش مدیر</string><string name="force_mute">خاموش کردن اجباری میکروفون</string>
     <string name="allow_to_speak">دادن اجازه صحبت</string><string name="remove_from_call">حذف از تماس</string>
-    <string name="quick_match">بازی سریع دوز</string><string name="searching_for_players">در حال جست‌وجوی بازیکن…</string>
+    <string name="quick_match">بازی سریع</string><string name="select_quick_game">بازی برای ورود سریع</string><string name="searching_for_players">در حال جست‌وجوی بازیکن…</string>
     <string name="room_history">تاریخچهٔ اتاق</string>
     <string name="room_history_count">%1$d رویداد اخیر اتاق</string>
     <string name="no_room_history">هنوز رویدادی در اتاق ثبت نشده است.</string>

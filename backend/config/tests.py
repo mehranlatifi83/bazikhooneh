@@ -90,3 +90,20 @@ class JsonLoggingTests(TestCase):
             request_id_context.reset(token)
         self.assertEqual("request-42", payload["request_id"])
         self.assertEqual("hello", payload["message"])
+class PublicLinkTests(TestCase):
+    def test_room_link_is_accessible_and_opens_the_app(self):
+        response = self.client.get("/rooms/ABC123")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "bazikhooneh://room/ABC123")
+
+    def test_invalid_room_link_is_not_found(self):
+        self.assertEqual(self.client.get("/rooms/not-valid").status_code, 404)
+
+    @override_settings(ANDROID_APP_CERT_SHA256="AA:BB,CC:DD")
+    def test_asset_links_uses_configured_signing_certificates(self):
+        response = self.client.get("/.well-known/assetlinks.json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()[0]["target"]["sha256_cert_fingerprints"],
+            ["AA:BB", "CC:DD"],
+        )

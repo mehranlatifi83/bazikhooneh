@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
+import ir.codelighthouse.bazikhooneh.community.RoomSharing;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
 public final class CommunityRoomActivity extends NavigableActivity implements CommunityClient.Events {
@@ -161,10 +162,11 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         if(text.isEmpty())return;Button button=findViewById(R.id.community_send);button.setEnabled(false);long reply=replyToMessage;
         client.sendMessage(code,text,reply,(message,error)->runOnUiThread(()->{button.setEnabled(true);if(error!=null){show(getString(R.string.message_send_failed,error));return;}
             addMessage(message,false);if(text.equals(input.getText().toString().trim()))input.setText("");replyToMessage=0;input.setHint(R.string.community_message_hint);}));}
-    private void shareRoom(){String base=BuildConfig.API_BASE_URL.replaceAll("/+$","");String link=base+"/rooms/"+code;
-        Intent share=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_SUBJECT,currentRoom==null?getString(R.string.app_name):currentRoom.optString("title"))
-                .putExtra(Intent.EXTRA_TEXT,getString(R.string.share_room_text,currentRoom==null?getString(R.string.app_name):currentRoom.optString("title"),code,link));
-        startActivity(Intent.createChooser(share,getString(R.string.share_room)));}
+    private void shareRoom() {
+        String title = currentRoom == null
+                ? getString(R.string.app_name) : currentRoom.optString("title");
+        RoomSharing.share(this, title, code);
+    }
     private void inviteFriend(){EditText username=new EditText(this);username.setHint(R.string.account_username);
         new android.app.AlertDialog.Builder(this).setTitle(R.string.invite_friend_to_room).setMessage(R.string.invite_friend_help).setView(username)
                 .setNegativeButton(android.R.string.cancel,null).setPositiveButton(R.string.send_invitation,(d,w)->{String value=username.getText().toString().trim();if(value.isEmpty())return;
@@ -179,12 +181,14 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         if("ludo".equals(key))openLudo(player);else openTic(player);}));}
     private void openTic(JSONObject player){if(player==null)return;JSONObject game=player.optJSONObject("game");
         SecurePreferences secure=SecurePreferences.open(this,"online_session");
+        secure.putString("community_room", code);
         secure.putString("room",game.optString("room_code"));
         secure.putString("symbol",player.optString("symbol"));
         secure.putString("token",player.optString("reconnect_token"));
         startActivity(new Intent(this,MainActivity.class).putExtra(MainActivity.EXTRA_MODE,"online"));}
     private void openLudo(JSONObject player){if(player==null)return;
         SecurePreferences secure=SecurePreferences.open(this,"ludo_online");
+        secure.putString("community_room", code);
         secure.putString("room",player.optString("room_code"));
         secure.putInt("color",player.optInt("color"));
         secure.putString("token",player.optString("reconnect_token"));

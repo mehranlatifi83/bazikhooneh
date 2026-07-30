@@ -13,6 +13,7 @@ import ir.codelighthouse.bazikhooneh.account.AccountClient;
 import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
+import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
 
 public final class LoginActivity extends NavigableActivity {
     private EditText username;
@@ -69,6 +70,11 @@ public final class LoginActivity extends NavigableActivity {
         @Override public void onSession(AccountSession session) {
             runOnUiThread(() -> {
                 new SessionStore(LoginActivity.this).save(session);
+                if (AppNavigator.consumePendingRoom(LoginActivity.this)) {
+                    setResult(RESULT_OK);
+                    finish();
+                    return;
+                }
                 String roomCode = getIntent().getStringExtra("room_code");
                 String gameKey = getIntent().getStringExtra(CommunityRoomsActivity.EXTRA_GAME_KEY);
                 if (roomCode != null || getIntent().getBooleanExtra("open_online", false)) {

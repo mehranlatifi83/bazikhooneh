@@ -149,6 +149,7 @@ TRUSTED_PROXY_IPS = tuple(
 # credential path in the environment avoids embedding private keys in code.
 FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
 FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "bazikhooneh-cfcba")
+ANDROID_APP_CERT_SHA256 = os.getenv("ANDROID_APP_CERT_SHA256", "")
 
 TURN_HOST = os.environ.get("TURN_HOST", "bazikhooneh.codelighthouse.ir")
 TURN_PORT = int(os.environ.get("TURN_PORT", "3478"))

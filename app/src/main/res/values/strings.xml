@@ -289,7 +289,7 @@
     <string name="ban_from_room">Ban from room</string><string name="make_room_admin">Make room administrator</string>
     <string name="remove_room_admin">Remove administrator role</string><string name="force_mute">Force mute</string>
     <string name="allow_to_speak">Allow to speak</string><string name="remove_from_call">Remove from call</string>
-    <string name="quick_match">Quick match: tic-tac-toe</string><string name="searching_for_players">Searching for another player…</string>
+    <string name="quick_match">Quick match</string><string name="select_quick_game">Game for quick match</string><string name="searching_for_players">Searching for another player…</string>
     <string name="room_history">Room history</string>
     <string name="room_history_count">%1$d recent room events</string>
     <string name="no_room_history">No room events yet.</string>

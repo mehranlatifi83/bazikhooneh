@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioGroup;
-import ir.codelighthouse.bazikhooneh.account.SessionStore;
+import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
 
 public final class TicTacToeMenuActivity extends NavigableActivity {
     private RadioGroup difficulty;
@@ -39,12 +39,6 @@ public final class TicTacToeMenuActivity extends NavigableActivity {
     }
 
     private void openOnline() {
-        if (!new SessionStore(this).isSignedIn()) {
-            startActivity(new Intent(this, LoginActivity.class).putExtra("open_online", true)
-                    .putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY,"three_piece_tic_tac_toe"));
-            return;
-        }
-        startActivity(new Intent(this, CommunityRoomsActivity.class)
-                .putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY,"three_piece_tic_tac_toe"));
+        AppNavigator.openRooms(this, "three_piece_tic_tac_toe");
     }
 }

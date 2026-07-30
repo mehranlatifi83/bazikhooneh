@@ -13,6 +13,8 @@ import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.NotificationSync;
 import ir.codelighthouse.bazikhooneh.catalog.GameCatalog;
 import ir.codelighthouse.bazikhooneh.catalog.GameDefinition;
+import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
+import ir.codelighthouse.bazikhooneh.navigation.RoomLink;
 
 public final class HomeActivity extends Activity {
     private static final String APP_PREFS = "app_state";
@@ -36,11 +38,8 @@ public final class HomeActivity extends Activity {
         });
         findViewById(R.id.open_settings).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsActivity.class)));
-        findViewById(R.id.open_community_rooms).setOnClickListener(v -> {
-            Class<?> destination = new SessionStore(this).isSignedIn()
-                    ? CommunityRoomsActivity.class : LoginActivity.class;
-            startActivity(new Intent(this, destination));
-        });
+        findViewById(R.id.open_community_rooms).setOnClickListener(v ->
+                AppNavigator.openRooms(this, ""));
         findViewById(R.id.open_guide).setOnClickListener(v ->
                 startActivity(new Intent(this, GuideActivity.class)));
         findViewById(R.id.open_friends).setOnClickListener(v -> {
@@ -55,18 +54,25 @@ public final class HomeActivity extends Activity {
             Class<?> destination = new SessionStore(this).isSignedIn() ? LeaderboardActivity.class : LoginActivity.class;
             startActivity(new Intent(this, destination));
         });
-        if (getIntent().getData() != null && "room".equals(getIntent().getData().getHost())) {
-            String code = getIntent().getData().getLastPathSegment();
-            if (code != null && code.length() == 6) {
-                SessionStore store = new SessionStore(this);
-                Class<?> destination = store.isSignedIn() ? CommunityRoomsActivity.class : LoginActivity.class;
-                startActivity(new Intent(this, destination).putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE, code));
-            }
-        }
-        if (!getSharedPreferences(APP_PREFS, MODE_PRIVATE).getBoolean("guide_seen", false)) {
+        boolean routed = routeDeepLink(getIntent());
+        if (!routed && !getSharedPreferences(APP_PREFS, MODE_PRIVATE).getBoolean("guide_seen", false)) {
             getSharedPreferences(APP_PREFS, MODE_PRIVATE).edit().putBoolean("guide_seen", true).apply();
             startActivity(new Intent(this, GuideActivity.class));
         }
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        routeDeepLink(intent);
+    }
+
+    private boolean routeDeepLink(Intent intent) {
+        String code = RoomLink.parseCode(intent == null ? null : intent.getData());
+        if (code.isEmpty()) return false;
+        intent.setData(null);
+        AppNavigator.openRoom(this, code);
+        return true;
     }
 
     @Override protected void onResume() {
