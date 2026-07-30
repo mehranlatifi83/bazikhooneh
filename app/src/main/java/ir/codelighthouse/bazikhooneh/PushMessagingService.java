@@ -1,4 +1,5 @@
 package ir.codelighthouse.bazikhooneh;
+import ir.codelighthouse.bazikhooneh.feature.room.RoomActivity;import ir.codelighthouse.bazikhooneh.feature.room.RoomListActivity;
 
 import android.app.*;
 import android.content.Intent;
@@ -32,9 +33,9 @@ public final class PushMessagingService extends FirebaseMessagingService {
         String room=value(data,"room_code");
         if("friend_request".equals(kind))return new Intent(this,FriendsActivity.class);
         if(!room.isEmpty()&&("room_message".equals(kind)||"room_call".equals(kind)))
-            return new Intent(this,CommunityRoomActivity.class).putExtra("room_code",room);
-        if(!room.isEmpty())return new Intent(this,CommunityRoomsActivity.class)
-                .putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE,room);
+            return new Intent(this,RoomActivity.class).putExtra("room_code",room);
+        if(!room.isEmpty())return new Intent(this,RoomListActivity.class)
+                .putExtra(RoomListActivity.EXTRA_ROOM_CODE,room);
         return new Intent(this,NotificationsActivity.class);
     }
     private static String value(Map<String,String> data,String key){

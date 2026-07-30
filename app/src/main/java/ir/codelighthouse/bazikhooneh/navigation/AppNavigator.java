@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
-import ir.codelighthouse.bazikhooneh.CommunityRoomsActivity;
+import ir.codelighthouse.bazikhooneh.feature.room.RoomListActivity;
 import ir.codelighthouse.bazikhooneh.LoginActivity;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 
@@ -18,7 +18,7 @@ public final class AppNavigator {
     public static void openRooms(Context context, String gameKey) {
         Intent intent = authenticatedDestination(context);
         if (gameKey != null && !gameKey.isEmpty()) {
-            intent.putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY, gameKey);
+            intent.putExtra(RoomListActivity.EXTRA_GAME_KEY, gameKey);
         }
         context.startActivity(intent);
     }
@@ -29,7 +29,7 @@ public final class AppNavigator {
             rememberRoom(context, roomCode);
         }
         Intent intent = authenticatedDestination(context)
-                .putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE, roomCode);
+                .putExtra(RoomListActivity.EXTRA_ROOM_CODE, roomCode);
         context.startActivity(intent);
     }
 
@@ -39,14 +39,14 @@ public final class AppNavigator {
         if (code == null || code.isEmpty()) return false;
         activity.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
                 .edit().remove(PENDING_ROOM).apply();
-        activity.startActivity(new Intent(activity, CommunityRoomsActivity.class)
-                .putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE, code));
+        activity.startActivity(new Intent(activity, RoomListActivity.class)
+                .putExtra(RoomListActivity.EXTRA_ROOM_CODE, code));
         return true;
     }
 
     private static Intent authenticatedDestination(Context context) {
         Class<?> destination = new SessionStore(context).isSignedIn()
-                ? CommunityRoomsActivity.class : LoginActivity.class;
+                ? RoomListActivity.class : LoginActivity.class;
         return new Intent(context, destination);
     }
 

@@ -1,7 +1,10 @@
-package ir.codelighthouse.bazikhooneh;
+package ir.codelighthouse.bazikhooneh.feature.room;
 
 import android.os.Bundle;
 import android.view.View;
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.R;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import org.json.JSONArray;

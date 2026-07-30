@@ -14,6 +14,7 @@ import ir.codelighthouse.bazikhooneh.account.AccountSession;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.account.AccountErrorMessages;
 import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
+import ir.codelighthouse.bazikhooneh.feature.room.RoomListActivity;
 
 public final class LoginActivity extends NavigableActivity {
     private EditText username;
@@ -76,11 +77,11 @@ public final class LoginActivity extends NavigableActivity {
                     return;
                 }
                 String roomCode = getIntent().getStringExtra("room_code");
-                String gameKey = getIntent().getStringExtra(CommunityRoomsActivity.EXTRA_GAME_KEY);
+                String gameKey = getIntent().getStringExtra(RoomListActivity.EXTRA_GAME_KEY);
                 if (roomCode != null || getIntent().getBooleanExtra("open_online", false)) {
-                    Intent lobby = new Intent(LoginActivity.this, CommunityRoomsActivity.class);
-                    if (roomCode != null) lobby.putExtra(CommunityRoomsActivity.EXTRA_ROOM_CODE, roomCode);
-                    if (gameKey != null) lobby.putExtra(CommunityRoomsActivity.EXTRA_GAME_KEY, gameKey);
+                    Intent lobby = new Intent(LoginActivity.this, RoomListActivity.class);
+                    if (roomCode != null) lobby.putExtra(RoomListActivity.EXTRA_ROOM_CODE, roomCode);
+                    if (gameKey != null) lobby.putExtra(RoomListActivity.EXTRA_GAME_KEY, gameKey);
                     startActivity(lobby);
                 }
                 setResult(RESULT_OK);
