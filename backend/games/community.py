@@ -28,6 +28,14 @@ from .models import (
     Player, Room, token_hash,
 )
 from .views import ludo_payload, player_payload
+from .game_services import (
+    GameServiceError,
+    create_game_session,
+    create_quick_match,
+    game_capacity,
+    is_supported,
+    join_game_session,
+)
 from .websocket_security import (
     bearer_token, connection_allowed, message_allowed, update_presence,
 )
@@ -577,24 +585,11 @@ class CommunityGameView(APIView):
         room.game_sessions.filter(state__in=("waiting", "active")).update(
             state="ended", ended_at=timezone.now())
         game_key = str(request.data.get("game_key", ""))
-        if game_key == "three_piece_tic_tac_toe":
-            legacy = Room.create_unique()
-            player, token = Player.create_with_token(legacy, "X", request.user)
-            session = CommunityGameSession.objects.create(room=room, game_key=game_key,
-                                                           created_by=request.user,
-                                                           tic_tac_toe_room=legacy)
-            payload = player_payload(legacy, player, token)
-        elif game_key == "ludo":
-            legacy = LudoRoom.create_unique(request.user)
-            legacy.game_state = {"third_six_penalty": bool(request.data.get("third_six_penalty", False))}
-            legacy.save(update_fields=("game_state", "updated_at"))
-            seat, token = LudoSeat.create_human(legacy, 0, request.user)
-            session = CommunityGameSession.objects.create(room=room, game_key=game_key,
-                                                           created_by=request.user,
-                                                           ludo_room=legacy)
-            payload = ludo_payload(legacy, seat, token)
-        else:
-            return Response({"error": "unsupported_game"}, status=400)
+        try:
+            session, payload = create_game_session(
+                room, request.user, game_key, request.data)
+        except GameServiceError as error:
+            return Response({"error": error.code}, status=error.status)
         CommunityEvent.objects.create(room=room, actor=request.user, kind="game_selected",
                                       payload={"game_key": game_key, "session_id": session.id})
         notify_room_members(room, request.user, "room_game", "A game is ready",
@@ -618,45 +613,10 @@ class CommunityGameJoinView(APIView):
             return Response({"error": "not_a_member"}, status=403)
         if not session:
             return Response({"error": "no_active_game"}, status=404)
-        if session.game_key == "three_piece_tic_tac_toe":
-            legacy = session.tic_tac_toe_room
-            existing = legacy.players.filter(account=request.user).first()
-            if existing:
-                token = secrets.token_urlsafe(32)
-                existing.reconnect_token_hash = token_hash(token)
-                existing.is_active = True
-                existing.save(update_fields=("reconnect_token_hash", "is_active", "last_seen_at"))
-                player = existing
-            else:
-                if legacy.players.filter(is_active=True).count() >= 2:
-                    return Response({"error": "game_full"}, status=409)
-                symbol = "O" if legacy.players.filter(symbol="X", is_active=True).exists() else "X"
-                player, token = Player.create_with_token(legacy, symbol, request.user)
-            if legacy.players.filter(is_active=True).count() == 2 and legacy.state == Room.State.WAITING:
-                legacy.state = Room.State.ACTIVE
-                legacy.save(update_fields=("state", "updated_at"))
-                Match.start_for_room(legacy)
-                session.state = "active"
-                session.save(update_fields=("state",))
-            payload = player_payload(legacy, player, token)
-        elif session.game_key == "ludo":
-            legacy = session.ludo_room
-            existing = legacy.seats.filter(account=request.user, is_bot=False).first()
-            if existing:
-                token = secrets.token_urlsafe(32)
-                existing.reconnect_token_hash = token_hash(token)
-                existing.active = True
-                existing.save(update_fields=("reconnect_token_hash", "active", "last_seen_at"))
-                seat = existing
-            else:
-                used = set(legacy.seats.filter(active=True).values_list("color", flat=True))
-                color = next((value for value in range(4) if value not in used), None)
-                if color is None:
-                    return Response({"error": "game_full"}, status=409)
-                seat, token = LudoSeat.create_human(legacy, color, request.user)
-            payload = ludo_payload(legacy, seat, token)
-        else:
-            return Response({"error": "unsupported_game"}, status=400)
+        try:
+            payload = join_game_session(session, request.user)
+        except GameServiceError as error:
+            return Response({"error": error.code}, status=error.status)
         CommunityEvent.objects.create(room=room, actor=request.user, kind="game_joined",
                                       payload={"game_key": session.game_key,
                                                "session_id": session.id})
@@ -690,7 +650,7 @@ class MatchmakingView(APIView):
     @transaction.atomic
     def post(self, request):
         game_key = str(request.data.get("game_key", "three_piece_tic_tac_toe"))
-        if game_key not in ("three_piece_tic_tac_toe", "ludo"):
+        if not is_supported(game_key):
             return Response({"error": "unsupported_game"}, status=400)
         existing = MatchmakingTicket.objects.select_for_update().filter(account=request.user).first()
         if existing and existing.status == "matched":
@@ -704,39 +664,11 @@ class MatchmakingView(APIView):
             return Response({"status": "waiting"}, status=202)
         room = CommunityRoom.create_unique(other.account, "Quick match")
         room.privacy = CommunityRoom.Privacy.PRIVATE
-        room.max_members = 4 if game_key == "ludo" else 2
+        room.max_members = game_capacity(game_key)
         room.save()
         CommunityMembership.objects.create(room=room, account=request.user, role="member")
-        first_credentials = {}
-        second_credentials = {}
-        if game_key == "three_piece_tic_tac_toe":
-            legacy = Room.create_unique()
-            first_player, first_token = Player.create_with_token(legacy, "X", other.account)
-            second_player, second_token = Player.create_with_token(legacy, "O", request.user)
-            legacy.state = Room.State.ACTIVE
-            legacy.save(update_fields=("state", "updated_at"))
-            Match.start_for_room(legacy)
-            CommunityGameSession.objects.create(room=room, game_key=game_key,
-                                                created_by=other.account,
-                                                tic_tac_toe_room=legacy,
-                                                state="active")
-            first_credentials = player_payload(legacy, first_player, first_token)
-            second_credentials = player_payload(legacy, second_player, second_token)
-            CommunityEvent.objects.create(room=room, actor=other.account,
-                                          kind="game_selected",
-                                          payload={"game_key": game_key})
-        else:
-            legacy = LudoRoom.create_unique(other.account)
-            first_seat, first_token = LudoSeat.create_human(legacy, 0, other.account)
-            second_seat, second_token = LudoSeat.create_human(legacy, 1, request.user)
-            CommunityGameSession.objects.create(room=room, game_key=game_key,
-                                                created_by=other.account,
-                                                ludo_room=legacy)
-            first_credentials = ludo_payload(legacy, first_seat, first_token)
-            second_credentials = ludo_payload(legacy, second_seat, second_token)
-            CommunityEvent.objects.create(room=room, actor=other.account,
-                                          kind="game_selected",
-                                          payload={"game_key": game_key})
+        first_credentials, second_credentials = create_quick_match(
+            room, game_key, other.account, request.user)
         other.status = "matched"
         other.matched_room = room
         other.game_credentials = first_credentials
