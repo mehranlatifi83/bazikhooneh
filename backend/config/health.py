@@ -49,8 +49,7 @@ def turn_ready():
     # requiring or exposing application credentials.
     transaction_id = os.urandom(12)
     request = struct.pack("!HHI12s", 0x0001, 0, 0x2112A442, transaction_id)
-    addresses = socket.getaddrinfo(
-        host, settings.TURN_PORT, type=socket.SOCK_DGRAM)
+    addresses = socket.getaddrinfo(host, settings.TURN_PORT, type=socket.SOCK_DGRAM)
     family, socket_type, protocol, _, address = addresses[0]
     with socket.socket(family, socket_type, protocol) as connection:
         connection.settimeout(1)
@@ -59,7 +58,8 @@ def turn_ready():
     if len(response) < 20:
         return False
     message_type, _, magic_cookie, response_transaction = struct.unpack(
-        "!HHI12s", response[:20])
+        "!HHI12s", response[:20]
+    )
     return (
         message_type == 0x0101
         and magic_cookie == 0x2112A442
@@ -80,9 +80,7 @@ def readiness(request):
             checks[name] = bool(check())
         except Exception:
             checks[name] = False
-    core_ready = all(
-        checks[name] for name in ("database", "cache", "channel_layer")
-    )
+    core_ready = all(checks[name] for name in ("database", "cache", "channel_layer"))
     fully_ready = core_ready and checks["turn"]
     return JsonResponse(
         {"status": "ok" if fully_ready else "degraded", "checks": checks},

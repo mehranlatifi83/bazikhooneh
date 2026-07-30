@@ -21,6 +21,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="player",
-            constraint=models.UniqueConstraint(fields=("room", "account"), name="unique_room_account"),
+            constraint=models.UniqueConstraint(
+                fields=("room", "account"), name="unique_room_account"
+            ),
         ),
     ]

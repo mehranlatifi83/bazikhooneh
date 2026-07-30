@@ -73,10 +73,8 @@ def join_game_session(session, account):
 def create_quick_match(room, game_key, first_account, second_account):
     if game_key == TIC_TAC_TOE:
         legacy = Room.create_unique()
-        first, first_token = Player.create_with_token(
-            legacy, "X", first_account)
-        second, second_token = Player.create_with_token(
-            legacy, "O", second_account)
+        first, first_token = Player.create_with_token(legacy, "X", first_account)
+        second, second_token = Player.create_with_token(legacy, "O", second_account)
         legacy.state = Room.State.ACTIVE
         legacy.save(update_fields=("state", "updated_at"))
         Match.start_for_room(legacy)
@@ -93,10 +91,8 @@ def create_quick_match(room, game_key, first_account, second_account):
         )
     elif game_key == LUDO:
         legacy = LudoRoom.create_unique(first_account)
-        first, first_token = LudoSeat.create_human(
-            legacy, 0, first_account)
-        second, second_token = LudoSeat.create_human(
-            legacy, 1, second_account)
+        first, first_token = LudoSeat.create_human(legacy, 0, first_account)
+        second, second_token = LudoSeat.create_human(legacy, 1, second_account)
         CommunityGameSession.objects.create(
             room=room,
             game_key=game_key,
@@ -125,15 +121,14 @@ def _join_tic_tac_toe(session, account):
         token = secrets.token_urlsafe(32)
         player.reconnect_token_hash = token_hash(token)
         player.is_active = True
-        player.save(update_fields=(
-            "reconnect_token_hash", "is_active", "last_seen_at"))
+        player.save(update_fields=("reconnect_token_hash", "is_active", "last_seen_at"))
     else:
         if legacy.players.filter(is_active=True).count() >= 2:
             raise GameServiceError("game_full", 409)
-        symbol = "O" if legacy.players.filter(
-            symbol="X", is_active=True).exists() else "X"
-        player, token = Player.create_with_token(
-            legacy, symbol, account)
+        symbol = (
+            "O" if legacy.players.filter(symbol="X", is_active=True).exists() else "X"
+        )
+        player, token = Player.create_with_token(legacy, symbol, account)
     if (
         legacy.players.filter(is_active=True).count() == 2
         and legacy.state == Room.State.WAITING
@@ -153,11 +148,9 @@ def _join_ludo(session, account):
         token = secrets.token_urlsafe(32)
         seat.reconnect_token_hash = token_hash(token)
         seat.active = True
-        seat.save(update_fields=(
-            "reconnect_token_hash", "active", "last_seen_at"))
+        seat.save(update_fields=("reconnect_token_hash", "active", "last_seen_at"))
     else:
-        used = set(legacy.seats.filter(
-            active=True).values_list("color", flat=True))
+        used = set(legacy.seats.filter(active=True).values_list("color", flat=True))
         color = next((value for value in range(4) if value not in used), None)
         if color is None:
             raise GameServiceError("game_full", 409)

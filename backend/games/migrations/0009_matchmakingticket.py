@@ -5,23 +5,49 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0004_security_event'),
-        ('games', '0008_communityroom_communitymessage_communitygamesession_and_more'),
+        ("accounts", "0004_security_event"),
+        ("games", "0008_communityroom_communitymessage_communitygamesession_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MatchmakingTicket',
+            name="MatchmakingTicket",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('game_key', models.CharField(db_index=True, max_length=40)),
-                ('status', models.CharField(db_index=True, default='waiting', max_length=12)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('account', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='matchmaking_ticket', to='accounts.account')),
-                ('matched_room', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='matchmaking_tickets', to='games.communityroom')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("game_key", models.CharField(db_index=True, max_length=40)),
+                (
+                    "status",
+                    models.CharField(db_index=True, default="waiting", max_length=12),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "account",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="matchmaking_ticket",
+                        to="accounts.account",
+                    ),
+                ),
+                (
+                    "matched_room",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="matchmaking_tickets",
+                        to="games.communityroom",
+                    ),
+                ),
             ],
         ),
     ]

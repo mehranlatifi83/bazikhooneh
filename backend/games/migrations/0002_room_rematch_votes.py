@@ -6,9 +6,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="room", name="rematch_o", field=models.BooleanField(default=False)
+            model_name="room",
+            name="rematch_o",
+            field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name="room", name="rematch_x", field=models.BooleanField(default=False)
+            model_name="room",
+            name="rematch_x",
+            field=models.BooleanField(default=False),
         ),
     ]

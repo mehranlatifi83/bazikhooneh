@@ -91,22 +91,26 @@ if redis_url:
         }
     }
 else:
-    CACHES = {
-        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
-    }
-    CHANNEL_LAYERS = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
-AUTH_PASSWORD_VALIDATORS = [] if DEBUG else [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
+AUTH_PASSWORD_VALIDATORS = (
+    []
+    if DEBUG
+    else [
+        {
+            "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+        },
+        {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+        {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+        {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    ]
+)
 AUTH_USER_MODEL = "accounts.Account"
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["accounts.authentication.AccountTokenAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "accounts.authentication.AccountTokenAuthentication"
+    ],
     "DEFAULT_THROTTLE_CLASSES": [
         "accounts.throttling.IPRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -129,9 +133,13 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = Path(os.getenv("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@bazikhooneh.local")
-EMAIL_DELIVERY_ENABLED = os.getenv("EMAIL_DELIVERY_ENABLED", "true" if DEBUG else "false").lower() == "true"
+EMAIL_DELIVERY_ENABLED = (
+    os.getenv("EMAIL_DELIVERY_ENABLED", "true" if DEBUG else "false").lower() == "true"
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
@@ -141,7 +149,8 @@ EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
 ONLINE_RECONNECT_GRACE_SECONDS = int(os.getenv("ONLINE_RECONNECT_GRACE_SECONDS", "60"))
 TRUSTED_PROXY_IPS = tuple(
-    value.strip() for value in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1").split(",")
+    value.strip()
+    for value in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1").split(",")
     if value.strip()
 )
 
@@ -167,7 +176,11 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-CSRF_TRUSTED_ORIGINS = [item.strip() for item in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if item.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    item.strip()
+    for item in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if item.strip()
+]
 
 LOGGING = {
     "version": 1,
@@ -180,8 +193,20 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "INFO")},
     "loggers": {
-        "django.server": {"handlers": ["console"], "level": "WARNING", "propagate": False},
-        "bazikhooneh.request": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "bazikhooneh.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "django.server": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "bazikhooneh.request": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "bazikhooneh.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
     },
 }

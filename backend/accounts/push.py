@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AccountNotification, PushDelivery, PushDevice
+from .models import PushDelivery, PushDevice
 
 logger = logging.getLogger("bazikhooneh.push")
 
@@ -26,6 +26,7 @@ def enqueue_notifications(notifications):
 def _firebase_app():
     import firebase_admin
     from firebase_admin import credentials
+
     try:
         return firebase_admin.get_app()
     except ValueError:
@@ -39,26 +40,43 @@ def _firebase_app():
 
 def deliver_batch(limit=100):
     from firebase_admin import exceptions, messaging
+
     _firebase_app()
     now = timezone.now()
     with transaction.atomic():
-        rows = list(PushDelivery.objects.select_for_update(skip_locked=True)
-                    .select_related("notification", "device")
-                    .filter(status="pending", available_at__lte=now)
-                    .order_by("id")[:limit])
-        PushDelivery.objects.filter(id__in=[row.id for row in rows]).update(status="sending")
+        rows = list(
+            PushDelivery.objects.select_for_update(skip_locked=True)
+            .select_related("notification", "device")
+            .filter(status="pending", available_at__lte=now)
+            .order_by("id")[:limit]
+        )
+        PushDelivery.objects.filter(id__in=[row.id for row in rows]).update(
+            status="sending"
+        )
     sent = 0
     for row in rows:
         notification, device = row.notification, row.device
-        data = {str(key): str(value) for key, value in notification.data.items()
-                if value is not None}
-        data.update({"notification_id": str(notification.id), "kind": notification.kind,
-                     "title": notification.title, "body": notification.body})
+        data = {
+            str(key): str(value)
+            for key, value in notification.data.items()
+            if value is not None
+        }
+        data.update(
+            {
+                "notification_id": str(notification.id),
+                "kind": notification.kind,
+                "title": notification.title,
+                "body": notification.body,
+            }
+        )
         try:
-            messaging.send(messaging.Message(
-                token=device.token, data=data,
-                android=messaging.AndroidConfig(priority="high"),
-            ))
+            messaging.send(
+                messaging.Message(
+                    token=device.token,
+                    data=data,
+                    android=messaging.AndroidConfig(priority="high"),
+                )
+            )
             row.status, row.sent_at, row.last_error = "sent", timezone.now(), ""
             sent += 1
         except exceptions.FirebaseError as error:
@@ -72,14 +90,28 @@ def deliver_batch(limit=100):
                 row.status = "failed"
             else:
                 row.status = "pending"
-                row.available_at = timezone.now() + timedelta(seconds=min(300, 2 ** row.attempts * 5))
-            logger.warning("push_delivery_failed", extra={
-                "delivery_id": row.id, "error_code": error_code})
+                row.available_at = timezone.now() + timedelta(
+                    seconds=min(300, 2**row.attempts * 5)
+                )
+            logger.warning(
+                "push_delivery_failed",
+                extra={"delivery_id": row.id, "error_code": error_code},
+            )
         except Exception as error:
             row.attempts += 1
             row.last_error = str(error)[:300]
             row.status = "failed" if row.attempts >= 5 else "pending"
-            row.available_at = timezone.now() + timedelta(seconds=min(300, 2 ** row.attempts * 5))
+            row.available_at = timezone.now() + timedelta(
+                seconds=min(300, 2**row.attempts * 5)
+            )
             logger.exception("push_delivery_failed", extra={"delivery_id": row.id})
-        row.save(update_fields=("status", "attempts", "available_at", "sent_at", "last_error"))
+        row.save(
+            update_fields=(
+                "status",
+                "attempts",
+                "available_at",
+                "sent_at",
+                "last_error",
+            )
+        )
     return sent, len(rows)

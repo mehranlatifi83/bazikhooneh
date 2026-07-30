@@ -17,8 +17,17 @@ def import_legacy_auth_users(apps, schema_editor):
         """)
         legacy_users = cursor.fetchall()
 
-    for (legacy_username, first_name, last_name, email, password, is_staff,
-         is_active, is_superuser, last_login) in legacy_users:
+    for (
+        legacy_username,
+        first_name,
+        last_name,
+        email,
+        password,
+        is_staff,
+        is_active,
+        is_superuser,
+        last_login,
+    ) in legacy_users:
         username = legacy_username.strip().lower()
         account = Account.objects.filter(username=username).first()
         if account is None:
@@ -78,7 +87,8 @@ def migrate_admin_log_fk(apps, schema_editor):
         """)
         for (constraint_name,) in cursor.fetchall():
             cursor.execute(
-                f'ALTER TABLE django_admin_log DROP CONSTRAINT "{constraint_name}"')
+                f'ALTER TABLE django_admin_log DROP CONSTRAINT "{constraint_name}"'
+            )
         cursor.execute("ALTER TABLE django_admin_log DROP COLUMN user_id")
         cursor.execute("""
             ALTER TABLE django_admin_log
@@ -157,7 +167,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="account",
             name="last_login",
-            field=models.DateTimeField(blank=True, null=True, verbose_name="last login"),
+            field=models.DateTimeField(
+                blank=True, null=True, verbose_name="last login"
+            ),
         ),
         migrations.AddField(
             model_name="account",

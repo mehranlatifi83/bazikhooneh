@@ -16,7 +16,9 @@ class AccountTokenAuthentication(BaseAuthentication):
         if prefix != self.keyword or not raw:
             return None
         try:
-            token = AccountToken.objects.select_related("account").get(token_hash=hash_token(raw))
+            token = AccountToken.objects.select_related("account").get(
+                token_hash=hash_token(raw)
+            )
         except AccountToken.DoesNotExist as error:
             raise AuthenticationFailed("invalid_token") from error
         if token.expires_at <= timezone.now() or not token.account.is_active:
@@ -28,6 +30,7 @@ class AccountTokenAuthentication(BaseAuthentication):
             AccountToken.objects.filter(pk=token.pk).update(last_used_at=now)
             if token.session_id:
                 token.session.__class__.objects.filter(pk=token.session_id).update(
-                    last_used_at=now)
+                    last_used_at=now
+                )
         request.account_token = token
         return token.account, token

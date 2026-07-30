@@ -20,7 +20,11 @@ class JsonFormatter(logging.Formatter):
         }
         for key, value in record.__dict__.items():
             if key not in self.standard_attributes and key not in {
-                "message", "asctime", "request_id", "request", "request_body"
+                "message",
+                "asctime",
+                "request_id",
+                "request",
+                "request_body",
             }:
                 try:
                     json.dumps(value)

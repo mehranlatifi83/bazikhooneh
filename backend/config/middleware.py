@@ -16,7 +16,9 @@ class RequestContextMiddleware:
 
     def __call__(self, request):
         supplied = request.headers.get("X-Request-ID", "")
-        request_id = supplied if VALID_REQUEST_ID.fullmatch(supplied) else uuid.uuid4().hex
+        request_id = (
+            supplied if VALID_REQUEST_ID.fullmatch(supplied) else uuid.uuid4().hex
+        )
         request.request_id = request_id
         context_token = request_id_context.set(request_id)
         started = time.monotonic()

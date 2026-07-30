@@ -7,32 +7,70 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0005_alter_accounttoken_last_used_at'),
+        ("accounts", "0005_alter_accounttoken_last_used_at"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AccountSession',
+            name="AccountSession",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('family_id', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False)),
-                ('refresh_token_hash', models.CharField(db_index=True, max_length=64, unique=True)),
-                ('device_name', models.CharField(blank=True, max_length=120)),
-                ('app_version', models.CharField(blank=True, max_length=40)),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('last_used_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('expires_at', models.DateTimeField()),
-                ('revoked_at', models.DateTimeField(blank=True, null=True)),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sessions', to='accounts.account')),
-                ('replaced_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='replaces', to='accounts.accountsession')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "family_id",
+                    models.UUIDField(db_index=True, default=uuid.uuid4, editable=False),
+                ),
+                (
+                    "refresh_token_hash",
+                    models.CharField(db_index=True, max_length=64, unique=True),
+                ),
+                ("device_name", models.CharField(blank=True, max_length=120)),
+                ("app_version", models.CharField(blank=True, max_length=40)),
+                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "last_used_at",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("expires_at", models.DateTimeField()),
+                ("revoked_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "account",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sessions",
+                        to="accounts.account",
+                    ),
+                ),
+                (
+                    "replaced_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="replaces",
+                        to="accounts.accountsession",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='accounttoken',
-            name='session',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='access_tokens', to='accounts.accountsession'),
+            model_name="accounttoken",
+            name="session",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="access_tokens",
+                to="accounts.accountsession",
+            ),
         ),
     ]

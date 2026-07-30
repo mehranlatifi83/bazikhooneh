@@ -77,7 +77,8 @@ class RoomWebSocketTests(TransactionTestCase):
         self.assertEqual("pong", (await second.receive_json_from())["type"])
         await asyncio.sleep(0.05)
         state = await database_sync_to_async(
-            lambda: Room.objects.get(pk=self.room.pk).state)()
+            lambda: Room.objects.get(pk=self.room.pk).state
+        )()
         self.assertEqual(Room.State.ACTIVE, state)
         await second.disconnect()
 
@@ -127,12 +128,18 @@ class RoomWebSocketTests(TransactionTestCase):
         await x_socket.receive_json_from()  # O presence
 
         for socket, destination in (
-            (x_socket, 0), (o_socket, 3), (x_socket, 1),
-            (o_socket, 4), (x_socket, 2),
+            (x_socket, 0),
+            (o_socket, 3),
+            (x_socket, 1),
+            (o_socket, 4),
+            (x_socket, 2),
         ):
-            await socket.send_json_to({
-                "type": "action", "action": {"kind": "place", "destination": destination}
-            })
+            await socket.send_json_to(
+                {
+                    "type": "action",
+                    "action": {"kind": "place", "destination": destination},
+                }
+            )
             await x_socket.receive_json_from()
             await o_socket.receive_json_from()
 
@@ -175,23 +182,32 @@ class RoomWebSocketTests(TransactionTestCase):
         await o_socket.disconnect()
 
     async def _run_disconnect_timeout(self):
-        x_socket=self._socket(self.x_token);o_socket=self._socket(self.o_token)
-        await x_socket.connect();await o_socket.connect()
-        await x_socket.receive_json_from();await x_socket.receive_json_from();await x_socket.receive_json_from()
-        await o_socket.receive_json_from();await o_socket.receive_json_from()
+        x_socket = self._socket(self.x_token)
+        o_socket = self._socket(self.o_token)
+        await x_socket.connect()
+        await o_socket.connect()
+        await x_socket.receive_json_from()
+        await x_socket.receive_json_from()
+        await x_socket.receive_json_from()
+        await o_socket.receive_json_from()
+        await o_socket.receive_json_from()
         await x_socket.disconnect()
-        presence=await o_socket.receive_json_from();state=await o_socket.receive_json_from()
-        self.assertEqual("presence",presence["type"])
-        self.assertEqual("closed",state["game"]["room_state"])
-        self.assertEqual("x_left",state["game"]["outcome_reason"])
+        presence = await o_socket.receive_json_from()
+        state = await o_socket.receive_json_from()
+        self.assertEqual("presence", presence["type"])
+        self.assertEqual("closed", state["game"]["room_state"])
+        self.assertEqual("x_left", state["game"]["outcome_reason"])
         await o_socket.disconnect()
 
     def _socket(self, token):
         return WebsocketCommunicator(
             application,
             f"/ws/v1/rooms/{self.room.code}/",
-            headers=[(b"host", b"localhost"), (b"origin", b"http://localhost"),
-                     (b"authorization", f"Bearer {token}".encode())],
+            headers=[
+                (b"host", b"localhost"),
+                (b"origin", b"http://localhost"),
+                (b"authorization", f"Bearer {token}".encode()),
+            ],
         )
 
 
@@ -201,21 +217,26 @@ class LudoRoomWebSocketTests(TransactionTestCase):
 
     async def _run_live_broadcast(self):
         owner = await database_sync_to_async(Account.objects.create_user)(
-            username="ludo_ws_owner", password="secure-password-123")
+            username="ludo_ws_owner", password="secure-password-123"
+        )
         opponent = await database_sync_to_async(Account.objects.create_user)(
-            username="ludo_ws_opponent", password="secure-password-123")
+            username="ludo_ws_opponent", password="secure-password-123"
+        )
         room = await database_sync_to_async(LudoRoom.create_unique)(owner)
         first, first_token = await database_sync_to_async(LudoSeat.create_human)(
-            room, 0, owner)
+            room, 0, owner
+        )
         second, second_token = await database_sync_to_async(LudoSeat.create_human)(
-            room, 1, opponent)
+            room, 1, opponent
+        )
 
         def start_room():
             LudoSeat.objects.create(room=room, color=2, is_bot=True)
             LudoSeat.objects.create(room=room, color=3, is_bot=True)
             room.state = "active"
             room.game_state = initial_state(
-                [True] * 4, [False, False, True, True], False)
+                [True] * 4, [False, False, True, True], False
+            )
             room.version = 1
             room.save()
 
@@ -227,14 +248,18 @@ class LudoRoomWebSocketTests(TransactionTestCase):
         await first_socket.receive_json_from()
         await second_socket.receive_json_from()
 
-        await first_socket.send_json_to({
-            "type": "roll", "action_id": "ludo-roll-1",
-        })
+        await first_socket.send_json_to(
+            {
+                "type": "roll",
+                "action_id": "ludo-roll-1",
+            }
+        )
         first_state = await first_socket.receive_json_from(timeout=2)
         second_state = await second_socket.receive_json_from(timeout=2)
         self.assertEqual("state", first_state["type"])
-        self.assertEqual(first_state["payload"]["version"],
-                         second_state["payload"]["version"])
+        self.assertEqual(
+            first_state["payload"]["version"], second_state["payload"]["version"]
+        )
         self.assertGreater(first_state["payload"]["version"], 1)
         await first_socket.disconnect()
         await second_socket.disconnect()
@@ -244,6 +269,8 @@ class LudoRoomWebSocketTests(TransactionTestCase):
         return WebsocketCommunicator(
             application,
             f"/ws/v1/ludo/{code}/",
-            headers=[(b"host", b"localhost"),
-                     (b"authorization", f"Bearer {token}".encode())],
+            headers=[
+                (b"host", b"localhost"),
+                (b"authorization", f"Bearer {token}".encode()),
+            ],
         )

@@ -31,5 +31,7 @@ class GameStateTests(SimpleTestCase):
     def _place(self, *cells):
         game = GameState()
         for cell in cells:
-            game = game.apply(game.current_player, {"kind": "place", "destination": cell})
+            game = game.apply(
+                game.current_player, {"kind": "place", "destination": cell}
+            )
         return game

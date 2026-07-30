@@ -18,7 +18,9 @@ class CleanupRoomsTests(TestCase):
         active.state = Room.State.ACTIVE
         active.save()
         old = timezone.now() - timedelta(hours=48)
-        Room.objects.filter(id__in=(waiting.id, closed.id, active.id)).update(updated_at=old)
+        Room.objects.filter(id__in=(waiting.id, closed.id, active.id)).update(
+            updated_at=old
+        )
 
         call_command("cleanup_rooms", stdout=StringIO())
 

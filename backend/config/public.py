@@ -48,12 +48,18 @@ def asset_links(request):
         for item in settings.ANDROID_APP_CERT_SHA256.split(",")
         if item.strip()
     ]
-    payload = [{
-        "relation": ["delegate_permission/common.handle_all_urls"],
-        "target": {
-            "namespace": "android_app",
-            "package_name": "ir.codelighthouse.bazikhooneh",
-            "sha256_cert_fingerprints": fingerprints,
-        },
-    }] if fingerprints else []
+    payload = (
+        [
+            {
+                "relation": ["delegate_permission/common.handle_all_urls"],
+                "target": {
+                    "namespace": "android_app",
+                    "package_name": "ir.codelighthouse.bazikhooneh",
+                    "sha256_cert_fingerprints": fingerprints,
+                },
+            }
+        ]
+        if fingerprints
+        else []
+    )
     return JsonResponse(payload, safe=False)

@@ -12,7 +12,14 @@ class PlayerInline(admin.TabularInline):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ("code", "state", "current_player", "phase", "game_status", "updated_at")
+    list_display = (
+        "code",
+        "state",
+        "current_player",
+        "phase",
+        "game_status",
+        "updated_at",
+    )
     search_fields = ("code",)
     list_filter = ("state", "phase", "game_status")
     inlines = (PlayerInline,)
@@ -20,6 +27,14 @@ class RoomAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ("room", "round_number", "x_account", "o_account", "winner", "outcome", "finished_at")
+    list_display = (
+        "room",
+        "round_number",
+        "x_account",
+        "o_account",
+        "winner",
+        "outcome",
+        "finished_at",
+    )
     list_filter = ("outcome",)
     search_fields = ("room__code", "x_account__username", "o_account__username")

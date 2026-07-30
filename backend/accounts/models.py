@@ -67,14 +67,20 @@ class Account(AbstractBaseUser, PermissionsMixin):
 
 class AccountToken(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    account = models.ForeignKey(Account, related_name="tokens", on_delete=models.CASCADE)
+    account = models.ForeignKey(
+        Account, related_name="tokens", on_delete=models.CASCADE
+    )
     token_hash = models.CharField(max_length=64, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     last_used_at = models.DateTimeField(default=timezone.now)
     session = models.ForeignKey(
-        "AccountSession", related_name="access_tokens", on_delete=models.CASCADE,
-        null=True, blank=True)
+        "AccountSession",
+        related_name="access_tokens",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
 
     @classmethod
     def issue(cls, account: Account, session=None, lifetime=timedelta(hours=1)):
@@ -91,7 +97,9 @@ class AccountToken(models.Model):
 class AccountSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     family_id = models.UUIDField(default=uuid.uuid4, db_index=True, editable=False)
-    account = models.ForeignKey(Account, related_name="sessions", on_delete=models.CASCADE)
+    account = models.ForeignKey(
+        Account, related_name="sessions", on_delete=models.CASCADE
+    )
     refresh_token_hash = models.CharField(max_length=64, unique=True, db_index=True)
     device_name = models.CharField(max_length=120, blank=True)
     app_version = models.CharField(max_length=40, blank=True)
@@ -101,12 +109,17 @@ class AccountSession(models.Model):
     expires_at = models.DateTimeField()
     revoked_at = models.DateTimeField(null=True, blank=True)
     replaced_by = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.SET_NULL,
-        related_name="replaces")
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="replaces",
+    )
 
     @classmethod
-    def issue(cls, account, device_name="", app_version="", ip_address=None,
-              family_id=None):
+    def issue(
+        cls, account, device_name="", app_version="", ip_address=None, family_id=None
+    ):
         raw = secrets.token_urlsafe(48)
         session = cls.objects.create(
             account=account,
@@ -132,14 +145,18 @@ class AccountSession(models.Model):
 
 class UsernameReservation(models.Model):
     username = models.CharField(max_length=30, unique=True)
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="reserved_usernames")
+    account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="reserved_usernames"
+    )
     expires_at = models.DateTimeField()
 
 
 class OneTimeToken(models.Model):
     PURPOSE_EMAIL = "verify_email"
     PURPOSE_PASSWORD = "reset_password"
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="one_time_tokens")
+    account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="one_time_tokens"
+    )
     purpose = models.CharField(max_length=24)
     token_hash = models.CharField(max_length=64, unique=True, db_index=True)
     pending_email = models.EmailField(blank=True)
@@ -149,26 +166,43 @@ class OneTimeToken(models.Model):
     @classmethod
     def issue(cls, account, purpose, pending_email=""):
         raw = secrets.token_urlsafe(24)
-        cls.objects.create(account=account, purpose=purpose, token_hash=hash_token(raw),
-                           pending_email=pending_email, expires_at=timezone.now() + timedelta(hours=1))
+        cls.objects.create(
+            account=account,
+            purpose=purpose,
+            token_hash=hash_token(raw),
+            pending_email=pending_email,
+            expires_at=timezone.now() + timedelta(hours=1),
+        )
         return raw
 
 
 class Friendship(models.Model):
     STATUS_PENDING = "pending"
     STATUS_ACCEPTED = "accepted"
-    requester = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="sent_friendships")
-    recipient = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="received_friendships")
+    requester = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="sent_friendships"
+    )
+    recipient = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="received_friendships"
+    )
     status = models.CharField(max_length=12, default=STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=("requester", "recipient"), name="unique_friend_request")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("requester", "recipient"), name="unique_friend_request"
+            )
+        ]
 
 
 class GameInvite(models.Model):
-    sender = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="sent_game_invites")
-    recipient = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="received_game_invites")
+    sender = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="sent_game_invites"
+    )
+    recipient = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="received_game_invites"
+    )
     game_key = models.CharField(max_length=40)
     room_code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -181,17 +215,29 @@ class GameInvite(models.Model):
 
 
 class UserBlock(models.Model):
-    blocker = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="blocks_made")
-    blocked = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="blocks_received")
+    blocker = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="blocks_made"
+    )
+    blocked = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="blocks_received"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=("blocker", "blocked"), name="unique_user_block")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("blocker", "blocked"), name="unique_user_block"
+            )
+        ]
 
 
 class UserReport(models.Model):
-    reporter = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="reports_made")
-    reported = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="reports_received")
+    reporter = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="reports_made"
+    )
+    reported = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="reports_received"
+    )
     reason = models.CharField(max_length=40)
     details = models.CharField(max_length=500, blank=True)
     status = models.CharField(max_length=16, default="open")
@@ -199,7 +245,9 @@ class UserReport(models.Model):
 
 
 class AccountNotification(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="notifications")
+    account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="notifications"
+    )
     kind = models.CharField(max_length=32)
     title = models.CharField(max_length=120)
     body = models.CharField(max_length=300)
@@ -212,7 +260,9 @@ class AccountNotification(models.Model):
 
 
 class PushDevice(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="push_devices")
+    account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="push_devices"
+    )
     token = models.CharField(max_length=512, unique=True)
     platform = models.CharField(max_length=16, default="android")
     app_version = models.CharField(max_length=32, blank=True)
@@ -226,10 +276,12 @@ class PushDevice(models.Model):
 
 
 class PushDelivery(models.Model):
-    notification = models.ForeignKey(AccountNotification, on_delete=models.CASCADE,
-                                     related_name="push_deliveries")
-    device = models.ForeignKey(PushDevice, on_delete=models.CASCADE,
-                               related_name="deliveries")
+    notification = models.ForeignKey(
+        AccountNotification, on_delete=models.CASCADE, related_name="push_deliveries"
+    )
+    device = models.ForeignKey(
+        PushDevice, on_delete=models.CASCADE, related_name="deliveries"
+    )
     status = models.CharField(max_length=16, default="pending")
     attempts = models.PositiveSmallIntegerField(default=0)
     available_at = models.DateTimeField(default=timezone.now)
@@ -238,13 +290,22 @@ class PushDelivery(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(
-            fields=("notification", "device"), name="unique_push_delivery")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("notification", "device"), name="unique_push_delivery"
+            )
+        ]
         indexes = [models.Index(fields=("status", "available_at"))]
 
 
 class SecurityEvent(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="security_events")
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="security_events",
+    )
     event = models.CharField(max_length=40)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)

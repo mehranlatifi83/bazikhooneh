@@ -48,9 +48,11 @@ def _increment_window(key, limit, timeout):
 @sync_to_async
 def connection_allowed(scope, token):
     ip_allowed = _increment_window(
-        f"ws:connect:ip:{client_ip(scope)}", limit=120, timeout=60)
+        f"ws:connect:ip:{client_ip(scope)}", limit=120, timeout=60
+    )
     credential_allowed = _increment_window(
-        f"ws:connect:credential:{hash_token(token)}", limit=60, timeout=60)
+        f"ws:connect:credential:{hash_token(token)}", limit=60, timeout=60
+    )
     if not ip_allowed or not credential_allowed:
         logger.warning("websocket_connection_rate_limited")
     return ip_allowed and credential_allowed
@@ -59,7 +61,8 @@ def connection_allowed(scope, token):
 @sync_to_async
 def message_allowed(token, limit):
     allowed = _increment_window(
-        f"ws:message:{hash_token(token)}", limit=limit, timeout=10)
+        f"ws:message:{hash_token(token)}", limit=limit, timeout=10
+    )
     if not allowed:
         logger.warning("websocket_message_rate_limited")
     return allowed
@@ -70,7 +73,8 @@ def claim_action(token, action_id):
     if not action_id:
         return True
     return cache.add(
-        f"ws:action:{hash_token(token)}:{action_id}", "pending", timeout=300)
+        f"ws:action:{hash_token(token)}:{action_id}", "pending", timeout=300
+    )
 
 
 @sync_to_async
@@ -87,8 +91,7 @@ def update_presence(kind, identity, channel_name, connected=True):
     if not isinstance(connections, dict):
         connections = {}
     connections = {
-        channel: seen for channel, seen in connections.items()
-        if now - float(seen) < 45
+        channel: seen for channel, seen in connections.items() if now - float(seen) < 45
     }
     if connected:
         connections[channel_name] = now
@@ -109,8 +112,7 @@ def has_active_presence(kind, identity):
     if not isinstance(connections, dict):
         return False
     active = {
-        channel: seen for channel, seen in connections.items()
-        if now - float(seen) < 45
+        channel: seen for channel, seen in connections.items() if now - float(seen) < 45
     }
     if active:
         cache.set(key, active, timeout=50)

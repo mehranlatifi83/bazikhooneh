@@ -18,9 +18,14 @@ class Status(StrEnum):
 
 
 WINNING_LINES = (
-    (0, 1, 2), (3, 4, 5), (6, 7, 8),
-    (0, 3, 6), (1, 4, 7), (2, 5, 8),
-    (0, 4, 8), (2, 4, 6),
+    (0, 1, 2),
+    (3, 4, 5),
+    (6, 7, 8),
+    (0, 3, 6),
+    (1, 4, 7),
+    (2, 5, 8),
+    (0, 4, 8),
+    (2, 4, 6),
 )
 
 
@@ -57,7 +62,11 @@ class GameState:
 
         board = self._replace(destination, player)
         status = self._status(board)
-        phase = Phase.MOVEMENT if board.count(".") == 3 and status == Status.ACTIVE else self.phase
+        phase = (
+            Phase.MOVEMENT
+            if board.count(".") == 3 and status == Status.ACTIVE
+            else self.phase
+        )
         return GameState(board, self._opponent(player), phase, status)
 
     def _move(self, player: str, source, destination) -> "GameState":

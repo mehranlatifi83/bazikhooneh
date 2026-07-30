@@ -5,71 +5,151 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0001_initial'),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='account',
-            name='email',
+            model_name="account",
+            name="email",
             field=models.EmailField(blank=True, db_index=True, max_length=254),
         ),
         migrations.AddField(
-            model_name='account',
-            name='email_verified',
+            model_name="account",
+            name="email_verified",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='account',
-            name='username_changed_at',
+            model_name="account",
+            name="username_changed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.CreateModel(
-            name='GameInvite',
+            name="GameInvite",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('game_key', models.CharField(max_length=40)),
-                ('room_code', models.CharField(max_length=6)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('accepted_at', models.DateTimeField(blank=True, null=True)),
-                ('recipient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='received_game_invites', to='accounts.account')),
-                ('sender', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sent_game_invites', to='accounts.account')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("game_key", models.CharField(max_length=40)),
+                ("room_code", models.CharField(max_length=6)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("accepted_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "recipient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="received_game_invites",
+                        to="accounts.account",
+                    ),
+                ),
+                (
+                    "sender",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sent_game_invites",
+                        to="accounts.account",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='OneTimeToken',
+            name="OneTimeToken",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('purpose', models.CharField(max_length=24)),
-                ('token_hash', models.CharField(db_index=True, max_length=64, unique=True)),
-                ('pending_email', models.EmailField(blank=True, max_length=254)),
-                ('expires_at', models.DateTimeField()),
-                ('used_at', models.DateTimeField(blank=True, null=True)),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='one_time_tokens', to='accounts.account')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("purpose", models.CharField(max_length=24)),
+                (
+                    "token_hash",
+                    models.CharField(db_index=True, max_length=64, unique=True),
+                ),
+                ("pending_email", models.EmailField(blank=True, max_length=254)),
+                ("expires_at", models.DateTimeField()),
+                ("used_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "account",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="one_time_tokens",
+                        to="accounts.account",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='UsernameReservation',
+            name="UsernameReservation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('username', models.CharField(max_length=30, unique=True)),
-                ('expires_at', models.DateTimeField()),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reserved_usernames', to='accounts.account')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("username", models.CharField(max_length=30, unique=True)),
+                ("expires_at", models.DateTimeField()),
+                (
+                    "account",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reserved_usernames",
+                        to="accounts.account",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Friendship',
+            name="Friendship",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(default='pending', max_length=12)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('recipient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='received_friendships', to='accounts.account')),
-                ('requester', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sent_friendships', to='accounts.account')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("status", models.CharField(default="pending", max_length=12)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "recipient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="received_friendships",
+                        to="accounts.account",
+                    ),
+                ),
+                (
+                    "requester",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sent_friendships",
+                        to="accounts.account",
+                    ),
+                ),
             ],
             options={
-                'constraints': [models.UniqueConstraint(fields=('requester', 'recipient'), name='unique_friend_request')],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("requester", "recipient"), name="unique_friend_request"
+                    )
+                ],
             },
         ),
     ]

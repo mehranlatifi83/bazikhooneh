@@ -7,14 +7,14 @@ from django.test import TestCase, override_settings
 class HealthAndObservabilityTests(TestCase):
     def test_liveness_is_lightweight_and_returns_request_id(self):
         response = self.client.get(
-            "/health/live/", HTTP_X_REQUEST_ID="client-request-123")
+            "/health/live/", HTTP_X_REQUEST_ID="client-request-123"
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual({"status": "ok"}, response.json())
         self.assertEqual("client-request-123", response["X-Request-ID"])
 
     def test_invalid_request_id_is_replaced(self):
-        response = self.client.get(
-            "/health/", HTTP_X_REQUEST_ID="invalid request id")
+        response = self.client.get("/health/", HTTP_X_REQUEST_ID="invalid request id")
         self.assertEqual(200, response.status_code)
         self.assertNotEqual("invalid request id", response["X-Request-ID"])
         self.assertEqual(32, len(response["X-Request-ID"]))
@@ -63,11 +63,12 @@ class HealthAndObservabilityTests(TestCase):
         cache.clear()
         api_settings.reload()
         try:
-            request = APIRequestFactory().get(
-                "/api/test", REMOTE_ADDR="203.0.113.9")
+            request = APIRequestFactory().get("/api/test", REMOTE_ADDR="203.0.113.9")
             throttle = IPRateThrottle()
             throttle.rate = "1/min"
-            throttle.num_requests, throttle.duration = throttle.parse_rate(throttle.rate)
+            throttle.num_requests, throttle.duration = throttle.parse_rate(
+                throttle.rate
+            )
             self.assertTrue(throttle.allow_request(request, None))
             self.assertFalse(throttle.allow_request(request, None))
         finally:
@@ -84,12 +85,15 @@ class JsonLoggingTests(TestCase):
         token = request_id_context.set("request-42")
         try:
             record = logging.LogRecord(
-                "test", logging.INFO, __file__, 1, "hello", (), None)
+                "test", logging.INFO, __file__, 1, "hello", (), None
+            )
             payload = json.loads(JsonFormatter().format(record))
         finally:
             request_id_context.reset(token)
         self.assertEqual("request-42", payload["request_id"])
         self.assertEqual("hello", payload["message"])
+
+
 class PublicLinkTests(TestCase):
     def test_room_link_is_accessible_and_opens_the_app(self):
         response = self.client.get("/rooms/ABC123")

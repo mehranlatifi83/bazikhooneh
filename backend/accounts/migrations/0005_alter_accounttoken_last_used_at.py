@@ -5,15 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0004_security_event'),
+        ("accounts", "0004_security_event"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='accounttoken',
-            name='last_used_at',
+            model_name="accounttoken",
+            name="last_used_at",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
     ]
