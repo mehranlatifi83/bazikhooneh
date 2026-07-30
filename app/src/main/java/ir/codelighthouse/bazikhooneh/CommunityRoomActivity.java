@@ -197,7 +197,9 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
     @Override public void onEvent(JSONObject event){runOnUiThread(()->{String type=event.optString("event");
         if("room_state".equals(type))renderRoom(event.optJSONObject("room"));
         else if("pong".equals(type)){socketVerified=true;reconnectScheduled=false;reconnectHandler.removeCallbacksAndMessages(null);
-            if(!everConnected){everConnected=true;show(getString(R.string.room_connected));}else status.setText(R.string.room_connected);}
+            if(!everConnected){everConnected=true;show(getString(R.string.room_connected));}
+            else{status.setText(R.string.room_connected);refreshMessages();
+                client.details(code,(data,error)->runOnUiThread(()->{if(data!=null)renderRoom(data);}));}}
         else if("chat_message".equals(type))addMessage(event.optJSONObject("message"),true);
         else if("chat_edited".equals(type))updateMessage(event.optJSONObject("message"));
         else if("chat_deleted".equals(type))removeMessage(event.optLong("message_id"));

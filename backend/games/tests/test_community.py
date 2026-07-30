@@ -61,6 +61,7 @@ class CommunityRoomApiTests(APITestCase):
             "mic_policy": "request", "max_participants": 4,
         }, format="json")
         self.assertEqual(201, call.status_code)
+        self.assertIsNone(call.data["max_participants"])
         muted = self.client.post(f"/api/v1/community/rooms/{code}/moderate/", {
             "username": "member_user", "action": "mute_chat", "minutes": 5,
         }, format="json")

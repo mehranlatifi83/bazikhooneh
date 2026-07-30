@@ -501,8 +501,7 @@ class CommunityCallView(APIView):
         mic_policy = str(request.data.get("mic_policy", "open"))
         call = CommunityCall.objects.create(
             room=room, creator=request.user, title=str(request.data.get("title", ""))[:100],
-            mic_policy=mic_policy if mic_policy in CommunityCall.MicPolicy.values else "open",
-            max_participants=max(2, min(8, int(request.data.get("max_participants", 4)))))
+            mic_policy=mic_policy if mic_policy in CommunityCall.MicPolicy.values else "open")
         CommunityCallParticipant.objects.create(call=call, account=request.user, can_speak=True)
         CommunityEvent.objects.create(room=room, actor=request.user, kind="call_started",
                                       payload={"call_id": str(call.id)})
@@ -936,7 +935,9 @@ class CommunityConsumer(AsyncJsonWebsocketConsumer):
             call = member.room.calls.select_for_update().filter(status="active").first()
             if not call:
                 raise ValueError("no_active_call")
-            if call.participants.filter(status="joined").count() >= call.max_participants:
+            if (call.max_participants is not None
+                    and call.participants.filter(status="joined").count()
+                    >= call.max_participants):
                 raise ValueError("call_full")
             participant, _ = CommunityCallParticipant.objects.get_or_create(
                 call=call, account=member.account)

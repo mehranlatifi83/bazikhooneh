@@ -48,6 +48,8 @@ public final class ReliableWebSocket {
                 return thread;
             });
     private final Object lock = new Object();
+    private final ConnectivityManager connectivityManager;
+    private final ConnectivityManager.NetworkCallback networkCallback;
 
     private Request request;
     private WebSocket socket;
@@ -58,12 +60,50 @@ public final class ReliableWebSocket {
     private int reconnectAttempt;
     private boolean stopped = true;
     private boolean disconnectNotified;
+    private boolean networkCallbackRegistered;
+    private Network activeNetwork;
+    private long lastServerMessageNanos;
 
     public ReliableWebSocket(
             Context context, OkHttpClient client, Listener listener) {
         this.context = context.getApplicationContext();
         this.client = client;
         this.listener = listener;
+        connectivityManager = (ConnectivityManager)
+                this.context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override public void onAvailable(Network network) {
+                executeSafely(() -> {
+                    synchronized (lock) {
+                        boolean changed = activeNetwork != null
+                                && !activeNetwork.equals(network);
+                        activeNetwork = network;
+                        if (!stopped && (state == State.WAITING
+                                || (state == State.OPEN && changed))) {
+                            reconnectNowLocked();
+                        }
+                    }
+                });
+            }
+
+            @Override public void onLost(Network network) {
+                executeSafely(() -> {
+                    synchronized (lock) {
+                        if (network.equals(activeNetwork)) activeNetwork = null;
+                        if (!stopped && activeNetwork == null
+                                && (state == State.OPEN || state == State.CONNECTING)) {
+                            reconnectNowLocked();
+                        }
+                    }
+                });
+            }
+        };
+    }
+
+    private void executeSafely(Runnable runnable) {
+        try {
+            scheduler.execute(runnable);
+        } catch (java.util.concurrent.RejectedExecutionException ignored) { }
     }
 
     public void start(Request request) {
@@ -73,6 +113,7 @@ public final class ReliableWebSocket {
             stopped = false;
             reconnectAttempt = 0;
             disconnectNotified = false;
+            registerNetworkCallbackLocked();
             generation++;
             openLocked(generation);
         }
@@ -80,8 +121,12 @@ public final class ReliableWebSocket {
 
     public boolean send(JSONObject message) {
         synchronized (lock) {
-            return state == State.OPEN && socket != null
-                    && socket.send(message.toString());
+            if (state != State.OPEN || socket == null) return false;
+            boolean sent = socket.send(message.toString());
+            if (!sent) {
+                reconnectNowLocked();
+            }
+            return sent;
         }
     }
 
@@ -112,6 +157,7 @@ public final class ReliableWebSocket {
         State previousState = state;
         state = State.STOPPED;
         if (previous != null) previous.close(1000, "client_stopped");
+        unregisterNetworkCallbackLocked();
         if (notify && previousState != State.STOPPED && previousState != State.IDLE) {
             listener.onClosed();
         }
@@ -135,6 +181,7 @@ public final class ReliableWebSocket {
                     state = State.OPEN;
                     reconnectAttempt = 0;
                     disconnectNotified = false;
+                    lastServerMessageNanos = System.nanoTime();
                     scheduleHeartbeatLocked(expectedGeneration);
                 }
                 listener.onOpen();
@@ -143,6 +190,7 @@ public final class ReliableWebSocket {
             @Override public void onMessage(WebSocket webSocket, String text) {
                 synchronized (lock) {
                     if (!isCurrent(expectedGeneration, webSocket)) return;
+                    lastServerMessageNanos = System.nanoTime();
                 }
                 try {
                     listener.onMessage(new JSONObject(text));
@@ -204,6 +252,17 @@ public final class ReliableWebSocket {
         }, delay, TimeUnit.MILLISECONDS);
     }
 
+    private void reconnectNowLocked() {
+        if (stopped || request == null) return;
+        cancelReconnectLocked();
+        cancelHeartbeatLocked();
+        WebSocket previous = socket;
+        socket = null;
+        generation++;
+        if (previous != null) previous.cancel();
+        openLocked(generation);
+    }
+
     private boolean isCurrent(long expectedGeneration, WebSocket candidate) {
         return !stopped && expectedGeneration == generation && candidate == socket;
     }
@@ -221,7 +280,12 @@ public final class ReliableWebSocket {
             synchronized (lock) {
                 if (stopped || expectedGeneration != generation
                         || state != State.OPEN || socket == null) return;
-                socket.send("{\"type\":\"ping\"}");
+                if (System.nanoTime() - lastServerMessageNanos
+                        > TimeUnit.SECONDS.toNanos(45)) {
+                    reconnectNowLocked();
+                    return;
+                }
+                if (!socket.send("{\"type\":\"ping\"}")) reconnectNowLocked();
             }
         }, 15, 15, TimeUnit.SECONDS);
     }
@@ -234,8 +298,7 @@ public final class ReliableWebSocket {
     }
 
     private boolean networkAvailable() {
-        ConnectivityManager manager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager manager = connectivityManager;
         if (manager == null) return true;
         Network active = manager.getActiveNetwork();
         if (active == null) return false;
@@ -244,8 +307,26 @@ public final class ReliableWebSocket {
                 && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
+    private void registerNetworkCallbackLocked() {
+        if (networkCallbackRegistered || connectivityManager == null) return;
+        try {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+            networkCallbackRegistered = true;
+        } catch (RuntimeException ignored) { }
+    }
+
+    private void unregisterNetworkCallbackLocked() {
+        if (!networkCallbackRegistered || connectivityManager == null) return;
+        try {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        } catch (RuntimeException ignored) { }
+        networkCallbackRegistered = false;
+        activeNetwork = null;
+    }
+
     public static long reconnectDelayMillis(int attempt, double randomUnit) {
-        int boundedAttempt = Math.max(0, Math.min(attempt, 5));
+        if (attempt <= 0) return 250L;
+        int boundedAttempt = Math.min(attempt - 1, 5);
         long base = Math.min(30_000L, 1_000L << boundedAttempt);
         double boundedRandom = Math.max(0.0, Math.min(1.0, randomUnit));
         double jitter = 0.75 + boundedRandom * 0.5;

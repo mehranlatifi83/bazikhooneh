@@ -25,6 +25,7 @@ public final class LudoOnlineClient {
     public interface Listener {
         void onSession(JSONObject session);
         void onState(JSONObject state);
+        void onConnected();
         void onError(String error);
         void onDisconnected();
     }
@@ -43,6 +44,9 @@ public final class LudoOnlineClient {
     private final String accountToken;
     private final Listener listener;
     private final ReliableWebSocket socket;
+    private volatile JSONObject pendingAction;
+    private volatile int pendingBaseVersion = -1;
+    private volatile int latestVersion = -1;
 
     public LudoOnlineClient(
             Context context, String base, String accountToken, Listener listener) {
@@ -51,13 +55,27 @@ public final class LudoOnlineClient {
         this.accountToken = accountToken;
         this.listener = listener;
         socket = new ReliableWebSocket(context, http, new ReliableWebSocket.Listener() {
-            @Override public void onOpen() { }
+            @Override public void onOpen() {
+                listener.onConnected();
+            }
             @Override public void onMessage(JSONObject message) {
                 if ("state".equals(message.optString("type"))) {
                     JSONObject payload = message.optJSONObject("payload");
                     if (payload == null) listener.onError("invalid_server_response");
-                    else listener.onState(payload);
+                    else {
+                        latestVersion = payload.optInt("version", latestVersion);
+                        if (pendingAction != null && latestVersion > pendingBaseVersion) {
+                            pendingAction = null;
+                            pendingBaseVersion = -1;
+                        } else if (pendingAction != null) {
+                            socket.send(pendingAction);
+                            return;
+                        }
+                        listener.onState(payload);
+                    }
                 } else if ("error".equals(message.optString("type"))) {
+                    pendingAction = null;
+                    pendingBaseVersion = -1;
                     listener.onError(message.optString("error", "server_error"));
                 } else if (!"pong".equals(message.optString("type"))) {
                     listener.onError("invalid_server_message");
@@ -150,13 +168,16 @@ public final class LudoOnlineClient {
                     .put("type", type)
                     .put("action_id", UUID.randomUUID().toString());
             if (piece >= 0) message.put("piece", piece);
-            if (!socket.send(message)) listener.onError("not_connected");
+            pendingBaseVersion = latestVersion;
+            pendingAction = message;
+            if (!socket.send(message)) listener.onDisconnected();
         } catch (JSONException error) {
             listener.onError("invalid_request");
         }
     }
 
     public void disconnect() {
+        pendingAction = null;
         socket.shutdown();
     }
 }

@@ -72,6 +72,7 @@ public final class MainActivity extends NavigableActivity {
     private int reconnectAttempts;
     private boolean reconnectAllowed;
     private boolean onlineActionPending;
+    private boolean onlineConnected;
     private boolean leavingRoom;
     private long onlineStartAt;
     private boolean opponentConnected = true;
@@ -434,6 +435,7 @@ public final class MainActivity extends NavigableActivity {
 
     private void beginOnlineRequest() {
         reconnectAllowed = true;
+        onlineConnected = false;
         selectedSource = -1;
         onlineState = null;
         roomInformation.setText("");
@@ -486,6 +488,7 @@ public final class MainActivity extends NavigableActivity {
             cell.setText(value == '.' ? "" : String.valueOf(value));
             applyPieceAppearance(cell, value == '.' ? Mark.EMPTY : value == 'X' ? Mark.X : Mark.O);
             boolean canPlay = onlineState != null && "active".equals(onlineState.roomState) && android.os.SystemClock.elapsedRealtime() >= onlineStartAt
+                    && onlineConnected
                     && onlineState.currentPlayer.equals(onlineSymbol)
                     && "active".equals(onlineState.status) && !onlineActionPending;
             cell.setEnabled(canPlay);
@@ -582,16 +585,20 @@ public final class MainActivity extends NavigableActivity {
         @Override public void onConnected() {
             reconnectAttempts = 0;
             handler.removeCallbacks(reconnectRunnable);
+            onlineConnected = true;
+            onlineActionPending = onlineClient.hasPendingAction();
+            runOnUiThread(() -> renderOnline(false));
         }
 
         @Override public void onDisconnected() {
             runOnUiThread(() -> {
+                onlineConnected = false;
                 if (leavingRoom) {
                     finishLocalLeave();
                     return;
                 }
                 statusText.setText(R.string.online_disconnected);
-                onlineActionPending = false;
+                onlineActionPending = onlineClient.hasPendingAction();
                 announce(getString(R.string.online_disconnected));
             });
         }
@@ -632,6 +639,7 @@ public final class MainActivity extends NavigableActivity {
         String token = secure.getString(PREF_TOKEN, "");
         if (room.isEmpty() || symbol.isEmpty() || token.isEmpty()) return;
         reconnectAllowed = true;
+        onlineConnected = false;
         onlineSymbol = symbol;
         roomCodeInput.setText(room);
         statusText.setText(R.string.online_connecting);
@@ -671,6 +679,7 @@ public final class MainActivity extends NavigableActivity {
     private void finishLocalLeave() {
         leavingRoom = false;
         onlineClient.disconnect();
+        onlineConnected = false;
         SecurePreferences.open(this, ONLINE_PREFS).clear();
         onlineState = null;
         onlineSymbol = null;

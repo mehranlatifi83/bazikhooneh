@@ -39,17 +39,33 @@ public final class OnlineGameClient {
     private final Listener listener;
     private final ReliableWebSocket socket;
     private String accountToken = "";
+    private volatile JSONObject pendingAction;
+    private volatile int pendingBaseVersion = -1;
+    private volatile int latestVersion = -1;
 
     public OnlineGameClient(Context context, String baseUrl, Listener listener) {
         this.baseUrl = trimSlash(baseUrl);
         this.listener = listener;
         socket = new ReliableWebSocket(context, http, new ReliableWebSocket.Listener() {
-            @Override public void onOpen() { listener.onConnected(); }
+            @Override public void onOpen() {
+                listener.onConnected();
+            }
             @Override public void onMessage(JSONObject message) {
                 try {
                     if ("state".equals(message.optString("type"))) {
-                        listener.onState(OnlineGameState.from(message.getJSONObject("game")));
+                        OnlineGameState state = OnlineGameState.from(message.getJSONObject("game"));
+                        latestVersion = state.version;
+                        if (pendingAction != null && state.version > pendingBaseVersion) {
+                            pendingAction = null;
+                            pendingBaseVersion = -1;
+                        } else if (pendingAction != null) {
+                            socket.send(pendingAction);
+                            return;
+                        }
+                        listener.onState(state);
                     } else if ("error".equals(message.optString("type"))) {
+                        pendingAction = null;
+                        pendingBaseVersion = -1;
                         listener.onError(message.optString("error", "server_error"));
                     } else if ("presence".equals(message.optString("type"))) {
                         listener.onPresence(message.optString("symbol"),
@@ -150,14 +166,21 @@ public final class OnlineGameClient {
             if (source >= 0) action.put("source", source);
             JSONObject message = new JSONObject().put("type", "action")
                     .put("action_id", UUID.randomUUID().toString()).put("action", action);
-            if (!socket.send(message)) listener.onError("not_connected");
+            pendingBaseVersion = latestVersion;
+            pendingAction = message;
+            if (!socket.send(message)) listener.onDisconnected();
         } catch (JSONException error) {
             listener.onError("invalid_request");
         }
     }
 
     public void disconnect() {
+        pendingAction = null;
         socket.shutdown();
+    }
+
+    public boolean hasPendingAction() {
+        return pendingAction != null;
     }
 
     private void send(JSONObject message, String type) {

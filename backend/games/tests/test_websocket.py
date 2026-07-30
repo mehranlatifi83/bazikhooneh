@@ -7,7 +7,9 @@ from django.test import TransactionTestCase
 from django.test import override_settings
 
 from config.asgi import application
-from games.models import Player, Room
+from accounts.models import Account
+from games.ludo_engine import initial_state
+from games.models import LudoRoom, LudoSeat, Player, Room
 
 
 class RoomWebSocketTests(TransactionTestCase):
@@ -189,5 +191,59 @@ class RoomWebSocketTests(TransactionTestCase):
             application,
             f"/ws/v1/rooms/{self.room.code}/",
             headers=[(b"host", b"localhost"), (b"origin", b"http://localhost"),
+                     (b"authorization", f"Bearer {token}".encode())],
+        )
+
+
+class LudoRoomWebSocketTests(TransactionTestCase):
+    def test_roll_is_broadcast_to_every_connected_player_without_reconnect(self):
+        async_to_sync(self._run_live_broadcast)()
+
+    async def _run_live_broadcast(self):
+        owner = await database_sync_to_async(Account.objects.create_user)(
+            username="ludo_ws_owner", password="secure-password-123")
+        opponent = await database_sync_to_async(Account.objects.create_user)(
+            username="ludo_ws_opponent", password="secure-password-123")
+        room = await database_sync_to_async(LudoRoom.create_unique)(owner)
+        first, first_token = await database_sync_to_async(LudoSeat.create_human)(
+            room, 0, owner)
+        second, second_token = await database_sync_to_async(LudoSeat.create_human)(
+            room, 1, opponent)
+
+        def start_room():
+            LudoSeat.objects.create(room=room, color=2, is_bot=True)
+            LudoSeat.objects.create(room=room, color=3, is_bot=True)
+            room.state = "active"
+            room.game_state = initial_state(
+                [True] * 4, [False, False, True, True], False)
+            room.version = 1
+            room.save()
+
+        await database_sync_to_async(start_room)()
+        first_socket = self._socket(room.code, first_token)
+        second_socket = self._socket(room.code, second_token)
+        self.assertTrue((await first_socket.connect())[0])
+        self.assertTrue((await second_socket.connect())[0])
+        await first_socket.receive_json_from()
+        await second_socket.receive_json_from()
+
+        await first_socket.send_json_to({
+            "type": "roll", "action_id": "ludo-roll-1",
+        })
+        first_state = await first_socket.receive_json_from(timeout=2)
+        second_state = await second_socket.receive_json_from(timeout=2)
+        self.assertEqual("state", first_state["type"])
+        self.assertEqual(first_state["payload"]["version"],
+                         second_state["payload"]["version"])
+        self.assertGreater(first_state["payload"]["version"], 1)
+        await first_socket.disconnect()
+        await second_socket.disconnect()
+
+    @staticmethod
+    def _socket(code, token):
+        return WebsocketCommunicator(
+            application,
+            f"/ws/v1/ludo/{code}/",
+            headers=[(b"host", b"localhost"),
                      (b"authorization", f"Bearer {token}".encode())],
         )

@@ -358,7 +358,9 @@ class CommunityCall(models.Model):
     title = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.ACTIVE)
     mic_policy = models.CharField(max_length=12, choices=MicPolicy.choices, default=MicPolicy.OPEN)
-    max_participants = models.PositiveSmallIntegerField(default=8)
+    # Null means that the room itself, not an arbitrary application constant,
+    # defines the practical capacity of the SFU call.
+    max_participants = models.PositiveSmallIntegerField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)

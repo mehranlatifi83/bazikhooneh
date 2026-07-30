@@ -48,9 +48,9 @@ def _increment_window(key, limit, timeout):
 @sync_to_async
 def connection_allowed(scope, token):
     ip_allowed = _increment_window(
-        f"ws:connect:ip:{client_ip(scope)}", limit=30, timeout=60)
+        f"ws:connect:ip:{client_ip(scope)}", limit=120, timeout=60)
     credential_allowed = _increment_window(
-        f"ws:connect:credential:{hash_token(token)}", limit=20, timeout=60)
+        f"ws:connect:credential:{hash_token(token)}", limit=60, timeout=60)
     if not ip_allowed or not credential_allowed:
         logger.warning("websocket_connection_rate_limited")
     return ip_allowed and credential_allowed
