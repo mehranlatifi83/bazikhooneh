@@ -1,4 +1,4 @@
-package ir.codelighthouse.bazikhooneh;
+package ir.codelighthouse.bazikhooneh.feature.ludo;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,6 +7,8 @@ import android.widget.CheckBox;
 import android.widget.RadioGroup;
 
 import ir.codelighthouse.bazikhooneh.navigation.AppNavigator;
+import ir.codelighthouse.bazikhooneh.NavigableActivity;
+import ir.codelighthouse.bazikhooneh.R;
 
 public final class LudoMenuActivity extends NavigableActivity {
     @Override protected void onCreate(Bundle state) {
@@ -32,14 +34,14 @@ public final class LudoMenuActivity extends NavigableActivity {
                 .getCheckedRadioButtonId();
         int players = selected == R.id.ludo_three_players ? 3
                 : selected == R.id.ludo_four_players ? 4 : 2;
-        startActivity(gameIntent("local").putExtra(LudoActivity.EXTRA_PLAYERS, players));
+        startActivity(gameIntent("local").putExtra(LudoGameActivity.EXTRA_PLAYERS, players));
     }
 
     private Intent gameIntent(String mode) {
         boolean thirdSixPenalty = ((CheckBox) findViewById(
                 R.id.ludo_third_six_penalty)).isChecked();
-        return new Intent(this, LudoActivity.class)
-                .putExtra(LudoActivity.EXTRA_MODE, mode)
-                .putExtra(LudoActivity.EXTRA_THIRD_SIX_PENALTY, thirdSixPenalty);
+        return new Intent(this, LudoGameActivity.class)
+                .putExtra(LudoGameActivity.EXTRA_MODE, mode)
+                .putExtra(LudoGameActivity.EXTRA_THIRD_SIX_PENALTY, thirdSixPenalty);
     }
 }

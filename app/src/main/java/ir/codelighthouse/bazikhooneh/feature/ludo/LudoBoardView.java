@@ -1,6 +1,7 @@
-package ir.codelighthouse.bazikhooneh;
+package ir.codelighthouse.bazikhooneh.feature.ludo;
 
 import android.content.Context;
+import ir.codelighthouse.bazikhooneh.R;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;

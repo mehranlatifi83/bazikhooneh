@@ -8,7 +8,7 @@
    <Button android:id="@+id/ludo_share_room" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/share_room" />
    <Button android:id="@+id/ludo_start_with_bots" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/ludo_start_with_bots" android:visibility="gone" />
   </LinearLayout>
-  <ir.codelighthouse.bazikhooneh.LudoBoardView android:id="@+id/ludo_board" android:layout_width="match_parent" android:layout_height="360dp" android:importantForAccessibility="no" />
+  <ir.codelighthouse.bazikhooneh.feature.ludo.LudoBoardView android:id="@+id/ludo_board" android:layout_width="match_parent" android:layout_height="360dp" android:importantForAccessibility="no" />
   <Button android:id="@+id/ludo_roll" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/ludo_roll_dice" />
   <LinearLayout android:id="@+id/ludo_piece_actions" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
   <LinearLayout android:id="@+id/ludo_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="vertical" />

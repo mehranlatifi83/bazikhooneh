@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import ir.codelighthouse.bazikhooneh.TicTacToeMenuActivity;
 import ir.codelighthouse.bazikhooneh.TicTacToeGuideActivity;
 import ir.codelighthouse.bazikhooneh.R;
-import ir.codelighthouse.bazikhooneh.LudoMenuActivity;
-import ir.codelighthouse.bazikhooneh.LudoGuideActivity;
+import ir.codelighthouse.bazikhooneh.feature.ludo.LudoMenuActivity;
+import ir.codelighthouse.bazikhooneh.feature.ludo.LudoGuideActivity;
 
 public final class GameCatalog {
     private GameCatalog() { }

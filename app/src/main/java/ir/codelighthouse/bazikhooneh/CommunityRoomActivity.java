@@ -14,6 +14,7 @@ import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
 import ir.codelighthouse.bazikhooneh.community.RoomSharing;
 import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGameActivity;
+import ir.codelighthouse.bazikhooneh.feature.ludo.LudoOnlineGameActivity;
 import ir.codelighthouse.bazikhooneh.security.SecurePreferences;
 
 public final class CommunityRoomActivity extends NavigableActivity implements CommunityClient.Events {
@@ -193,7 +194,7 @@ public final class CommunityRoomActivity extends NavigableActivity implements Co
         secure.putString("room",player.optString("room_code"));
         secure.putInt("color",player.optInt("color"));
         secure.putString("token",player.optString("reconnect_token"));
-        startActivity(new Intent(this,LudoOnlineActivity.class));}
+        startActivity(new Intent(this,LudoOnlineGameActivity.class));}
     private void joinSelectedGame(JSONObject event){if(startingGame){startingGame=false;return;}String name=getString("ludo".equals(event.optString("game_key"))?R.string.ludo_title:R.string.tic_tac_toe_title);
         new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.room_game_started,name))
                 .setNegativeButton(R.string.not_now,null).setPositiveButton(R.string.join_active_game,(d,w)->joinActiveGame()).show();}
