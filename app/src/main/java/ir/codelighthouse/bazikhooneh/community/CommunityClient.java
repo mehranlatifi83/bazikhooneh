@@ -85,7 +85,7 @@ public final class CommunityClient {
     public void leaderboard(Callback callback) { request("GET", "/api/v1/leaderboard/", null, callback); }
     public void startCall(String code, boolean requestToSpeak, Callback callback) {
         JSONObject body = new JSONObject();
-        try { body.put("mic_policy", requestToSpeak ? "request" : "open"); body.put("max_participants", 4); }
+        try { body.put("mic_policy", requestToSpeak ? "request" : "open"); body.put("max_participants", 8); }
         catch (Exception ignored) { }
         request("POST", "/api/v1/community/rooms/" + code + "/call/", body, callback);
     }

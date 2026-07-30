@@ -71,6 +71,7 @@ dependencies {
     // Bundles libmediasoupclient and its matching libwebrtc build (m140). Keeping a
     // second WebRTC AAR would duplicate org.webrtc classes and native symbols.
     implementation 'io.github.crow-misia.libmediasoup-android:libmediasoup-android:0.21.0'
+    implementation 'io.github.crow-misia.libwebrtc:libwebrtc-ktx:1.12.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test:runner:1.5.2'

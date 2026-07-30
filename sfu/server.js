@@ -35,6 +35,11 @@ async function authenticate(request, code) {
   if (!response.ok) throw new Error("unauthorized");
   const room = await response.json();
   if (!room.membership || !room.active_call) throw new Error("no_active_call");
+  const accountId = String(room.membership.id);
+  const joined = (room.active_call.participants || []).some(
+    participant => String(participant.id) === accountId
+  );
+  if (!joined) throw new Error("not_in_call");
   return { account: room.membership, call: room.active_call };
 }
 
@@ -49,10 +54,12 @@ async function getRoom(code) {
 }
 
 function closePeer(room, peer) {
+  if (peer.closed) return;
+  peer.closed = true;
   for (const consumer of peer.consumers.values()) consumer.close();
   for (const producer of peer.producers.values()) producer.close();
   for (const transport of peer.transports.values()) transport.close();
-  room.peers.delete(peer.id);
+  if (room.peers.get(peer.id) === peer) room.peers.delete(peer.id);
   if (!room.peers.size) {
     room.router.close();
     rooms.delete(room.code);
@@ -92,9 +99,12 @@ websocket.on("connection", async (socket, context) => {
   const room = await getRoom(context.code);
   const id = String(context.identity.account.id);
   const old = room.peers.get(id);
-  if (old) { old.socket.close(4001, "replaced"); closePeer(room, old); }
-  const peer = { id, socket, transports: new Map(), producers: new Map(), consumers: new Map() };
+  const peer = {
+    id, socket, closed: false,
+    transports: new Map(), producers: new Map(), consumers: new Map()
+  };
   room.peers.set(id, peer);
+  if (old) { old.socket.close(4001, "replaced"); closePeer(room, old); }
   socket.on("close", () => closePeer(room, peer));
   socket.on("error", () => {});
   socket.on("message", async raw => {
@@ -182,3 +192,21 @@ websocket.on("connection", async (socket, context) => {
   });
 });
 server.listen(PORT, "127.0.0.1", () => console.log(`SFU listening on ${PORT}`));
+
+let shuttingDown = false;
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`SFU shutting down after ${signal}`);
+  websocket.close();
+  for (const room of rooms.values()) {
+    for (const peer of room.peers.values()) peer.socket.terminate();
+    room.router.close();
+  }
+  rooms.clear();
+  for (const worker of workers) worker.close();
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+process.once("SIGTERM", () => shutdown("SIGTERM"));
+process.once("SIGINT", () => shutdown("SIGINT"));

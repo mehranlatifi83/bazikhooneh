@@ -12,6 +12,7 @@ EnvironmentFile=/root/bazikhooneh/.env
 ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=3
+TimeoutStopSec=15
 LimitNOFILE=65536
 PrivateTmp=true
 NoNewPrivileges=true
