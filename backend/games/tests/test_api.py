@@ -100,4 +100,4 @@ class RoomApiTests(APITestCase):
     def test_room_creation_requires_account(self):
         self.client.credentials()
         response = self.client.post("/api/v1/rooms/", {}, format="json")
-        self.assertEqual(403, response.status_code)
+        self.assertEqual(401, response.status_code)

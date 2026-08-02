@@ -6,7 +6,7 @@ from django.test import override_settings
 from accounts.models import Account, AccountNotification, Friendship
 
 from config.asgi import application
-from games.models import CommunityRoom
+from games.models import CommunityGameSession, CommunityRoom
 
 
 class CommunityRoomApiTests(APITestCase):
@@ -252,6 +252,26 @@ class CommunityRoomApiTests(APITestCase):
         self.assertEqual(2, len(details.data["active_game"]["participants"]))
         self.assertTrue(details.data["active_game"]["is_participant"])
         self.assertNotIn("legacy_room_code", details.data["active_game"])
+
+    def test_orphaned_game_session_does_not_break_room_list(self):
+        owner_token = self.register("orphan_owner")
+        self.authenticate(owner_token)
+        code = self.client.post(
+            "/api/v1/community/rooms/", {"title": "Reusable room"}, format="json"
+        ).data["code"]
+        self.client.post(
+            f"/api/v1/community/rooms/{code}/game/",
+            {"game_key": "three_piece_tic_tac_toe"},
+            format="json",
+        )
+        session = CommunityGameSession.objects.get(room__code=code)
+        session.tic_tac_toe_room.delete()
+
+        listed = self.client.get("/api/v1/community/rooms/")
+
+        self.assertEqual(200, listed.status_code)
+        room = next(value for value in listed.data["results"] if value["code"] == code)
+        self.assertIsNone(room["active_game"])
 
     def test_ludo_matchmaking_creates_shared_game_session(self):
         first_token = self.register("ludo_first")

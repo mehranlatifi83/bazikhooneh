@@ -3,6 +3,7 @@ package ir.codelighthouse.bazikhooneh.community;
 import android.content.Context;
 import ir.codelighthouse.bazikhooneh.BuildConfig;
 import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
+import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.network.ReliableWebSocket;
 import java.util.concurrent.TimeUnit;
 import okhttp3.*;
@@ -24,7 +25,7 @@ public final class CommunityClient {
   }
 
   private final String baseUrl;
-  private final String token;
+  private final SessionStore sessionStore;
   private final Context context;
   private final OkHttpClient http =
       new OkHttpClient.Builder()
@@ -40,7 +41,7 @@ public final class CommunityClient {
   public CommunityClient(Context context, String baseUrl, String token) {
     this.context = context.getApplicationContext();
     this.baseUrl = baseUrl.replaceAll("/$", "");
-    this.token = token;
+    this.sessionStore = new SessionStore(this.context);
   }
 
   public void list(Callback callback) {
@@ -216,7 +217,7 @@ public final class CommunityClient {
     Request request =
         new Request.Builder()
             .url(wsBase + "/ws/v1/community/" + code + "/")
-            .header("Authorization", "Bearer " + token)
+            .header("Authorization", "Bearer " + accessToken())
             .build();
     if (socket == null)
       socket =
@@ -317,13 +318,18 @@ public final class CommunityClient {
             ? null
             : RequestBody.create(body.toString(), MediaType.get("application/json; charset=utf-8"));
     Request.Builder builder =
-        new Request.Builder().url(baseUrl + path).header("Authorization", "Bearer " + token);
+        new Request.Builder().url(baseUrl + path).header("Authorization", "Bearer " + accessToken());
     if ("POST".equals(method))
       builder.post(requestBody == null ? RequestBody.create(new byte[0]) : requestBody);
     else if ("DELETE".equals(method)) builder.delete(requestBody);
     else if ("PATCH".equals(method)) builder.patch(requestBody);
     else builder.get();
     http.newCall(builder.build()).enqueue(new CallbackAdapter(callback));
+  }
+
+  private String accessToken() {
+    String current = sessionStore.token();
+    return current.isEmpty() ? "" : current;
   }
 
   private static final class CallbackAdapter implements okhttp3.Callback {

@@ -10,6 +10,11 @@ from .models import AccountToken, hash_token
 class AccountTokenAuthentication(BaseAuthentication):
     keyword = "Bearer"
 
+    def authenticate_header(self, request):
+        # DRF otherwise turns AuthenticationFailed into 403. Returning a challenge makes an
+        # expired access token a proper 401, allowing mobile clients to rotate and retry it.
+        return self.keyword
+
     def authenticate(self, request):
         authorization = request.headers.get("Authorization", "")
         prefix, _, raw = authorization.partition(" ")

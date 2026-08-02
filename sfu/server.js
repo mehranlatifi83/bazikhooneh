@@ -30,7 +30,11 @@ async function authenticate(request, code) {
   const authorization = request.headers.authorization || "";
   if (!authorization.startsWith("Bearer ")) throw new Error("unauthorized");
   const response = await fetch(`${API}/api/v1/community/rooms/${encodeURIComponent(code)}/`, {
-    headers: { Authorization: authorization }
+    headers: {
+      Authorization: authorization,
+      // The internal hop terminates on loopback behind the same trusted proxy boundary.
+      "X-Forwarded-Proto": "https"
+    }
   });
   if (!response.ok) throw new Error("unauthorized");
   const room = await response.json();
@@ -41,6 +45,10 @@ async function authenticate(request, code) {
   );
   if (!joined) throw new Error("not_in_call");
   return { account: room.membership, call: room.active_call };
+}
+
+function logEvent(event, details = {}) {
+  console.log(JSON.stringify({ event, ...details, timestamp: new Date().toISOString() }));
 }
 
 async function getRoom(code) {
@@ -92,7 +100,14 @@ server.on("upgrade", async (request, socket, head) => {
     const identity = await authenticate(request, code);
     websocket.handleUpgrade(request, socket, head, ws =>
       websocket.emit("connection", ws, { code, identity }));
-  } catch { socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n"); socket.destroy(); }
+  } catch (error) {
+    logEvent("sfu_auth_rejected", {
+      room: new URL(request.url, "http://localhost").searchParams.get("room") || "",
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+    socket.destroy();
+  }
 });
 
 websocket.on("connection", async (socket, context) => {
@@ -104,9 +119,22 @@ websocket.on("connection", async (socket, context) => {
     transports: new Map(), producers: new Map(), consumers: new Map()
   };
   room.peers.set(id, peer);
+  logEvent("sfu_peer_connected", { room: context.code, account_id: id });
   if (old) { old.socket.close(4001, "replaced"); closePeer(room, old); }
-  socket.on("close", () => closePeer(room, peer));
-  socket.on("error", () => {});
+  socket.on("close", (code, reason) => {
+    logEvent("sfu_peer_disconnected", {
+      room: context.code,
+      account_id: id,
+      code,
+      reason: reason.toString()
+    });
+    closePeer(room, peer);
+  });
+  socket.on("error", error => logEvent("sfu_peer_error", {
+    room: context.code,
+    account_id: id,
+    reason: error instanceof Error ? error.message : "unknown"
+  }));
   socket.on("message", async raw => {
     let message;
     try { message = JSON.parse(raw.toString()); } catch { return; }

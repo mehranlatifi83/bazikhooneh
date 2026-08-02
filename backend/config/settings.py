@@ -1,8 +1,18 @@
 import os
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def redis_url_without_read_timeout(value):
+    parts = urlsplit(value)
+    query = [(key, item) for key, item in parse_qsl(parts.query) if key != "socket_timeout"]
+    return urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
+    )
+
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "development-only-insecure-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
@@ -11,6 +21,9 @@ ALLOWED_HOSTS = [
     for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if host.strip()
 ]
+for internal_host in ("127.0.0.1", "localhost"):
+    if internal_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(internal_host)
 
 if not DEBUG and SECRET_KEY == "development-only-insecure-key":
     raise RuntimeError("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false")
@@ -87,7 +100,18 @@ if redis_url:
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {"hosts": [redis_url]},
+            "CONFIG": {
+                # A cache read timeout must not terminate Channels' blocking receive loop.
+                # Keep a bounded connect timeout and TCP health checks instead.
+                "hosts": [
+                    {
+                        "address": redis_url_without_read_timeout(redis_url),
+                        "socket_timeout": None,
+                        "socket_connect_timeout": 5,
+                        "health_check_interval": 30,
+                    }
+                ]
+            },
         }
     }
 else:

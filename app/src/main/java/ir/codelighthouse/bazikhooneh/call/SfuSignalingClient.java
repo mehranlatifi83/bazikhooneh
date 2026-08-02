@@ -1,6 +1,9 @@
 package ir.codelighthouse.bazikhooneh.call;
 
 import android.content.Context;
+import ir.codelighthouse.bazikhooneh.BuildConfig;
+import ir.codelighthouse.bazikhooneh.account.SessionAuthenticator;
+import ir.codelighthouse.bazikhooneh.account.SessionStore;
 import ir.codelighthouse.bazikhooneh.network.ReliableWebSocket;
 import java.util.Map;
 import java.util.UUID;
@@ -24,7 +27,11 @@ final class SfuSignalingClient {
   SfuSignalingClient(
       Context context, String baseUrl, String token, String room, Listener listener) {
     this.listener = listener;
-    OkHttpClient http = new OkHttpClient.Builder().pingInterval(15, TimeUnit.SECONDS).build();
+    OkHttpClient http =
+        new OkHttpClient.Builder()
+            .pingInterval(15, TimeUnit.SECONDS)
+            .authenticator(new SessionAuthenticator(BuildConfig.API_BASE_URL))
+            .build();
     socket =
         new ReliableWebSocket(
             context,
@@ -80,7 +87,9 @@ final class SfuSignalingClient {
     Request request =
         new Request.Builder()
             .url(ws + "/sfu/?room=" + room)
-            .header("Authorization", "Bearer " + token)
+            .header(
+                "Authorization",
+                "Bearer " + new SessionStore(context.getApplicationContext()).token())
             .build();
     socket.start(request);
   }

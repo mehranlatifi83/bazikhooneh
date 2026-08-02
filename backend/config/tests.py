@@ -1,10 +1,21 @@
 import json
+from urllib.parse import parse_qs, urlsplit
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 
+from config.settings import redis_url_without_read_timeout
+
 
 class HealthAndObservabilityTests(TestCase):
+    def test_channel_redis_url_drops_only_blocking_read_timeout(self):
+        value = redis_url_without_read_timeout(
+            "redis://user:password@localhost:6379/0?socket_timeout=5&ssl=true"
+        )
+        parsed = urlsplit(value)
+        self.assertEqual("user:password@localhost:6379", parsed.netloc)
+        self.assertEqual({"ssl": ["true"]}, parse_qs(parsed.query))
+
     def test_liveness_is_lightweight_and_returns_request_id(self):
         response = self.client.get(
             "/health/live/", HTTP_X_REQUEST_ID="client-request-123"

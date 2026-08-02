@@ -69,6 +69,18 @@ class AccountApiTests(APITestCase):
         token.refresh_from_db()
         self.assertGreater(token.last_used_at, stale)
 
+    def test_expired_access_token_returns_refreshable_bearer_challenge(self):
+        self.authenticated()
+        token = AccountToken.objects.get()
+        AccountToken.objects.filter(pk=token.pk).update(
+            expires_at=timezone.now() - timedelta(seconds=1)
+        )
+
+        response = self.client.get("/api/v1/accounts/me/")
+
+        self.assertEqual(401, response.status_code)
+        self.assertEqual("Bearer", response["WWW-Authenticate"])
+
     def test_untrusted_forwarded_ip_is_not_logged(self):
         self.client.post(
             "/api/v1/accounts/login/",

@@ -25,9 +25,10 @@ public final class SessionAuthenticator implements Authenticator {
   @Override
   public Request authenticate(Route route, Response response) {
     if (responseCount(response) > 1) return null;
-    // Game WebSockets use a separate reconnect credential, not the
-    // account access token. Never replace that credential here.
-    if (response.request().url().encodedPath().startsWith("/ws/")) return null;
+    // Game sockets use a separate reconnect credential. Community and SFU sockets use the
+    // account access token and must be allowed to refresh during their HTTP upgrade handshake.
+    String path = response.request().url().encodedPath();
+    if (path.startsWith("/ws/v1/rooms/") || path.startsWith("/ws/v1/ludo/")) return null;
     SessionStore store = new SessionStore(BaziKhoonehApplication.context());
     if (store.refreshToken().isEmpty()) return null;
     synchronized (ROTATION_LOCK) {

@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 
 from accounts.models import AccountNotification
 from accounts.push import enqueue_notifications
@@ -85,6 +86,10 @@ def room_payload(room, account=None):
     active_call = room.calls.filter(status=CommunityCall.Status.ACTIVE).first()
     active_game = (
         room.game_sessions.filter(state__in=("waiting", "active"))
+        .filter(
+            Q(game_key="three_piece_tic_tac_toe", tic_tac_toe_room__isnull=False)
+            | Q(game_key="ludo", ludo_room__isnull=False)
+        )
         .order_by("-created_at")
         .first()
     )
