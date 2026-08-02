@@ -537,7 +537,17 @@ public final class CallKeepAliveService extends Service implements CommunityClie
       client = null;
     }
     if (mediaEngine != null) {
-      mediaEngine.close();
+      if (audioTrack != null) audioTrack.setEnabled(false);
+      boolean mediaStopped = mediaEngine.closeAndAwait(8, java.util.concurrent.TimeUnit.SECONDS);
+      if (!mediaStopped) {
+        android.util.Log.e(
+            "BaziKhoonehCall", "Native media shutdown did not finish; retaining WebRTC owners");
+        mediaEngine = null;
+        // Disposing these owners while libwebrtc is still encoding causes a native SIGSEGV.
+        audioTrack = null;
+        audioSource = null;
+        factory = null;
+      }
       mediaEngine = null;
     }
     if (networkCallback != null && connectivityManager != null)

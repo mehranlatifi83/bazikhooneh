@@ -79,13 +79,9 @@ public final class MediasoupCallEngine {
               @Override
               public void onEvent(String event, JSONObject data) {
                 if ("newProducer".equals(event) && data != null)
-                  executor.execute(() -> consumeSafe(data));
+                  executeIfOpen(() -> consumeSafe(data));
                 else if ("producerClosed".equals(event) && data != null) {
-                  Consumer value = consumers.remove(data.optString("consumerId"));
-                  if (value != null) {
-                    value.close();
-                    value.dispose();
-                  }
+                  executeIfOpen(() -> closeConsumer(data.optString("consumerId")));
                 }
               }
 
@@ -159,6 +155,7 @@ public final class MediasoupCallEngine {
   }
 
   public void setMicEnabled(boolean enabled) {
+    if (closed) return;
     audioTrack.setEnabled(enabled);
     if (producer != null) {
       if (enabled) producer.resume();
@@ -187,22 +184,54 @@ public final class MediasoupCallEngine {
         TimeUnit.SECONDS);
   }
 
-  public void close() {
+  /**
+   * Stops the native media graph before its Java-owned track and factory are disposed.
+   *
+   * <p>libmediasoupclient keeps encoder threads alive until the producer/transports are closed. The
+   * caller must therefore wait for this method before disposing AudioTrack, AudioSource or
+   * PeerConnectionFactory.
+   */
+  public boolean closeAndAwait(long timeout, TimeUnit unit) {
+    if (closed) return executor.isTerminated();
     closed = true;
-    if (signaling != null) signaling.close();
-    executor.execute(this::closeMedia);
+    reconnectPending.set(false);
+    SfuSignalingClient activeSignaling = signaling;
+    signaling = null;
+    if (activeSignaling != null) activeSignaling.close();
+    Future<?> release;
+    try {
+      release = executor.submit(this::closeMedia);
+    } catch (RejectedExecutionException ignored) {
+      return executor.isTerminated();
+    }
     executor.shutdown();
+    try {
+      release.get(timeout, unit);
+      return executor.awaitTermination(timeout, unit);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
+    } catch (ExecutionException | TimeoutException e) {
+      Log.e(TAG, "Timed out while closing native call media", e);
+      return false;
+    }
   }
 
   private void closeMedia() {
     for (Consumer value : consumers.values()) {
-      value.close();
-      value.dispose();
+      closeSafely(value);
     }
     consumers.clear();
     if (producer != null) {
-      producer.close();
-      producer.dispose();
+      try {
+        producer.pause();
+      } catch (RuntimeException ignored) {
+      }
+      try {
+        producer.close();
+      } finally {
+        producer.dispose();
+      }
       producer = null;
     }
     if (send != null) {
@@ -218,6 +247,28 @@ public final class MediasoupCallEngine {
     if (device != null) {
       device.dispose();
       device = null;
+    }
+  }
+
+  private void executeIfOpen(Runnable action) {
+    if (closed || executor.isShutdown()) return;
+    try {
+      executor.execute(action);
+    } catch (RejectedExecutionException ignored) {
+      // A socket callback raced with orderly call shutdown.
+    }
+  }
+
+  private void closeConsumer(String id) {
+    Consumer value = consumers.remove(id);
+    if (value != null) closeSafely(value);
+  }
+
+  private void closeSafely(Consumer value) {
+    try {
+      value.close();
+    } finally {
+      value.dispose();
     }
   }
 
