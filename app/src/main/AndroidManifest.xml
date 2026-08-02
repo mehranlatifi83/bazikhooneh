@@ -34,7 +34,8 @@
             android:foregroundServiceType="microphone" />
         <activity android:name=".feature.account.RegisterActivity" android:exported="false" android:label="@string/account_register" />
         <activity android:name=".feature.room.RoomListActivity" android:exported="false" android:label="@string/community_rooms_title" />
-        <activity android:name=".feature.room.RoomActivity" android:exported="false" android:label="@string/community_room_title" />
+        <activity android:name=".feature.room.RoomActivity" android:exported="false"
+            android:label="@string/community_room_title" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".feature.room.RoomEventsActivity" android:exported="false" android:label="@string/room_history" />
         <activity android:name=".feature.social.LeaderboardActivity" android:exported="false" android:label="@string/leaderboard_title" />
         <activity android:name=".call.VoiceCallActivity" android:exported="false" android:label="@string/voice_call_title" android:launchMode="singleTop" />

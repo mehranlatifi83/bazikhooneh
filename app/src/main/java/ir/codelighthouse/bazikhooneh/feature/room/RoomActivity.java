@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import ir.codelighthouse.bazikhooneh.*;
 import ir.codelighthouse.bazikhooneh.account.SessionStore;
@@ -12,6 +14,7 @@ import ir.codelighthouse.bazikhooneh.call.CallKeepAliveService;
 import ir.codelighthouse.bazikhooneh.call.VoiceCallActivity;
 import ir.codelighthouse.bazikhooneh.community.CommunityClient;
 import ir.codelighthouse.bazikhooneh.community.RoomSharing;
+import ir.codelighthouse.bazikhooneh.core.audio.MessageSoundPlayer;
 import ir.codelighthouse.bazikhooneh.core.ui.NavigableActivity;
 import ir.codelighthouse.bazikhooneh.feature.ludo.LudoOnlineGameActivity;
 import ir.codelighthouse.bazikhooneh.feature.tictactoe.TicTacToeGameActivity;
@@ -42,10 +45,12 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
   private boolean socketVerified;
   private boolean reconnectScheduled;
   private boolean everConnected;
+  private MessageSoundPlayer messageSounds;
 
   @Override
   protected void onCreate(Bundle state) {
     super.onCreate(state);
+    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     setContentView(R.layout.activity_community_room);
     code = getIntent().getStringExtra(EXTRA_ROOM_CODE);
     SessionStore store = new SessionStore(this);
@@ -58,7 +63,15 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     members = findViewById(R.id.community_members_list);
     messages = findViewById(R.id.community_messages_list);
     status = findViewById(R.id.community_room_status);
+    messageSounds = new MessageSoundPlayer();
     findViewById(R.id.community_send).setOnClickListener(v -> send());
+    ((EditText) findViewById(R.id.community_message_input))
+        .setOnEditorActionListener(
+            (view, actionId, event) -> {
+              if (actionId != EditorInfo.IME_ACTION_SEND) return false;
+              send();
+              return true;
+            });
     findViewById(R.id.community_share).setOnClickListener(v -> shareRoom());
     findViewById(R.id.community_copy)
         .setOnClickListener(
@@ -292,11 +305,12 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     messageActionViews.clear();
     messageContainers.clear();
     if (values == null) return;
-    for (int i = 0; i < values.length(); i++) addMessage(values.optJSONObject(i), false);
+    for (int i = 0; i < values.length(); i++)
+      addMessage(values.optJSONObject(i), false, false);
     scrollBottom();
   }
 
-  private void addMessage(JSONObject item, boolean announce) {
+  private void addMessage(JSONObject item, boolean announce, boolean playSound) {
     if (item == null || item.optBoolean("deleted")) return;
     long id = item.optLong("id");
     if (id > 0 && messageViews.containsKey(id)) return;
@@ -326,6 +340,11 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
           return true;
         });
     if (announce) row.announceForAccessibility(row.getText());
+    if (playSound && messageSounds != null) {
+      boolean own = sender != null && sender.optString("username").equalsIgnoreCase(ownUsername);
+      if (own) messageSounds.sent();
+      else messageSounds.received();
+    }
     scrollBottom();
   }
 
@@ -403,7 +422,7 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     long id = item.optLong("id");
     TextView row = messageViews.get(id);
     if (row == null) {
-      addMessage(item, false);
+      addMessage(item, false, false);
       return;
     }
     JSONObject sender = item.optJSONObject("sender");
@@ -465,7 +484,7 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
                     show(getString(R.string.message_send_failed, error));
                     return;
                   }
-                  addMessage(message, false);
+                  addMessage(message, false, true);
                   if (text.equals(input.getText().toString().trim())) input.setText("");
                   replyToMessage = 0;
                   input.setHint(R.string.community_message_hint);
@@ -648,7 +667,8 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
                             if (data != null) renderRoom(data);
                           }));
             }
-          } else if ("chat_message".equals(type)) addMessage(event.optJSONObject("message"), true);
+          } else if ("chat_message".equals(type))
+            addMessage(event.optJSONObject("message"), true, true);
           else if ("chat_edited".equals(type)) updateMessage(event.optJSONObject("message"));
           else if ("chat_deleted".equals(type)) removeMessage(event.optLong("message_id"));
           else if ("game_selected".equals(type)) joinSelectedGame(event);
@@ -733,6 +753,10 @@ public class RoomActivity extends NavigableActivity implements CommunityClient.E
     destroyed = true;
     reconnectHandler.removeCallbacksAndMessages(null);
     if (client != null) client.disconnect();
+    if (messageSounds != null) {
+      messageSounds.release();
+      messageSounds = null;
+    }
     super.onDestroy();
   }
 
