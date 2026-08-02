@@ -138,7 +138,13 @@ websocket.on("connection", async (socket, context) => {
   socket.on("message", async raw => {
     let message;
     try { message = JSON.parse(raw.toString()); } catch { return; }
+    if (message.type === "ping") {
+      if (socket.readyState === 1)
+        socket.send(JSON.stringify({ type: "pong", server_time: Date.now() }));
+      return;
+    }
     const { id: requestId, action, data = {} } = message;
+    logEvent("sfu_action", { room: context.code, account_id: id, action });
     try {
       if (action === "routerCapabilities")
         return reply(socket, requestId, room.router.rtpCapabilities);
@@ -216,7 +222,16 @@ websocket.on("connection", async (socket, context) => {
         await consumer.resume();return reply(socket, requestId, {});
       }
       throw new Error("unknown_action");
-    } catch (error) { reply(socket, requestId, null, String(error.message || error)); }
+    } catch (error) {
+      const reason = String(error.message || error);
+      logEvent("sfu_action_failed", {
+        room: context.code,
+        account_id: id,
+        action,
+        reason
+      });
+      reply(socket, requestId, null, reason);
+    }
   });
 });
 server.listen(PORT, "127.0.0.1", () => console.log(`SFU listening on ${PORT}`));

@@ -1,13 +1,16 @@
 package ir.codelighthouse.bazikhooneh.call;
 
 import android.content.Context;
+import android.util.Log;
 import io.github.crow_misia.mediasoup.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.json.*;
 import org.webrtc.*;
 
 public final class MediasoupCallEngine {
+  private static final String TAG = "BaziKhoonehCall";
   public interface Listener {
     void onConnected();
 
@@ -21,7 +24,8 @@ public final class MediasoupCallEngine {
   private final PeerConnectionFactory factory;
   private final org.webrtc.AudioTrack audioTrack;
   private final Listener listener;
-  private final ExecutorService executor = Executors.newSingleThreadExecutor();
+  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  private final AtomicBoolean reconnectPending = new AtomicBoolean();
   private final Map<String, Consumer> consumers = new ConcurrentHashMap<>();
   private SfuSignalingClient signaling;
   private Device device;
@@ -49,6 +53,7 @@ public final class MediasoupCallEngine {
 
   public void connect() {
     if (closed) return;
+    reconnectPending.set(false);
     signaling =
         new SfuSignalingClient(
             context,
@@ -64,7 +69,9 @@ public final class MediasoupCallEngine {
                         setup();
                         listener.onConnected();
                       } catch (Exception e) {
+                        Log.e(TAG, "SFU media setup failed", e);
                         listener.onDisconnected();
+                        scheduleReconnect();
                       }
                     });
               }
@@ -84,7 +91,10 @@ public final class MediasoupCallEngine {
 
               @Override
               public void onDisconnected() {
-                if (!closed) listener.onDisconnected();
+                if (!closed) {
+                  listener.onDisconnected();
+                  scheduleReconnect();
+                }
               }
             });
   }
@@ -157,13 +167,24 @@ public final class MediasoupCallEngine {
   }
 
   public void reconnect() {
-    executor.execute(
+    scheduleReconnect(0);
+  }
+
+  private void scheduleReconnect() {
+    scheduleReconnect(2);
+  }
+
+  private void scheduleReconnect(long delaySeconds) {
+    if (closed || !reconnectPending.compareAndSet(false, true)) return;
+    SfuSignalingClient previous = signaling;
+    signaling = null;
+    if (previous != null) previous.close();
+    executor.schedule(
         () -> {
-          if (!closed) {
-            if (signaling != null) signaling.close();
-            connect();
-          }
-        });
+          if (!closed) connect();
+        },
+        delaySeconds,
+        TimeUnit.SECONDS);
   }
 
   public void close() {
@@ -237,7 +258,10 @@ public final class MediasoupCallEngine {
 
     @Override
     public void onConnectionStateChange(Transport t, String state) {
-      if ("failed".equals(state)) listener.onDisconnected();
+      if ("failed".equals(state) || "disconnected".equals(state)) {
+        listener.onDisconnected();
+        scheduleReconnect();
+      }
     }
   }
 
@@ -257,7 +281,10 @@ public final class MediasoupCallEngine {
 
     @Override
     public void onConnectionStateChange(Transport t, String state) {
-      if ("failed".equals(state)) listener.onDisconnected();
+      if ("failed".equals(state) || "disconnected".equals(state)) {
+        listener.onDisconnected();
+        scheduleReconnect();
+      }
     }
   }
 }

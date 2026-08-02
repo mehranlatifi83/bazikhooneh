@@ -460,7 +460,7 @@ public final class CallKeepAliveService extends Service implements CommunityClie
           public void onAvailable(Network network) {
             main.post(
                 () -> {
-                  if (connected && mediaEngine != null) mediaEngine.reconnect();
+                  if (!leaving && mediaEngine != null) mediaEngine.reconnect();
                 });
           }
         };
